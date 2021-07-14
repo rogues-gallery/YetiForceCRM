@@ -2,7 +2,7 @@
 
 /**
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
@@ -22,12 +22,12 @@ class Settings_Inventory_CreditLimits_View extends Settings_Vtiger_Index_View
 	 *
 	 * @return string
 	 */
-	public function processTplName(\App\Request $request)
+	public function processTplName(App\Request $request)
 	{
 		return 'Index.tpl';
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$mode = $request->getMode();
 		if (!empty($mode)) {
@@ -50,7 +50,7 @@ class Settings_Inventory_CreditLimits_View extends Settings_Vtiger_Index_View
 		$viewer->view($this->processTplName($request), $qualifiedModuleName);
 	}
 
-	public function getPageLabels(\App\Request $request)
+	public function getPageLabels(App\Request $request)
 	{
 		if ($request->has('type')) {
 			$view = $request->getByType('type', 'Standard');

@@ -2,10 +2,10 @@
 /**
  * Service contracts utils file.
  *
- * @package   App
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -75,7 +75,7 @@ class ServiceContracts
 	 *
 	 * @return array
 	 */
-	private static function getDefaultBusinessHours(): array
+	public static function getDefaultBusinessHours(): array
 	{
 		if (\App\Cache::has('UtilsServiceContracts::getDefaultBusinessHours', '')) {
 			return \App\Cache::get('UtilsServiceContracts::getDefaultBusinessHours', '');
@@ -248,7 +248,7 @@ class ServiceContracts
 							$times = [
 								'reaction_time' => $row['reaction_time'],
 								'idle_time' => $row['idle_time'],
-								'resolve_time' => $row['resolve_time']
+								'resolve_time' => $row['resolve_time'],
 							];
 						}
 					}
@@ -258,7 +258,7 @@ class ServiceContracts
 		if ($businessHours) {
 			$result = [];
 			foreach (self::optimizeBusinessHours(\array_unique($businessHours)) as $value) {
-				$result[] = array_merge($times, $value);
+				$result[] = array_merge($value, $times);
 			}
 			return $result;
 		}
@@ -277,8 +277,8 @@ class ServiceContracts
 		$days = $holidays = [];
 		foreach ($rows as $row) {
 			foreach (explode(',', $row['working_days']) as $day) {
-				if ((isset($days[$day]['working_hours_from']) && (int) $row['working_hours_from'] < (int) $days[$day]['working_hours_from']) ||
-					empty($days[$day]['working_hours_from'])) {
+				if ((isset($days[$day]['working_hours_from']) && (int) $row['working_hours_from'] < (int) $days[$day]['working_hours_from'])
+					|| empty($days[$day]['working_hours_from'])) {
 					$days[$day] = [
 						'working_hours_from' => $row['working_hours_from'],
 						'working_hours_to' => $row['working_hours_to'],
@@ -288,8 +288,8 @@ class ServiceContracts
 					];
 				}
 			}
-			if (!empty($row['holidays']) && ((isset($holidays['working_hours_from']) && (int) $row['working_hours_from'] < (int) $holidays['working_hours_from']) ||
-				empty($holidays['working_hours_from']))) {
+			if (!empty($row['holidays']) && ((isset($holidays['working_hours_from']) && (int) $row['working_hours_from'] < (int) $holidays['working_hours_from'])
+				|| empty($holidays['working_hours_from']))) {
 				$holidays = [
 					'working_hours_from' => $row['working_hours_from'],
 					'working_hours_to' => $row['working_hours_to'],
@@ -342,8 +342,9 @@ class ServiceContracts
 		if (!$end) {
 			$end = date('Y-m-d H:i:s');
 		}
-		if ($field = \App\Field::getRelatedFieldForModule($recordModel->getModuleName(), 'ServiceContracts')) {
-			return self::getDiffFromServiceContracts($start, $end, $recordModel->get($field['fieldname']), $recordModel);
+		$fieldModel = current($recordModel->getModule()->getReferenceFieldsForModule('ServiceContracts'));
+		if ($fieldModel && ($value = $recordModel->get($fieldModel->getName()))) {
+			return self::getDiffFromServiceContracts($start, $end, $value, $recordModel);
 		}
 		if (!($diff = self::getDiffFromDefaultBusinessHours($start, $end))) {
 			$diff = \App\Fields\DateTime::getDiff($start, $end, 'minutes');
@@ -412,10 +413,10 @@ class ServiceContracts
 	 */
 	public static function updateExpectedTimes(\Vtiger_Record_Model $recordModel, array $type)
 	{
-		if (($field = \App\Field::getRelatedFieldForModule($recordModel->getModuleName(), 'ServiceContracts')) && $recordModel->get($field['fieldname'])) {
-			foreach (self::getExpectedTimes($recordModel->get($field['fieldname']), $recordModel, $type) as $key => $time) {
-				$recordModel->set($key . '_expected', $time);
-			}
+		$field = \App\Field::getRelatedFieldForModule($recordModel->getModuleName(), 'ServiceContracts');
+		$serviceContract = ($field && !empty($recordModel->get($field['fieldname']))) ? $recordModel->get($field['fieldname']) : 0;
+		foreach (self::getExpectedTimes($serviceContract, $recordModel, $type) as $key => $time) {
+			$recordModel->set($key . '_expected', $time);
 		}
 	}
 
@@ -432,7 +433,7 @@ class ServiceContracts
 	{
 		$return = [];
 		$date = new \DateTime();
-		if ($rules = self::getRulesForServiceContracts($id, $recordModel)) {
+		if ($id && ($rules = self::getRulesForServiceContracts($id, $recordModel))) {
 			if (isset($rules['id'])) {
 				foreach (self::$fieldsMap as $key => $fieldKey) {
 					if (\in_array($fieldKey, $type)) {

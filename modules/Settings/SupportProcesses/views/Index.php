@@ -4,11 +4,11 @@
  * Settings SupportProcesses index view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_SupportProcesses_Index_View extends Settings_Vtiger_Index_View
 {
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		\App\Log::trace('Entering Settings_SupportProcesses_Index_View::process() method ...');
 		$qualifiedModule = $request->getModule(false);

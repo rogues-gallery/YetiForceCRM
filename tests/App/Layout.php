@@ -1,14 +1,20 @@
 <?php
 /**
- * Layout test class.
+ * Layout test file.
+ *
+ * @package   Tests
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
 namespace Tests\App;
 
+/**
+ * Layout test class.
+ */
 class Layout extends \Tests\Base
 {
 	/**
@@ -27,8 +33,8 @@ class Layout extends \Tests\Base
 	public function testGetLayoutFile()
 	{
 		$this->assertFileExists(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . \App\Layout::getLayoutFile('modules/Accounts/resources/Detail.js'), 'Expected file in provided path');
-		$this->assertFileNotExists(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . \App\Layout::getLayoutFile('styles/NxFile.css'), 'Expected file in provided path not exists');
-		$this->assertFileNotExists(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . \App\Layout::getLayoutFile('modules/Accounts/AccountHierarchy.tpl'), 'Expected file in provided path not exists');
+		$this->assertFileDoesNotExist(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . \App\Layout::getLayoutFile('styles/NxFile.css'), 'Expected file in provided path not exists');
+		$this->assertFileDoesNotExist(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . \App\Layout::getLayoutFile('modules/Accounts/AccountHierarchy.tpl'), 'Expected file in provided path not exists');
 	}
 
 	/**
@@ -76,5 +82,15 @@ class Layout extends \Tests\Base
 	public function testGetUniqueId()
 	{
 		$this->assertSame(0, strpos(\App\Layout::getUniqueId('basic'), 'basic'), 'Unique ID should contain provided prefix');
+	}
+
+	/**
+	 * Testing getIconByFileType function.
+	 */
+	public function testGetIconByFileType()
+	{
+		$this->assertSame('far fa-file-video', \App\Layout\Icon::getIconByFileType('video'), 'Expected icon class name(video)');
+		$this->assertSame('fas fa-calendar-alt', \App\Layout\Icon::getIconByFileType('text/vcard'), 'Expected icon class name(text/vcard)');
+		$this->assertSame('yfm-Documents', \App\Layout\Icon::getIconByFileType('NotExists'), 'Expected icon class name(text/vcard)');
 	}
 }

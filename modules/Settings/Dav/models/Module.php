@@ -4,7 +4,7 @@
  * Settings dav module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_Dav_Module_Model extends Settings_Vtiger_Module_Model
 {
@@ -66,22 +66,22 @@ class Settings_Dav_Module_Model extends Settings_Vtiger_Module_Model
 			'userid' => $userID,
 		])->execute();
 		$pdo = $db->getMasterPdo();
-		if (in_array('CalDav', $type)) {
-			$calendarBackend = new App\Dav\CalDavBackendPdo($pdo);
+		if (\in_array('CalDav', $type)) {
+			$calendarBackend = new \App\Integrations\Dav\Backend\Calendar($pdo);
 			$calendarBackend->createCalendar('principals/' . $userModel->get('user_name'), API_CalDAV_Model::CALENDAR_NAME, [
 				'{DAV:}displayname' => API_CalDAV_Model::CALENDAR_NAME,
 			]);
 			$db->createCommand()->update('vtiger_activity', ['dav_status' => 1])->execute();
 		}
-		if (in_array('CardDav', $type)) {
-			$cardDavBackend = new App\Dav\CardDavBackendPdo($pdo);
+		if (\in_array('CardDav', $type)) {
+			$cardDavBackend = new \App\Integrations\Dav\Backend\Card($pdo);
 			$cardDavBackend->createAddressBook('principals/' . $userModel->get('user_name'), API_CardDAV_Model::ADDRESSBOOK_NAME, [
 				'{DAV:}displayname' => API_CardDAV_Model::ADDRESSBOOK_NAME,
 			]);
 			$db->createCommand()->update('vtiger_contactdetails', ['dav_status' => 1])->execute();
 			$db->createCommand()->update('vtiger_ossemployees', ['dav_status' => 1])->execute();
 		}
-		if (in_array('WebDav', $type)) {
+		if (\in_array('WebDav', $type)) {
 			$this->createUserDirectory($userID);
 		}
 		return $key;

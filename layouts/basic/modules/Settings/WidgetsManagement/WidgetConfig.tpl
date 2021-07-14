@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Settings-WidgetsManagement-WidgetConfig -->
 	{assign var=WIDGET_INFO value=\App\Json::decode(html_entity_decode($WIDGET_MODEL->get('data')))}
@@ -10,10 +10,13 @@
 			<div class="row p-2 d-flex justify-content-between">
 				<div style="word-wrap: break-word;">
 					<span class="fieldLabel ml-3">{\App\Language::translate($WIDGET_MODEL->getTitle(), $SELECTED_MODULE_NAME)}</span>
+					{if $LINK_LABEL_KEY === 'LBL_UPDATES' && !\App\YetiForce\Shop::check('YetiForceWidgets')}
+						<a class="btn btn-sm" href="index.php?parent=Settings&module=YetiForce&view=Shop&product=YetiForceWidgets&mode=showProductModal" title="{\App\Language::translate('LBL_PAID_FUNCTIONALITY', 'Settings::YetiForce')}"><span class="yfi-premium color-red-600"></span></a>
+					{/if}
 				</div>
 				<span class="btn-group mr-3 actions">
 					<a href="javascript:void(0)" class="dropdown-toggle editFieldDetails" data-toggle="dropdown">
-						<span class="fas fa-edit alignMiddle"
+						<span class="yfi yfi-full-editing-view"
 							  title="{\App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
 					</a>
 					<div class="basicFieldOperations d-none u-overflow-x-hidden pl-2 pr-2" style="width: 375px;">
@@ -87,7 +90,7 @@
 										</div>
 										<div class="col-md-7 text-center">
 											<input type="text" name="plotTickSize" class="form-control"
-												   value="{$WIDGET_INFO['plotTickSize']}">
+												   value="{if isset($WIDGET_INFO['plotTickSize'])}{$WIDGET_INFO['plotTickSize']}{else}0{/if}">
 										</div>
 									</div>
 									<div class="row pt-2">
@@ -96,7 +99,7 @@
 										</div>
 										<div class="col-md-7 text-center">
 											<input type="text" name="plotLimit" class="form-control"
-												   value="{$WIDGET_INFO['plotLimit']}">
+												   value="{if isset($WIDGET_INFO['plotLimit'])}{$WIDGET_INFO['plotLimit']}{else}0{/if}">
 										</div>
 									</div>
 								{/if}
@@ -106,8 +109,7 @@
 											{\App\Language::translate('LBL_SHOW_USERS', $QUALIFIED_MODULE)}
 										</div>
 										<div class="col-md-7 text-center checkboxForm">
-											<input type="checkbox" name="showUsers"
-													{if $WIDGET_INFO['showUsers'] eq 1} checked {/if}>
+											<input type="checkbox" name="showUsers"	{if !empty($WIDGET_INFO['showUsers'])} checked {/if} value="1">
 										</div>
 									</div>
 								{/if}
@@ -138,6 +140,11 @@
 									{if !is_array($WIDGET_OWNERS.available)}
 										{$WIDGET_OWNERS.available = array($WIDGET_OWNERS.available)}
 									{/if}
+									{if isset($FILTER_USER_ITEM[$LINK_LABEL_KEY])}
+										{assign var=FILTER_WIDGET_ITEMS value=$FILTER_USER_ITEM[$LINK_LABEL_KEY]}
+									{else}
+										{assign var=FILTER_WIDGET_ITEMS value=$FILTER_USER_ITEM['default']}
+									{/if}
 									<div class="row pt-2">
 										<div class="col-md-5 col-form-label text-left">
 											{\App\Language::translate('LBL_FILTERS_AVAILABLE', $QUALIFIED_MODULE)}
@@ -148,7 +155,7 @@
 													placeholder="{\App\Language::translate('LBL_PLEASE_SELECT_ATLEAST_ONE_OPTION', $QUALIFIED_MODULE)}">
 
 												{foreach key=OWNER_NAME item=OWNER_ID from=$FILTER_SELECT}
-													{if !in_array($OWNER_ID, $RESTRICT_FILTER_FOR_LABEL) }
+													{if !in_array($OWNER_ID, $RESTRICT_FILTER_FOR_LABEL) && in_array($OWNER_ID, $FILTER_WIDGET_ITEMS)}
 														<option value="{$OWNER_ID}" {if in_array($OWNER_ID, $WIDGET_OWNERS.available)} selected {/if} >													{\App\Language::translate($OWNER_NAME, $QUALIFIED_MODULE)}
 														</option>
 													{/if}
@@ -193,6 +200,14 @@
 								</div>
 							{/if}
 							{if $LINK_LABEL_KEY === 'Multifilter'}
+								<div class="row pt-2">
+									<div class="col-md-5 col-form-label text-left">
+										{\App\Language::translate('LBL_SHOW_FULL_NAME', $QUALIFIED_MODULE)}
+									</div>
+									<div class="col-md-7 text-right checkboxForm">
+										<input type="checkbox" name="showFullName" class="" {if !empty($WIDGET_INFO['showFullName']) eq 1} checked {/if}>
+									</div>
+								</div>
 								<div class="row pt-2">
 									<div class="col-sm-5 col-form-label">
 										{\App\Language::translate('LBL_FILTERS_AVAILABLE', $QUALIFIED_MODULE)}
@@ -253,7 +268,7 @@
 						</form>
 					</div>&nbsp;
 					<a href="javascript:void(0)" class="deleteCustomField" data-field-id="{$WIDGET_MODEL->get('id')}">
-						<span class="fas fa-trash-alt alignMiddle"
+						<span class="fas fa-trash-alt"
 							  title="{\App\Language::translate('LBL_DELETE', $QUALIFIED_MODULE)}"></span>
 					</a>
 				</span>

@@ -3,7 +3,7 @@
  * Users module config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 return [
 	'IS_VISIBLE_USER_INFO_FOOTER' => [
@@ -14,7 +14,7 @@ return [
 	],
 	'USER_NAME_IS_EDITABLE' => [
 		'default' => true,
-		'description' => 'Is it possible to edit a usernames',
+		'description' => 'Is it possible to edit usernames?',
 		'validation' => '\App\Validator::bool',
 		'sanitization' => '\App\Purifier::bool'
 	],
@@ -35,5 +35,10 @@ return [
 		'description' => 'Activation of favorite owners',
 		'validation' => '\App\Validator::bool',
 		'sanitization' => '\App\Purifier::bool'
-	]
+	],
+	'pwnedPasswordProvider' => [
+		'default' => 'YetiForce',
+		'description' => 'Provider to the check password is in the stolen passwords database',
+		'validation' => '\App\Validator::text',
+	],
 ];

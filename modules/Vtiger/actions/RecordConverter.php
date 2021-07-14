@@ -6,7 +6,7 @@
  * @package Action
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Adrian Kon <a.kon@yetiforce.com>
  */
 
@@ -35,8 +35,8 @@ class Vtiger_RecordConverter_Action extends \App\Controller\Action
 		$convertId = $request->getInteger('convertId');
 		$convertInstance = \App\RecordConverter::getInstanceById($convertId, $moduleName);
 		$redirect = '';
-		if (1 === \count($records) && $convertInstance->get('redirect_to_edit')) {
-			$redirect = 'index.php?module=' . App\Module::getModuleName($convertInstance->get('destiny_module')) . '&view=Edit&recordConverter=' . $convertId . '&sourceId=' . $records[0] . '&sourceModule=' . $moduleName;
+		if (1 === \count($records) && $convertInstance->get('redirect_to_edit') && $convertInstance->isPermitted(current($records))) {
+			$redirect = 'index.php?module=' . App\Module::getModuleName($convertInstance->get('destiny_module')) . '&view=Edit&recordConverter=' . $convertId . '&sourceRecord=' . $records[0] . '&sourceModule=' . $moduleName;
 		} else {
 			$convertInstance->process($records);
 		}

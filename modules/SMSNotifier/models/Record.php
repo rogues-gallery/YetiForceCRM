@@ -3,7 +3,7 @@
  * Record Class for SMSNotifier.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -66,7 +66,7 @@ class SMSNotifier_Record_Model extends Vtiger_Record_Model
 		} else {
 			$recordModel->set('smsnotifier_status', 'PLL_FAILED');
 		}
-		$recordModel->setHandlerExceptions(['disableWorkflow' => true]);
+		$recordModel->setHandlerExceptions(['disableHandlerClasses' => ['Vtiger_Workflow_Handler']]);
 		$recordModel->save();
 
 		return $result;

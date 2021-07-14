@@ -5,8 +5,9 @@
  * @package   Relation
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 use App\Relation\RelationInterface;
 
@@ -19,6 +20,12 @@ class OSSMailView_GetRecordToMails_Relation implements RelationInterface
 	 * Name of the table that stores relations.
 	 */
 	public const TABLE_NAME = 'vtiger_ossmailview_relation';
+
+	/** {@inheritdoc} */
+	public function getRelationType(): int
+	{
+		return Vtiger_Relation_Model::RELATION_M2M;
+	}
 
 	/**
 	 * {@inheritdoc}
@@ -47,7 +54,7 @@ class OSSMailView_GetRecordToMails_Relation implements RelationInterface
 		$data = ['ossmailviewid' => $sourceRecordId, 'crmid' => $destinationRecordId];
 		if (!$this->isExists($data)) {
 			$date = isset($this->date) ? $this->date : \Vtiger_Record_Model::getInstanceById($sourceRecordId, 'OSSMailView')->get('date');
-			$return = $this->addToDB($data + ['date' => $date]);
+			$return = $this->addToDB(array_merge($data, ['date' => $date]));
 			if ($return && ($parentId = \Users_Privileges_Model::getParentRecord($destinationRecordId))) {
 				$data['crmid'] = $parentId;
 				if ($this->addRelation($data, $date) && ($parentId = \Users_Privileges_Model::getParentRecord($parentId))) {
@@ -66,7 +73,7 @@ class OSSMailView_GetRecordToMails_Relation implements RelationInterface
 	 *
 	 * @return bool
 	 */
-	public function isExists(array  $data): bool
+	public function isExists(array $data): bool
 	{
 		return (bool) (new \App\Db\Query())->from(self::TABLE_NAME)->where($data)->exists();
 	}

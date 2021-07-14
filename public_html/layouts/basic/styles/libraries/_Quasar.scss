@@ -1,5 +1,6 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
-.quasar-reset {
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+.quasar-reset,
+body > .q-dialog:not(.quasar-reset) {
 	.row {
 		margin: unset;
 		margin-right: unset;
@@ -12,6 +13,9 @@
 		padding: unset;
 		padding-right: unset;
 		padding-left: unset;
+	}
+	.q-field .col {
+		position: relative;
 	}
 }
 
@@ -35,5 +39,22 @@
 
 	.q-layout-container {
 		height: calc(100vh - 113px);
+	}
+}
+.singleComment .q-message-text {
+	background: #e0e0e0;
+}
+
+@media only screen and (min-width: 768px) {
+	.singleComment {
+		.q-message-text {
+			background: #e0e0e0;
+		}
+		&:hover .comment-actions {
+			visibility: visible;
+		}
+		.comment-actions {
+			visibility: hidden;
+		}
 	}
 }

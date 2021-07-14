@@ -3,10 +3,10 @@
 /**
  * YetiForce shop AbstractBaseProduct file.
  *
- * @package   App
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -18,11 +18,23 @@ namespace App\YetiForce\Shop;
 abstract class AbstractBaseProduct
 {
 	/**
+	 * Product label.
+	 *
+	 * @var string
+	 */
+	public $label;
+	/**
 	 * Product name.
 	 *
 	 * @var string
 	 */
 	public $name;
+	/**
+	 * Is the product featured.
+	 *
+	 * @var bool
+	 */
+	public $active = true;
 	/**
 	 * Is the product featured.
 	 *
@@ -34,7 +46,13 @@ abstract class AbstractBaseProduct
 	 *
 	 * @var string
 	 */
-	public $category = '';
+	public $category;
+	/**
+	 * Product website.
+	 *
+	 * @var string
+	 */
+	public $website;
 	/**
 	 * Price table depending on the size of the company.
 	 *
@@ -43,7 +61,14 @@ abstract class AbstractBaseProduct
 	public $prices = [];
 
 	/**
-	 * Price type (table,manual).
+	 * Custom prices label.
+	 *
+	 * @var array
+	 */
+	public $customPricesLabel = [];
+
+	/**
+	 * Price type (table,manual,selection).
 	 *
 	 * @var string
 	 */
@@ -71,11 +96,21 @@ abstract class AbstractBaseProduct
 	public $paidPackage;
 
 	/**
+	 * Custom Fields.
+	 *
+	 * @var array
+	 */
+	public $customFields = [];
+
+	/**
 	 * Verify the product.
 	 *
-	 * @return bool
+	 * @return array
 	 */
-	abstract protected function verify(): bool;
+	public function verify(): array
+	{
+		return ['status' => true];
+	}
 
 	/**
 	 * Construct.
@@ -104,7 +139,7 @@ abstract class AbstractBaseProduct
 	 */
 	public function getPrice(): int
 	{
-		return $this->prices[\App\Company::getSize()] ?? 0;
+		return $this->prices[\App\Company::getSize()] ?? $this->prices[0] ?? 0;
 	}
 
 	/**
@@ -114,6 +149,9 @@ abstract class AbstractBaseProduct
 	 */
 	public function getLabel(): string
 	{
+		if (!empty($this->label)) {
+			return $this->label;
+		}
 		return \App\Language::translate('LBL_SHOP_' . \strtoupper($this->name), 'Settings:YetiForce');
 	}
 
@@ -156,10 +194,22 @@ abstract class AbstractBaseProduct
 	{
 		$filePath = null;
 		$file = 'modules/Settings/YetiForce/' . $this->name . '.png';
-		if (\file_exists(\ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . 'public_html' . \DIRECTORY_SEPARATOR . $file)) {
-			$filePath = \App\Layout::getPublicUrl($file, true);
+		if (\file_exists(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . 'public_html' . \DIRECTORY_SEPARATOR . $file)) {
+			$filePath = \App\Layout::getPublicUrl($file);
 		}
 		return $filePath;
+	}
+
+	/**
+	 * Get price label.
+	 *
+	 * @param string $key
+	 *
+	 * @return string
+	 */
+	public function getPriceLabel($key): string
+	{
+		return \App\Language::translate('LBL_SHOP_COMPANY_SIZE_' . \strtoupper($key), 'Settings::YetiForce');
 	}
 
 	/**
@@ -194,35 +244,90 @@ abstract class AbstractBaseProduct
 	 */
 	public function getVariable(): array
 	{
-		return [
+		$productSelection = 'selection' === $this->pricesType;
+		$data = [
 			'cmd' => '_xclick-subscriptions',
 			'no_shipping' => 1,
 			'no_note' => 1,
 			'src' => 1,
 			'sra' => 1,
 			't3' => 'M',
-			'p3' => \date('d'),
-			'a3' => $this->getPrice(),
+			'p3' => 1,
 			'item_name' => $this->name,
 			'currency_code' => $this->currencyCode,
 			'on0' => 'Package',
-			'os0' => \App\Company::getSize(),
 		];
+		if (!$productSelection) {
+			$data['os0'] = \App\Company::getSize();
+		}
+		if ('manual' !== $this->pricesType && !$productSelection) {
+			$data['a3'] = $this->getPrice();
+		}
+		return array_merge($data, \App\YetiForce\Shop::getVariablePayments($this->isCustom()));
+	}
+
+	/**
+	 * Get product custom fields.
+	 *
+	 * @return array
+	 */
+	public function getCustomFields(): array
+	{
+		return $this->customFields;
+	}
+
+	/**
+	 * Is custom fields.
+	 *
+	 * @return bool
+	 */
+	public function isCustom(): bool
+	{
+		return !empty($this->customFields);
 	}
 
 	/**
 	 * Show alert.
 	 *
-	 * @return string
+	 * @return array
 	 */
-	public function showAlert(): string
+	public function showAlert(): array
 	{
-		if (strtotime('now') > strtotime($this->expirationDate)) {
-			return 'LBL_SIZE_OF_YOUR_COMPANY_HAS_CHANGED';
+		$return = ['status' => false];
+		if (isset($this->paidPackage, $this->expirationDate)) {
+			if (strtotime('now') > strtotime($this->expirationDate)) {
+				$return = ['status' => true, 'type' => 'LBL_SHOP_RENEW', 'message' => 'LBL_SUBSCRIPTION_HAS_EXPIRED'];
+			} elseif (!\App\Company::compareSize($this->paidPackage)) {
+				$return = ['status' => true, 'type' => 'LBL_SHOP_RENEW', 'message' => 'LBL_SIZE_OF_YOUR_COMPANY_HAS_CHANGED'];
+			} elseif ($analyze = $this->analyzeConfiguration()) {
+				$return = array_merge(['status' => true], $analyze);
+			}
+		} else {
+			$check = $this->verify();
+			if (!$check['status']) {
+				$return = ['status' => true, 'type' => 'LBL_SHOP_RENEW', 'message' => $check['message']];
+			}
 		}
-		if (\App\Company::getSize() !== $this->paidPackage) {
-			return 'LBL_SIZE_OF_YOUR_COMPANY_HAS_CHANGED';
-		}
-		return '';
+		return $return;
+	}
+
+	/**
+	 * Analyze the configuration.
+	 *
+	 * @return array
+	 */
+	public function analyzeConfiguration(): array
+	{
+		return [];
+	}
+
+	/**
+	 * Product modal additional buttons.
+	 *
+	 * @return Vtiger_Link_Model[]
+	 */
+	public function getAdditionalButtons(): array
+	{
+		return [];
 	}
 }

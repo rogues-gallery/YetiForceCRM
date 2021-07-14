@@ -6,7 +6,7 @@
  * @package   InventoryField
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -28,17 +28,13 @@ class Vtiger_TaxPercent_InventoryField extends Vtiger_Tax_InventoryField
 	 */
 	public $shared = ['taxparam' => 'tax'];
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, array $rowData = [], bool $rawText = false)
 	{
 		return App\Fields\Double::formatToDisplay($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getValueForSave(array $item, bool $userFormat = false, string $column = null)
 	{
 		if ($column === $this->getColumnName() || null === $column) {

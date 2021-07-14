@@ -1,9 +1,9 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
     <div id="transferOwnershipContainer" class='modelContainer modal fade' tabindex="-1">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<div class="modal-header contentsBackground">
+				<div class="modal-header">
 					<h5 id="massEditHeader" class="modal-title">{\App\Language::translate('LBL_ChangeType', $MODULE)}</h5>
 					<button type="button" class="close" data-dismiss="modal" title="{\App\Language::translate('LBL_CLOSE')}">
 						<span aria-hidden="true">&times;</span>

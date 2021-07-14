@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 <div class="">
 	<div class="form-horizontal">
 		<div class="form-group row">
@@ -65,20 +65,20 @@
 							<tr data-langkey="{$LANG_KEY}" data-type="php">
 								<td>{$LANG_KEY}</td>
 								{foreach from=$langs item=item key=lang}
-									<td><input 
+									<td><input
 											data-lang="{$lang}"
 											data-type="php"
-											name="{$LANG_KEY}" 
-											class="translation form-control {if $item == NULL}empty_value{/if}" 
-											{if $item == NULL} placeholder="{\App\Language::translate('LBL_NoTranslation',$QUALIFIED_MODULE)}" {/if} 
-											type="text" 
+											name="{$LANG_KEY}"
+											class="translation form-control {if $item == NULL}empty_value{/if}"
+											{if $item == NULL} placeholder="{\App\Language::translate('LBL_NoTranslation',$QUALIFIED_MODULE)}" {/if}
+											type="text"
 											value ="{$item}" />
 									</td>
 								{/foreach}
 								<td>
 									{if isset($CUSTOM_DATA['php'][$LANG_KEY])}
 										<button type="button" class="btn btn-light js-delete" data-js="click" title="{\App\Language::translate('LBL_DELETE')}">
-											<span class="fas fa-trash-alt alignMiddle"></span>
+											<span class="fas fa-trash-alt"></span>
 										</button>
 									{/if}
 								</td>
@@ -101,20 +101,20 @@
 							<tr data-langkey="{$LANG_KEY}" data-type="js">
 								<td>{$LANG_KEY}</td>
 								{foreach from=$langs item=item key=lang}
-									<td><input 
+									<td><input
 											data-lang="{$lang}"
 											data-type="js"
-											name="{$LANG_KEY}" 
-											class="translation form-control {if $item == NULL}empty_value{/if}" 
-											{if $item == NULL} placeholder="{\App\Language::translate('LBL_NoTranslation',$QUALIFIED_MODULE)}" {/if} 
-											type="text" 
+											name="{$LANG_KEY}"
+											class="translation form-control {if $item == NULL}empty_value{/if}"
+											{if $item == NULL} placeholder="{\App\Language::translate('LBL_NoTranslation',$QUALIFIED_MODULE)}" {/if}
+											type="text"
 											value ="{$item}" />
 									</td>
 								{/foreach}
 								<td>
 									{if isset($CUSTOM_DATA['js'][$LANG_KEY])}
 										<button type="button" class="btn btn-light js-delete" data-js="click" title="{\App\Language::translate('LBL_DELETE')}">
-											<span class="fas fa-trash-alt alignMiddle"></span>
+											<span class="fas fa-trash-alt"></span>
 										</button>
 									{/if}
 								</td>

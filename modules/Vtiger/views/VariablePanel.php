@@ -3,11 +3,13 @@
 /**
  * Variable panel view class.
  *
+ * @package View
+ *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
-class Vtiger_VariablePanel_View extends \App\Controller\View
+class Vtiger_VariablePanel_View extends \App\Controller\View\Page
 {
 	/**
 	 * Checking permissions.
@@ -17,7 +19,7 @@ class Vtiger_VariablePanel_View extends \App\Controller\View
 	 * @throws \App\Exceptions\NoPermitted
 	 * @throws \App\Exceptions\NoPermittedToRecord
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		if (!\App\Privilege::isPermitted($moduleName, 'CreateView')) {
@@ -33,7 +35,7 @@ class Vtiger_VariablePanel_View extends \App\Controller\View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

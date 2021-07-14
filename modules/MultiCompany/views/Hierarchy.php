@@ -4,17 +4,17 @@
  * Class to show hierarchy.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
-class MultiCompany_Hierarchy_View extends \App\Controller\View
+class MultiCompany_Hierarchy_View extends \App\Controller\View\Page
 {
 	use App\Controller\ClearProcess;
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$recordId = $request->getInteger('record');
 		if (!$recordId) {
@@ -28,7 +28,7 @@ class MultiCompany_Hierarchy_View extends \App\Controller\View
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

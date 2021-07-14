@@ -3,7 +3,7 @@
  * SMSAPI - sms provider.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -51,17 +51,12 @@ class SMSNotifier_SMSAPI_Provider extends SMSNotifier_Basic_Provider
 	}
 
 	/**
-	 * Response.
-	 *
-	 * @param Requests_Response $request
-	 *
-	 * @return bool
+	 * {@inheritdoc}
 	 */
-	public function getResponse(Requests_Response $request)
+	public function getResponse($request)
 	{
-		$response = \App\Json::decode($request->body);
-
-		return isset($response['error']) && !empty($response['error']) ? false : true;
+		$response = \App\Json::decode($request->getBody());
+		return 200 === $request->getStatusCode() && empty($response['error']);
 	}
 
 	/**
@@ -75,9 +70,10 @@ class SMSNotifier_SMSAPI_Provider extends SMSNotifier_Basic_Provider
 		$moduleName = 'Settings:SMSNotifier';
 		foreach ($this->getRequiredParams() as $name) {
 			$field = ['uitype' => 16, 'column' => $name, 'name' => $name, 'displaytype' => 1, 'typeofdata' => 'V~M', 'presence' => 0, 'isEditableReadOnly' => false];
-			if ($name === 'from') {
-				$field['picklistValues'] = ['Eco' => 'Eco'];
+			if ('from' === $name) {
+				$field['uitype'] = 1;
 				$field['label'] = 'FL_SMSAPI_FROM';
+				$field['fieldvalue'] = $this->has($name) ? $this->get($name) : '';
 				$fields[] = $field;
 			}
 		}

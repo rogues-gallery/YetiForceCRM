@@ -4,9 +4,9 @@
  * OSSEmployees EmployeeHierarchy view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
-class OSSEmployees_EmployeeHierarchy_View extends \App\Controller\View
+class OSSEmployees_EmployeeHierarchy_View extends \App\Controller\View\Page
 {
 	use App\Controller\ClearProcess;
 
@@ -17,7 +17,7 @@ class OSSEmployees_EmployeeHierarchy_View extends \App\Controller\View
 	 *
 	 * @throws \App\Exceptions\NoPermittedToRecord
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$recordId = $request->getInteger('record');
 		if (!$recordId) {
@@ -28,7 +28,7 @@ class OSSEmployees_EmployeeHierarchy_View extends \App\Controller\View
 		}
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

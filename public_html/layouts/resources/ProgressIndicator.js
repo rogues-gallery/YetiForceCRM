@@ -8,8 +8,8 @@
  *************************************************************************************/
 'use strict';
 
-(function($) {
-	var ProgressIndicatorHelper = function() {
+(function ($) {
+	var ProgressIndicatorHelper = function () {
 		var thisInstance = this;
 
 		this.defaults = {
@@ -26,12 +26,13 @@
 		};
 
 		this.blockOverlayCSS = {
-			opacity: '0.2'
+			opacity: '0.2',
+			'background-color': ''
 		};
 
 		this.blockCss = {
 			border: '',
-			backgroundColor: '',
+			'background-color': '',
 			'background-clip': 'border-box',
 			'border-radius': '2px'
 		};
@@ -46,12 +47,12 @@
 
 		this.showOnTop = false;
 
-		this.init = function(element, options) {
-			if (typeof options === 'undefined') {
-				options = {};
-			}
-
+		this.init = function (element, options = {}) {
 			thisInstance.options = $.extend(true, this.defaults, options);
+			thisInstance.blockOverlayCSS = Object.assign(
+				thisInstance.blockOverlayCSS,
+				options.blockOverlayCSS ? options.blockOverlayCSS : {}
+			);
 			thisInstance.container = element;
 			thisInstance.position = options.position;
 			if (typeof options.imageContainerCss !== 'undefined') {
@@ -63,7 +64,7 @@
 			return this;
 		};
 
-		this.initActions = function() {
+		this.initActions = function () {
 			if (this.options.mode == 'show') {
 				this.show();
 			} else if (this.options.mode == 'hide') {
@@ -71,21 +72,21 @@
 			}
 		};
 
-		this.isPageBlockMode = function() {
+		this.isPageBlockMode = function () {
 			if (typeof this.elementToBlock !== 'undefined' && this.elementToBlock.is('body')) {
 				return true;
 			}
 			return false;
 		};
 
-		this.isBlockMode = function() {
+		this.isBlockMode = function () {
 			if (typeof this.options.blockInfo !== 'undefined' && this.options.blockInfo.enabled == true) {
 				return true;
 			}
 			return false;
 		};
 
-		this.show = function() {
+		this.show = function () {
 			var className = 'bigLoading';
 			if (this.options.smallLoadingImage == true) {
 				className = 'smallLoading';
@@ -105,13 +106,15 @@
 			var jQImageHtml = jQuery(imageHtml).css(this.imageContainerCss);
 
 			var jQMessage = thisInstance.options.message;
-			if (jQMessage.length == 0) {
-				jQMessage = app.vtranslate('JS_LOADING_PLEASE_WAIT');
+			if (jQMessage !== false) {
+				if (jQMessage.length == 0) {
+					jQMessage = app.vtranslate('JS_LOADING_PLEASE_WAIT');
+				}
+				if (!(jQMessage instanceof jQuery)) {
+					jQMessage = jQuery('<span></span>').html(jQMessage);
+				}
+				var messageContainer = jQuery('<div class="message"></div>').append(jQMessage);
 			}
-			if (!(jQMessage instanceof jQuery)) {
-				jQMessage = jQuery('<span></span>').html(jQMessage);
-			}
-			var messageContainer = jQuery('<div class="message"></div>').append(jQMessage);
 			jQImageHtml.append(messageContainer);
 			if (this.isBlockMode()) {
 				jQImageHtml.addClass('blockMessageContainer');
@@ -153,7 +156,7 @@
 			}
 		};
 
-		this.hide = function() {
+		this.hide = function () {
 			$('.imageHolder', this.container).remove();
 			if (typeof this.blockedElement !== 'undefined') {
 				if (this.isPageBlockMode()) {
@@ -166,12 +169,12 @@
 		};
 	};
 
-	$.fn.progressIndicator = function(options) {
+	$.fn.progressIndicator = function (options) {
 		let element = this;
 		if (this.length <= 0) {
 			element = jQuery('body');
 		}
-		return element.each(function(index, element) {
+		return element.each(function (index, element) {
 			let jQueryObject = $(element),
 				progressIndicatorInstance;
 			if (typeof jQueryObject.data('progressIndicator') !== 'undefined') {
@@ -184,7 +187,7 @@
 		});
 	};
 
-	$.progressIndicator = function(options) {
+	$.progressIndicator = function (options) {
 		var progressImageContainer = jQuery('<div></div>');
 		var progressIndicatorInstance = new ProgressIndicatorHelper();
 		progressIndicatorInstance.init(progressImageContainer, options);

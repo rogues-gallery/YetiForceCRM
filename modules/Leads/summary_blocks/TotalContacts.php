@@ -3,7 +3,7 @@
  * TotalContacts class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 
@@ -43,7 +43,11 @@ class TotalContacts
 	public function process(Vtiger_Record_Model $recordModel)
 	{
 		\App\Log::trace('Entering TotalContacts::process() method ...');
-		$count = (new \App\Db\Query())->from('vtiger_contactdetails')->innerJoin('vtiger_crmentity', 'vtiger_contactdetails.contactid = vtiger_crmentity.crmid')->where(['vtiger_crmentity.deleted' => 0, 'vtiger_contactdetails.parentid' => $recordModel->getId()])->count();
+		$count = (new \App\Db\Query())
+			->from('vtiger_contactdetails')
+			->innerJoin('vtiger_crmentity', 'vtiger_contactdetails.contactid = vtiger_crmentity.crmid')
+			->where(['vtiger_crmentity.deleted' => 0, 'vtiger_contactdetails.parentid' => 44])
+			->count();
 		\App\Log::trace('Exiting TotalContacts::process() method ...');
 
 		return $count;

@@ -4,7 +4,7 @@
  * Time control list parser class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class OSSTimeControl_List_Textparser extends \App\TextParser\Base
@@ -45,6 +45,9 @@ class OSSTimeControl_List_Textparser extends \App\TextParser\Base
 		foreach ($ids as $recordId) {
 			$html .= '<tr>';
 			$recordModel = \Vtiger_Record_Model::getInstanceById($recordId, $this->textParser->moduleName);
+			if (!$recordModel->isViewable()) {
+				continue;
+			}
 			foreach ($columns as $column) {
 				$style = $bodyStyle;
 				$columnName = $column->getName();
@@ -65,7 +68,7 @@ class OSSTimeControl_List_Textparser extends \App\TextParser\Base
 			$columnName = $column->getName();
 			$content = '';
 			if ('sum_time' === $columnName) {
-				$content = '<strong>' . \App\Fields\RangeTime::formatHourToDisplay($summary['sum_time'], 'short') . '</strong>';
+				$content = '<strong>' . \App\Fields\RangeTime::displayElapseTime($summary['sum_time']) . '</strong>';
 				$style = $bodyStyle . 'text-align:center;';
 			} elseif ('name' === $columnName) {
 				$content = '<strong>' . \App\Language::translate('LBL_SUMMARY', $this->textParser->moduleName) . ':' . '</strong>';

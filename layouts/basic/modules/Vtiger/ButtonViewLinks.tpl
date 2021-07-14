@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{if count($LINKS) gt 0}
 		{if empty($BTN_ICON) && empty($TEXT_HOLDER)}
@@ -20,9 +20,8 @@
 				{else}
 					<span class="fas fa-list"></span>
 				{/if}
-				&nbsp;
-				<span class="textHolder">{\App\Language::translate($TEXT_HOLDER, $MODULE_NAME)}</span>
-				&nbsp;<span class="caret"></span>
+				<span class="textHolder ml-2">{\App\Language::translate($TEXT_HOLDER, $MODULE_NAME)}</span>
+				<span class="caret"></span>
 			</button>
 			<div class="dropdown-menu">
 				{foreach item=LINK from=$LINKS}
@@ -41,10 +40,10 @@
 							{if $LINK_URL && stripos($LINK_URL, 'javascript:') === false}
 								href="{$LINK_URL}"
 							{elseif $LINK_URL}
-								href="#"
+								type="button"
 								onclick='{$LINK_URL|substr:strlen("javascript:")}'
 							{else}
-								href="#"
+								type="button"
 							{/if}
 							{if $LINK->get('dataUrl')}
 								{' '}data-url="{$LINK->get('dataUrl')}"

@@ -1,8 +1,9 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 @charset 'UTF-8';
 //-------- global variables --------//
 @import "_Functions";
 @import "_Variables";
+@import "_Mixins";
 //-------- external --------//
 @import "../../../libraries/bootstrap/scss/bootstrap";
 @import "../../../libraries/select2-theme-bootstrap4/src/select2-bootstrap.scss";
@@ -15,12 +16,13 @@
 @import "libraries/_Quasar";
 //-------- base --------//
 @import "_Style";
+//-------- user preferences styles --------//
+@import "userPreferences/_RowHeight";
 //-------- components --------//
 @import "components/_Utilities";
 @import "components/_Global";
 @import "components/_Buttons";
 @import "components/_Checkbox";
-@import "components/_Chat";
 @import "components/_ConditionBuilder";
 //-------- layout --------//
 @import "layout/_Base";
@@ -35,6 +37,8 @@
 @import "pages/_Detail";
 @import "pages/_List";
 @import "pages/_ListPreview";
+
 //-------- settings --------//
 @import "pages/Settings/_Dashboard";
 @import "pages/Settings/_Shop";
+@import "pages/Settings/_ModuleManager";

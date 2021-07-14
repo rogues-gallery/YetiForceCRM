@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 jQuery.Class(
@@ -9,7 +9,7 @@ jQuery.Class(
 		 */
 		registerNewsletter() {
 			const form = $('[data-view="RegistrationOnlineModal"]').find('form');
-			form.find('[id$="newsletter]"]').on('click', e => {
+			form.find('[id$="newsletter"]').on('click', (e) => {
 				let inputsContainer = $(e.target).closest('.js-card-body');
 				if ($(e.target).prop('checked')) {
 					inputsContainer.find('[id$="firstname]"]').attr('data-validation-engine', 'validate[required]');
@@ -17,34 +17,33 @@ jQuery.Class(
 					inputsContainer.find('[id$="email]"]').attr('data-validation-engine', 'validate[required,custom[email]]');
 					inputsContainer.find('.js-newsletter-content').removeClass('d-none');
 				} else {
-					inputsContainer
-						.find('[id$="firstname]"]')
-						.removeAttr('data-validation-engine')
-						.val('');
-					inputsContainer
-						.find('[id$="lastname]"]')
-						.removeAttr('data-validation-engine')
-						.val('');
-					inputsContainer
-						.find('[id$="email]"]')
-						.removeAttr('data-validation-engine')
-						.val('');
+					inputsContainer.find('[id$="firstname]"]').removeAttr('data-validation-engine').val('');
+					inputsContainer.find('[id$="lastname]"]').removeAttr('data-validation-engine').val('');
+					inputsContainer.find('[id$="email]"]').removeAttr('data-validation-engine').val('');
 					inputsContainer.find('.js-newsletter-content').addClass('d-none');
 				}
 			});
 		},
+		getCompanies(form) {
+			let companies = [];
+			form.each(function () {
+				companies.push($(this).serializeFormData());
+			});
+			return companies;
+		},
 		registerEvents() {
+			const self = this;
 			const container = $("[data-view='RegistrationOnlineModal']");
 			const form = container.find('form');
 			form.validationEngine(app.validationEngineOptions);
-			form.on('submit', function(e) {
+			form.on('submit', function (e) {
 				e.preventDefault();
 				container.find('[name="saveButton"]').click();
 			});
-			container.find('[name="saveButton"]').on('click', function(e) {
+			container.find('[name="saveButton"]').on('click', function (e) {
 				if (!form.validationEngine('validate')) {
 					e.preventDefault();
-					Vtiger_Helper_Js.showPnotify({
+					app.showNotify({
 						text: app.vtranslate('JS_ENTER_ALL_REGISTRATION_DATA'),
 						type: 'error'
 					});
@@ -57,19 +56,34 @@ jQuery.Class(
 						enabled: true
 					}
 				});
-				AppConnector.request(form.serializeFormData()).done(function(data) {
-					Vtiger_Helper_Js.showPnotify({
-						text: data['result']['message'],
-						type: data['result']['type']
+				AppConnector.request({
+					module: 'YetiForce',
+					parent: 'Settings',
+					action: 'Register',
+					mode: 'online',
+					companies: self.getCompanies(form)
+				})
+					.done(function (data) {
+						app.showNotify({
+							text: data['result']['message'],
+							type: data['result']['type']
+						});
+						progress.progressIndicator({ mode: 'hide' });
+						if (data['result']['type'] === 'success') {
+							let href = location.href.replace('displayModal=online', '');
+							location.replace(href);
+						}
+						container.find('button[name=saveButton]').prop('disabled', false);
+						return data['result'];
+					})
+					.fail(function (error, title) {
+						progress.progressIndicator({ mode: 'hide' });
+						app.showNotify({
+							title: title,
+							text: error,
+							type: 'error'
+						});
 					});
-					progress.progressIndicator({ mode: 'hide' });
-					if (data['result']['type'] === 'success') {
-						let href = location.href.replace('displayModal=online', '');
-						location.replace(href);
-					}
-					container.find('button[name=saveButton]').prop('disabled', false);
-					return data['result'];
-				});
 			});
 			this.registerNewsletter();
 		}

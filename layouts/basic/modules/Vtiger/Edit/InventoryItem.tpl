@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-Edit-InventoryItem -->
 	{if !empty($ITEM_DATA['name'])}
@@ -17,10 +17,10 @@
 			{/if}
 			<button type="button" class="btn btn-sm btn-danger fas fa-trash-alt deleteRow"
 					title="{\App\Language::translate('LBL_DELETE',$MODULE_NAME)}"></button>
-			{if $COUNT_FIELDS2 > 0}
-				<button type="button" class="btn btn-sm btn-light toggleVisibility ml-1 js-toggle-icon__container" data-status=""
+			{if $COUNT_FIELDS2 > 0 && $IS_VISIBLE_COMMENTS}
+				<button type="button" class="btn btn-sm btn-light toggleVisibility ml-1 js-toggle-icon__container" data-status="{$IS_OPENED_COMMENTS}"
 						href="#" data-js="click">
-					<span class="js-toggle-icon fas fa-angle-down" data-active="fa-angle-up" data-inactive="fa-angle-down" data-js="click"></span>
+					<span class="js-toggle-icon fas fa-angle-{if $IS_OPENED_COMMENTS}up{else}down{/if}" data-active="fa-angle-up" data-inactive="fa-angle-down" data-js="click"></span>
 				</button>
 			{/if}
 			{if isset($ITEM_DATA['id'])}
@@ -40,25 +40,29 @@
 				class="col{$FIELD->getType()}{if !$FIELD->isEditable()} d-none{/if} text-right fieldValue">
 				{assign var="FIELD_TPL_NAME" value="inventoryfields/"|cat:$FIELD->getTemplateName('EditView',$MODULE)}
 				{assign var="COLUMN_NAME" value=$FIELD->get('columnName')}
-				{if !isset($ITEM_DATA[$COLUMN_NAME])}
-					{assign var="FIELD_VALUE" value=null}
+				{if isset($ITEM_DATA[$COLUMN_NAME])}
+					{assign var="ITEM_VALUE" value=$ITEM_DATA[$COLUMN_NAME]}
+				{elseif isset($DEFAULT_INVENTORY_ROW[$COLUMN_NAME])}
+					{assign var="ITEM_VALUE" value=$DEFAULT_INVENTORY_ROW[$COLUMN_NAME]}
 				{else}
-					{assign var="FIELD_VALUE" value=$ITEM_DATA[$COLUMN_NAME]}
+					{assign var="ITEM_VALUE" value=NULL}
 				{/if}
-				{include file=\App\Layout::getTemplatePath($FIELD_TPL_NAME, $MODULE) ITEM_VALUE=$FIELD_VALUE}
+				{include file=\App\Layout::getTemplatePath($FIELD_TPL_NAME, $MODULE)}
 			</td>
 		{/foreach}
 	</tr>
-	{if $IS_VISIBLE_DESCRIPTION}
-		<tr class="inventoryRowExpanded numRow{$ROW_NO} d-none" numrowex="{$ROW_NO}">
+	{if $IS_VISIBLE_COMMENTS}
+		<tr class="inventoryRowExpanded numRow{$ROW_NO} {if !$IS_OPENED_COMMENTS}d-none{/if}" numrowex="{$ROW_NO}">
 			<td class="colExpanded" colspan="{$COUNT_FIELDS1+1}">
 				{foreach item=FIELD from=$FIELDS[2]}
 					{assign var="FIELD_TPL_NAME" value="inventoryfields/"|cat:$FIELD->getTemplateName('EditView',$MODULE)}
 					{assign var="COLUMN_NAME" value=$FIELD->get('columnName')}
-					{if empty($ITEM_DATA[$COLUMN_NAME])}
-						{assign var="ITEM_VALUE" value=NULL}
-					{else}
+					{if isset($ITEM_DATA[$COLUMN_NAME])}
 						{assign var="ITEM_VALUE" value=$ITEM_DATA[$COLUMN_NAME]}
+					{elseif isset($DEFAULT_INVENTORY_ROW[$COLUMN_NAME])}
+						{assign var="ITEM_VALUE" value=$DEFAULT_INVENTORY_ROW[$COLUMN_NAME]}
+					{else}
+						{assign var="ITEM_VALUE" value=NULL}
 					{/if}
 					{include file=\App\Layout::getTemplatePath($FIELD_TPL_NAME, $MODULE)}
 				{/foreach}

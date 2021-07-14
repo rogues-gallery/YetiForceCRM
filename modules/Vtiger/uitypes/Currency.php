@@ -13,17 +13,13 @@ class Vtiger_Currency_UIType extends Vtiger_Base_UIType
 {
 	protected $edit = false;
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
 		return CurrencyField::convertToDBFormat($value, null, 72 === $this->getFieldModel()->get('uitype'));
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, $isUserFormat = false)
 	{
 		if (empty($value) || isset($this->validate[$value])) {
@@ -41,9 +37,7 @@ class Vtiger_Currency_UIType extends Vtiger_Base_UIType
 		$this->validate[$value] = true;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
 	{
 		if (!$value) {
@@ -55,19 +49,17 @@ class Vtiger_Currency_UIType extends Vtiger_Base_UIType
 		if (!$this->edit) {
 			$value = $this->getDetailViewDisplayValue($value, $record, $uiType);
 		}
-		return \App\Purifier::encodeHtml($value);
+		return $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
 		if (!empty($value)) {
 			$this->edit = true;
 			return $this->getDisplayValue($value);
 		}
-		return \App\Purifier::encodeHtml($value);
+		return $value;
 	}
 
 	/**
@@ -81,53 +73,32 @@ class Vtiger_Currency_UIType extends Vtiger_Base_UIType
 	 */
 	public function getDetailViewDisplayValue($value, $recordId, $uiType)
 	{
-		if (72 === $uiType && $recordId) {
-			$moduleName = $this->getFieldModel()->getModuleName();
-			if (!$moduleName) {
-				$moduleName = \App\Record::getType($recordId);
-			}
-			$currencyId = \App\Fields\Currency::getCurrencyByModule($recordId, $moduleName);
+		$moduleName = $this->getFieldModel()->getModuleName();
+		if (!$moduleName) {
+			$moduleName = \App\Record::getType($recordId);
+		}
+		if (72 === $uiType && $recordId && $currencyId = \App\Fields\Currency::getCurrencyByModule($recordId, $moduleName)) {
 			$currencySymbol = \App\Fields\Currency::getById($currencyId)['currency_symbol'];
 		} else {
-			$currencyModal = new CurrencyField($value);
-			$currencyModal->initialize();
-			$currencySymbol = $currencyModal->currencySymbol;
+			$userModel = \App\User::getCurrentUserModel();
+			$currencySymbol = $userModel->getDetail('currency_symbol');
 		}
 		return CurrencyField::appendCurrencySymbol($value, $currencySymbol);
 	}
 
-	/**
-	 * Get currency symbol by record ID.
-	 *
-	 * @param int $recordId
-	 *
-	 * @return string
-	 */
-	public function getSymbolByRecordId(int $recordId): string
-	{
-		$currencyId = \App\Fields\Currency::getCurrencyByModule($recordId, $this->getFieldModel()->getModuleName());
-		return \App\Fields\Currency::getById($currencyId)['currency_symbol'];
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getTemplateName()
 	{
 		return 'Edit/Field/Currency.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getAllowedColumnTypes()
 	{
 		return ['decimal'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getQueryOperators()
 	{
 		return ['e', 'n', 'l', 'g', 'm', 'h', 'y', 'ny'];
@@ -143,25 +114,5 @@ class Vtiger_Currency_UIType extends Vtiger_Base_UIType
 	public function getOperatorTemplateName(string $operator = '')
 	{
 		return 'ConditionBuilder/Currency.tpl';
-	}
-
-	/**
-	 * Generate valid sample value.
-	 *
-	 * @throws \Exception
-	 *
-	 * @return float|null
-	 */
-	public function getSampleValue()
-	{
-		$min = 0;
-		$max = $this->getFieldModel()->get('maximumlength');
-		if (strpos($max, ',')) {
-			$max = explode(',', $max)[1];
-		}
-		if ($max > 9999) {
-			$max = 9999;
-		}
-		return \App\Fields\Currency::formatToDb(random_int($min, (int) $max - 1) . \App\User::getCurrentUserModel()->getDetail('currency_decimal_separator') . random_int(0, 9) . random_int(0, 9));
 	}
 }

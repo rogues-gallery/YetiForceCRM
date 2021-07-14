@@ -1,15 +1,21 @@
 <?php
 
+/**
+ * Address finder Google file.
+ *
+ * @see       maps.googleapis.com Documentation  of Google Geocoding API
+ *
+ * @package App
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ */
+
 namespace App\Map\Address;
 
 /**
  * Address finder Google class.
- *
- * @see       maps.googleapis.com Documentation  of Google Geocoding API
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class GoogleGeocode extends Base
 {
@@ -21,44 +27,67 @@ class GoogleGeocode extends Base
 	protected static $url = 'https://maps.googleapis.com/maps/api/geocode/json?';
 
 	/**
-	 * Function checks if teryt is active.
-	 *
-	 * @return bool
+	 * {@inheritdoc}
 	 */
-	public static function isActive()
-	{
-		return (bool) \App\Map\Address::getConfig()['google_map_api']['nominatim'];
-	}
+	public $docUrl = 'https://code.google.com/apis/console/?noredirect';
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public $customFields = [
+		'key' => [
+			'type' => 'text',
+			'validator' => 'required,custom[onlyLetterNumber]',
+		],
+	];
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function find($value)
 	{
-		$key = \App\Map\Address::getConfig()['google_map_api']['key'];
+		if (empty($value) || !\App\RequestUtil::isNetConnection()) {
+			return [];
+		}
+		$key = $this->config['key'];
 		$lang = \App\Language::getShortLanguageName();
-		$response = \Requests::get(static::$url . "key={$key}&address=$value");
-		if (!$response->success) {
-			\App\Log::warning($response->status_code . ' ' . $response->body, __NAMESPACE__);
+		$url = static::$url . "key={$key}&address=$value";
+		try {
+			\App\Log::beginProfile("GET|GoogleGeocode::find|{$url}", __NAMESPACE__);
+			$response = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->get($url);
+			\App\Log::endProfile("GET|GoogleGeocode::find|{$url}", __NAMESPACE__);
+			if (200 !== $response->getStatusCode()) {
+				\App\Log::warning('Error: ' . $url . ' | ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase(), __CLASS__);
+				return false;
+			}
+			$body = \App\Json::decode($response->getBody()->getContents());
+		} catch (\Throwable $exc) {
+			\App\Log::warning('Error: ' . $url . ' | ' . $exc->getMessage(), __CLASS__);
 			return false;
 		}
-		$body = \App\Json::decode($response->body);
 		$rows = [];
 		if (empty($body['error_message']) && isset($body['status'])) {
 			if (isset($body['results'][0])) {
 				$location = $body['results'][0]['geometry']['location'];
 				$urlParam = "key={$key}&language={$lang}&latlng={$location['lat']},{$location['lng']}";
-				$response = \Requests::get(static::$url . $urlParam);
-				if (!$response->success) {
-					\App\Log::warning($response->status_code . ' ' . $response->body, __NAMESPACE__);
+				try {
+					\App\Log::beginProfile("GET|GoogleGeocode::find|{$urlParam}", __NAMESPACE__);
+					$response = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->get(static::$url . $urlParam);
+					\App\Log::endProfile("GET|GoogleGeocode::find|{$urlParam}", __NAMESPACE__);
+					if (200 !== $response->getStatusCode()) {
+						\App\Log::warning('Error: ' . static::$url . $urlParam . ' | ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase(), __CLASS__);
+						return false;
+					}
+					$body = \App\Json::decode($response->getBody()->getContents());
+				} catch (\Throwable $exc) {
+					\App\Log::warning('Error: ' . static::$url . $urlParam . ' | ' . $exc->getMessage(), __CLASS__);
 					return false;
 				}
-				$body = \App\Json::decode($response->body);
 				if (isset($body['results'])) {
 					foreach ($body['results'] as $row) {
 						$rows[] = [
 							'label' => $row['formatted_address'],
-							'address' => $this->parse($row['address_components'])
+							'address' => $this->parse($row['address_components']),
 						];
 					}
 				}

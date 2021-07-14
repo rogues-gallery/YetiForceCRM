@@ -15,7 +15,7 @@
 class ModComments_Record_Model extends Vtiger_Record_Model
 {
 	/**
-	 * Functions gets the comment id.
+	 * {@inheritdoc}
 	 */
 	public function getId()
 	{
@@ -26,9 +26,39 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 		return $this->get('modcommentsid');
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function setId($id)
 	{
 		return $this->set('modcommentsid', $id);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getDisplayValue($fieldName, $record = false, $rawText = false, $length = false)
+	{
+		if ('commentcontent' !== $fieldName) {
+			return parent::getDisplayValue($fieldName, $record, $rawText, $length);
+		}
+		if (empty($record)) {
+			$record = $this->getId();
+		}
+		$value = \App\Purifier::purifyHtml($this->get($fieldName));
+		if (!$rawText) {
+			$value = \App\Utils\Completions::decode($value);
+		}
+		return $length ? \App\Layout::truncateHtml($value) : $value;
+	}
+
+	/** {@inheritdoc} */
+	public function isEditable()
+	{
+		if (!isset($this->privileges['isEditable'])) {
+			return $this->privileges['isEditable'] = \App\User::getCurrentUserRealId() === (int) $this->get('userid') && parent::isEditable() && $this->isPermitted('EditableComments');
+		}
+		return $this->privileges['isEditable'];
 	}
 
 	/**
@@ -157,6 +187,7 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 	 * @param int                 $parentId
 	 * @param int[]               $hierarchy
 	 * @param Vtiger_Paging_Model $pagingModel
+	 * @param string              $moduleName
 	 *
 	 * @return \ModComments_Record_Model[]
 	 */
@@ -166,17 +197,17 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 		$queryGenerator->setFields(['parent_comments', 'createdtime', 'modifiedtime', 'related_to', 'id',
 			'assigned_user_id', 'commentcontent', 'creator', 'customer', 'reasontoedit', 'userid', 'parents']);
 		$queryGenerator->setSourceRecord($parentId);
-		$where = ['or'];
-		$requireCount = 0;
 		$moduleLevel = \App\ModuleHierarchy::getModuleLevel($moduleName);
-		if (false === $moduleLevel || in_array($moduleLevel, $hierarchy)) {
-			$where[] = ['related_to' => $parentId];
-			$requireCount = 1;
-		}
-		if (count($hierarchy) > $requireCount && ($query = \App\ModuleHierarchy::getQueryRelatedRecords($parentId, $hierarchy))) {
-			$where[] = ['related_to' => (new \App\Db\Query())->select(['id'])->from(['temp_query' => $query])];
+		$requireCount = false === $moduleLevel || \in_array($moduleLevel, $hierarchy) ? 1 : 0;
+		if (\count($hierarchy) > $requireCount && ($query = \App\ModuleHierarchy::getQueryRelatedRecords($parentId, $hierarchy))) {
+			if ($requireCount) {
+				$query->union((new \App\Db\Query())->select([new \yii\db\Expression($parentId)]));
+			}
+			$where = ['related_to' => (new \App\Db\Query())->select(['id'])->from(['temp_query' => $query])];
+		} elseif ($requireCount) {
+			$where = ['related_to' => $parentId];
 		} else {
-			$where[] = ['related_to' => 0];
+			$where = ['related_to' => 0];
 		}
 		$queryGenerator->addNativeCondition($where);
 		$queryGenerator->addNativeCondition(['parent_comments' => 0]);
@@ -307,11 +338,11 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 		$requireCount = 0;
 		$moduleLevel = \App\ModuleHierarchy::getModuleLevel($moduleName);
 
-		if (false === $moduleLevel || in_array($moduleLevel, $hierarchy)) {
+		if (false === $moduleLevel || \in_array($moduleLevel, $hierarchy)) {
 			$where[] = ['related_to' => $parentId];
 			$requireCount = 1;
 		}
-		if (count($hierarchy) > $requireCount && ($query = \App\ModuleHierarchy::getQueryRelatedRecords($parentId, $hierarchy))) {
+		if (\count($hierarchy) > $requireCount && ($query = \App\ModuleHierarchy::getQueryRelatedRecords($parentId, $hierarchy))) {
 			$where[] = ['related_to' => (new \App\Db\Query())->select(['id'])->from(['temp_query' => $query])];
 		}
 		$queryGenerator->addNativeCondition($where);
@@ -378,8 +409,8 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 					'confirm' => \App\Language::translate('LBL_ARCHIVE_RECORD_DESC'),
 				],
 				'linkicon' => 'fas fa-archive',
-				'linkclass' => 'btn-xs entityStateBtn',
-				'style' => empty($stateColors['Archived']) ? '' : "background: {$stateColors['Archived']};",
+				'linkclass' => 'btn-md',
+				'style' => empty($stateColors['Archived']) ? '' : "color: {$stateColors['Archived']};",
 				'showLabel' => false,
 			]);
 		}
@@ -393,8 +424,7 @@ class ModComments_Record_Model extends Vtiger_Record_Model
 					'confirm' => \App\Language::translate('LBL_MOVE_TO_TRASH_DESC'),
 				],
 				'linkicon' => 'fas fa-trash-alt',
-				'linkclass' => 'btn-xs entityStateBtn',
-				'style' => empty($stateColors['Trash']) ? '' : "background: {$stateColors['Trash']};",
+				'linkclass' => 'btn-md text-danger',
 				'showLabel' => false,
 			]);
 		}

@@ -1,12 +1,11 @@
 <?php
-
 /**
  * MultiDomain Query Field Class.
  *
- * @package   App
+ * @package UIType
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Adrian Kon <a.kon@yetiforce.com>
  */
 
@@ -18,12 +17,18 @@ namespace App\Conditions\QueryFields;
 class MultiDomainField extends BaseField
 {
 	/**
-	 * Contains operator.
-	 *
-	 * @return array
+	 * {@inheritdoc}
 	 */
-	public function operatorA()
+	public function getValue()
 	{
-		return ['like', $this->getColumnName(), ",{$this->getValue()},"];
+		return trim($this->value, ',');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getOperator()
+	{
+		return 'a' === $this->operator ? 'c' : $this->operator;
 	}
 }

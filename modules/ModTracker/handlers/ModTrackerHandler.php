@@ -24,11 +24,12 @@ class ModTracker_ModTrackerHandler_Handler
 		}
 		$recordModel = $eventHandler->getRecordModel();
 		if ($recordModel->isNew()) {
-			$delta = $recordModel->getData();
+			$delta = array_intersect_key($recordModel->getData(), $recordModel->getModule()->getFields());
+			$delta = array_fill_keys(array_keys($delta), null);
 			if ($recordModel->getModule()->isInventory() && ($invData = $recordModel->getInventoryData())) {
 				$delta['inventory'] = array_fill_keys(array_keys($invData), []);
 			}
-			unset($delta['createdtime'], $delta['modifiedtime'], $delta['id'], $delta['newRecord'], $delta['modifiedby']);
+			unset($delta['createdtime'], $delta['modifiedtime'], $delta['modifiedby']);
 			$status = ModTracker::$CREATED;
 			$watchdogTitle = 'LBL_CREATED';
 			$watchdogMessage = '$(record : ChangesListValues)$';
@@ -42,6 +43,13 @@ class ModTracker_ModTrackerHandler_Handler
 			$status = ModTracker::$UPDATED;
 			$watchdogTitle = 'LBL_UPDATED';
 			$watchdogMessage = '$(record : ChangesListValues)$';
+		}
+		if ($skipFields = $recordModel->ext['ModTrackerSkipFields'] ?? []) {
+			foreach ($delta as $fieldName => $preValue) {
+				if (\in_array($fieldName, $skipFields)) {
+					unset($delta[$fieldName]);
+				}
+			}
 		}
 		if (empty($delta)) {
 			return false;
@@ -73,8 +81,9 @@ class ModTracker_ModTrackerHandler_Handler
 			unset($delta['inventory']);
 		}
 		$insertedData = [];
-		foreach ($delta as $fieldName => &$preValue) {
+		foreach ($delta as $fieldName => $preValue) {
 			$newValue = $recordModel->get($fieldName);
+			$fieldModel = $recordModel->getField($fieldName);
 			if (empty($preValue) && empty($newValue)) {
 				continue;
 			}
@@ -83,6 +92,12 @@ class ModTracker_ModTrackerHandler_Handler
 			}
 			if (\is_array($newValue)) {
 				$newValue = implode(',', $newValue);
+			}
+			if (!$fieldModel) {
+				\App\Log::warning($fieldName . ' field does not exist in the module ' . $eventHandler->getModuleName(), __METHOD__);
+			} elseif ('text' === $fieldModel->getFieldDataType()) {
+				$preValue = empty($preValue) ? $preValue : \App\TextParser::textTruncate($preValue, 65532);
+				$newValue = empty($newValue) ? $newValue : \App\TextParser::textTruncate($newValue, 65532);
 			}
 			$insertedData[] = [$id, $fieldName, $preValue, $newValue];
 		}
@@ -238,6 +253,26 @@ class ModTracker_ModTrackerHandler_Handler
 	}
 
 	/**
+	 * Show hidden data handler function.
+	 *
+	 * @param App\EventHandler $eventHandler
+	 */
+	public function entityAfterShowHiddenData(App\EventHandler $eventHandler)
+	{
+		if (!ModTracker::isTrackingEnabledForModule($eventHandler->getModuleName())) {
+			return false;
+		}
+		$recordModel = $eventHandler->getRecordModel();
+		\App\Db::getInstance()->createCommand()->insert('vtiger_modtracker_basic', [
+			'crmid' => $recordModel->getId(),
+			'module' => $eventHandler->getModuleName(),
+			'whodid' => \App\User::getCurrentUserRealId(),
+			'changedon' => date('Y-m-d H:i:s'),
+			'status' => ModTracker::$SHOW_HIDDEN_DATA,
+		])->execute();
+	}
+
+	/**
 	 * Add notification in handler.
 	 *
 	 * @param string $moduleName
@@ -263,7 +298,7 @@ class ModTracker_ModTrackerHandler_Handler
 					$notification->set('description', $watchdogMessage);
 					$notification->set('notification_type', $watchdog->noticeDefaultType);
 					$notification->set('notification_status', 'PLL_UNREAD');
-					$notification->setHandlerExceptions(['disableHandlerByName' => ['ModTracker_ModTrackerHandler_Handler']]);
+					$notification->setHandlerExceptions(['disableHandlerClasses' => ['ModTracker_ModTrackerHandler_Handler']]);
 					$notification->save();
 				}
 			}

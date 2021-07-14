@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 <script type="text/javascript">
 	YetiForce_Bar_Widget_Js('YetiForce_TimeControl_Widget_Js',{}, {
 		getBasicOptions: function getBasicOptions(chartData) {
@@ -76,7 +76,7 @@
 			</div>
 		</div>
 		<div class="col-ceq-xsm-6">
-			{if $SOURCE_MODULE && App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST')}
+			{if $SOURCE_MODULE && App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST') && !\App\Config::module($SOURCE_MODULE, 'DISABLED_SHOW_OWNER_ONLY_IN_LIST', false)}
 				{assign var=USERS_GROUP_LIST value=\App\Fields\Owner::getInstance($SOURCE_MODULE)->getUsersAndGroupForModuleList(false,$USER_CONDITIONS)}
 				{assign var=ACCESSIBLE_USERS value=$USERS_GROUP_LIST['users']}
 			{else}

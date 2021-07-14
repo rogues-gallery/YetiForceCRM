@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {assign var=CONF_DATA value=\App\Json::decode(html_entity_decode($WIDGET->get('data')))}
 <script type="text/javascript">
 YetiForce_Bar_Widget_Js('YetiForce_SummationByMonths_Widget_Js',{}, {
@@ -34,7 +34,7 @@ YetiForce_Bar_Widget_Js('YetiForce_SummationByMonths_Widget_Js',{}, {
 						return App.Fields.Double.formatToDisplay(item.yLabel);
 					},
 					title: function tooltipTitleCallback(item) {
-						return app.vtranslate(App.Fields.Date.fullMonths[item[0].index])+' '+chartData.years[item[0].datasetIndex];
+						return App.Fields.Date.fullMonthsTranslated[item[0].index] + ' ' + chartData.years[item[0].datasetIndex];
 					},
 				}
 			},
@@ -49,8 +49,26 @@ YetiForce_Bar_Widget_Js('YetiForce_SummationByMonths_Widget_Js',{}, {
 	</div>
 	<hr class="widgetHr" />
 	<div class="row no-gutters" >
-		<div class="col-ceq-xsm-6">
-		</div>
+		{foreach from=$FILTER_FIELDS item=FIELD_MODEL key=FIELD_NAME}
+			<div class="col-ceq-xsm-6">
+				<div class="input-group input-group-sm">
+					<span class="input-group-prepend">
+						<span class="input-group-text">
+							<span class="{if $FIELD_MODEL->get('icon')}{$FIELD_MODEL->get('icon')}{else}fas fa-filter{/if} iconMiddle margintop3"
+								title="{\App\Language::translate($FIELD_MODEL->get('label'), $FIELD_MODEL->getModuleName())}"></span>
+						</span>
+					</span>
+					{assign var=FIELD_VALUE value=$FIELD_MODEL->get('fieldvalue')}
+					<select class="widgetFilter select2 form-control" aria-label="Small"
+							aria-describedby="inputGroup-sizing-sm" name="{$FIELD_MODEL->getName()}"
+							title="{\App\Language::translate($FIELD_MODEL->get('label'), $FIELD_MODEL->getModuleName())}">
+						{foreach item=VALUE key=KEY from=$FIELD_MODEL->getPicklistValues()}
+							<option value="{$KEY}"{if $FIELD_VALUE eq $KEY} selected{/if}>{$VALUE}</option>
+						{/foreach}
+					</select>
+				</div>
+			</div>
+		{/foreach}
 		<div class="col-ceq-xsm-6">
 			{include file=\App\Layout::getTemplatePath('dashboards/SelectAccessibleTemplate.tpl', $MODULE_NAME)}
 		</div>

@@ -1,9 +1,9 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 {assign var="MODULESENTITY" value=Settings_Search_Module_Model::getModulesEntity(false, true)}
 {assign var="FIELDS_MODULES" value=Settings_Search_Module_Model::getFieldFromModule()}
 <div class="tpl-Settings-Search-Index SearchFieldsEdit">
-	<div class="widget_header row">
+	<div class="o-breadcrumb widget_header row">
 		<div class="col-md-12">
 			{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 		</div>
@@ -91,7 +91,7 @@
 						</div>
 					</td>
 					<td class="alignMiddle widthMin">
-						<button class="btn editLabels btn-info" data-tabid="{$KEY}">
+						<button class="btn editLabels btn-info noWrap" data-tabid="{$KEY}">
 							<span class="fa fa-edit u-mr-5px"></span>{\App\Language::translate('LBL_EDIT',$QUALIFIED_MODULE)}
 						</button>
 					</td>

@@ -3,9 +3,12 @@
 /**
  * Base tree modal view class.
  *
+ * @package View
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Vtiger_TreeModal_View extends \App\Controller\Modal
 {
@@ -25,7 +28,7 @@ class Vtiger_TreeModal_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		if (!$currentUserPriviligesModel->hasModulePermission($request->getModule())) {
@@ -43,7 +46,7 @@ class Vtiger_TreeModal_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function preProcessAjax(\App\Request $request)
+	public function preProcessAjax(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$viewer->assign('FIELD_INSTANCE', $this->fieldModel);
@@ -52,11 +55,19 @@ class Vtiger_TreeModal_View extends \App\Controller\Modal
 	}
 
 	/**
+	 * {@inheritdoc}
+	 */
+	protected function preProcessTplName(App\Request $request)
+	{
+		return 'Modals/TreeHeader.tpl';
+	}
+
+	/**
 	 * Tree in popup.
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$type = false;
@@ -82,7 +93,7 @@ class Vtiger_TreeModal_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getModalScripts(\App\Request $request)
+	public function getModalScripts(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$jsFileNames = ['~libraries/jstree/dist/jstree.js'];
@@ -100,9 +111,9 @@ class Vtiger_TreeModal_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getModalCss(\App\Request $request)
+	public function getModalCss(App\Request $request)
 	{
-		return array_merge(parent::getHeaderCss($request), $this->checkAndConvertCssStyles([
+		return array_merge(parent::getModalCss($request), $this->checkAndConvertCssStyles([
 			'~libraries/jstree-bootstrap-theme/dist/themes/proton/style.css',
 		]));
 	}

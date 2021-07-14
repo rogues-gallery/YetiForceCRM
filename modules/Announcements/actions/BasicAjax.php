@@ -4,7 +4,7 @@
  * Watchdog Action Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Announcements_BasicAjax_Action extends \App\Controller\Action
@@ -18,7 +18,7 @@ class Announcements_BasicAjax_Action extends \App\Controller\Action
 	 *
 	 * @throws \App\Exceptions\NoPermitted
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if ($request->isEmpty('record', true)) {
 			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
@@ -33,6 +33,7 @@ class Announcements_BasicAjax_Action extends \App\Controller\Action
 	 */
 	public function __construct()
 	{
+		parent::__construct();
 		$this->exposeMethod('mark');
 	}
 
@@ -41,7 +42,7 @@ class Announcements_BasicAjax_Action extends \App\Controller\Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function mark(\App\Request $request)
+	public function mark(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$announcements = Vtiger_Module_Model::getInstance($moduleName);
@@ -52,7 +53,7 @@ class Announcements_BasicAjax_Action extends \App\Controller\Action
 		$response->emit();
 	}
 
-	public function validateRequest(\App\Request $request)
+	public function validateRequest(App\Request $request)
 	{
 		$request->validateWriteAccess();
 	}

@@ -3,14 +3,14 @@
 /**
  * Settings widgets SaveAjax action class.
  *
+ * @package   Settings.Action
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 {
-	/**
-	 * Settings_Widgets_SaveAjax_Action constructor.
-	 */
+	/** {@inheritdoc} */
 	public function __construct()
 	{
 		parent::__construct();
@@ -26,7 +26,7 @@ class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @throws \App\Exceptions\IllegalValue
 	 */
-	public function saveWidget(\App\Request $request)
+	public function saveWidget(App\Request $request)
 	{
 		$params = $request->getMultiDimensionArray('params', [
 			'tabid' => 'Integer',
@@ -35,21 +35,39 @@ class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 				'type' => 'Alnum',
 				'label' => 'Text',
 				'relatedmodule' => 'Integer',
+				'relation_id' => 'Integer',
 				'relatedfields' => ['Text'],
+				'customView' => ['Alnum'],
 				'viewtype' => 'Alnum',
 				'limit' => 'Integer',
 				'action' => 'Integer',
 				'actionSelect' => 'Integer',
 				'no_result_text' => 'Integer',
 				'switchHeader' => 'Text',
+				'switchTypeInHeader' => 'Text',
 				'filter' => 'Text',
 				'checkbox' => 'Text',
 				'field_name' => 'Alnum',
-				'FastEdit' => 'Integer'
+				'FastEdit' => 'Integer',
+				'chartType' => 'Text',
+				'color' => \App\Purifier::BOOL,
+				'valueType' => 'Text',
+				'groupField' => 'Text',
+				'search_params' => 'Text',
+				'valueField' => 'Text',
+				'email_template' => \App\Purifier::INTEGER,
+				'fromRelation' => \App\Purifier::TEXT,
+				'orderby' => \App\Purifier::TEXT
 			]
 		]);
 		if (!$this->validateLimit($params)) {
 			throw new \App\Exceptions\IllegalValue('ERR_NOT_ALLOWED_VALUE||limit||' . $params['data']['limit'], 406);
+		}
+		if (isset($params['data']['search_params'])) {
+			$params['data']['search_params'] = \App\Json::decode($params['data']['search_params']);
+		}
+		if (isset($params['data']['orderby'])) {
+			$params['data']['orderby'] = \App\Json::decode($params['data']['orderby']);
 		}
 		Settings_Widgets_Module_Model::saveWidget($params);
 		$response = new Vtiger_Response();
@@ -60,7 +78,7 @@ class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 		$response->emit();
 	}
 
-	public function removeWidget(\App\Request $request)
+	public function removeWidget(App\Request $request)
 	{
 		$params = $request->getMultiDimensionArray('params', [
 			'wid' => 'Integer',
@@ -74,7 +92,7 @@ class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 		$response->emit();
 	}
 
-	public function updateSequence(\App\Request $request)
+	public function updateSequence(App\Request $request)
 	{
 		$params = $request->getMultiDimensionArray('params', [
 			'tabid' => 'Integer',
@@ -109,6 +127,8 @@ class Settings_Widgets_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 				case 'DetailView':
 				case 'Summary':
 				case 'Updates':
+				case 'UpdatesList':
+				case 'PDFViewer':
 					$returnVal = true;
 					break;
 				default:

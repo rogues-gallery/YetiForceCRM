@@ -1,14 +1,19 @@
 {strip}
-	{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+	{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 	{if \App\Module::isModuleActive($MENU['mod']) AND ($PRIVILEGESMODEL->isAdminUser() || $PRIVILEGESMODEL->hasGlobalReadPermission() || $PRIVILEGESMODEL->hasModulePermission($MENU['tabid']) ) }
 		{assign var=ICON value=Vtiger_Menu_Model::getMenuIcon($MENU, Vtiger_Menu_Model::vtranslateMenu($MENU['name'],$MENU['mod']))}
-		{if $MENU['name'] == $MODULE}
+		{if isset($MID)}
+		  	{if $MENU['id'] === $MID}
+				{assign var=ACTIVE value='true'}
+			{else}
+				{assign var=ACTIVE value='false'}
+			{/if}
+		{elseif $MENU['mod'] === $MODULE}
 			{assign var=ACTIVE value='true'}
 		{else}
 			{assign var=ACTIVE value='false'}
 		{/if}
-		<li class="tpl-menu-Module c-menu__item js-menu__item nav-item modCT_{$MENU['mod']} {if !$HASCHILDS}hasParentMenu{/if}" data-id="{$MENU['id']}"
-			data-js="mouseenter mouseleave">
+		<li class="tpl-menu-Module c-menu__item js-menu__item nav-item modCT_{$MENU['mod']} {if !$HASCHILDS}hasParentMenu{/if}" data-id="{$MENU['id']}" data-js="mouseenter mouseleave">
 			<a class="nav-link {if $ACTIVE=='true'} active{else} collapsed{/if}{if $ICON} hasIcon{/if}{if isset($MENU['hotkey'])} hotKey{/if}{if $HASCHILDS == 'true'} js-submenu-toggler is-submenu-toggler{/if}"{if isset($MENU['hotkey'])} data-hotkeys="{$MENU['hotkey']}"{/if}
 					{if $HASCHILDS == 'true'} data-toggle="collapse" data-target="#submenu-{$MENU['id']}" role="button"{/if}
 			   href="{$MENU['dataurl']}"

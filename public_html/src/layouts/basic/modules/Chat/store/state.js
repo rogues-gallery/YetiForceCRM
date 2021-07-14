@@ -1,32 +1,58 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 export default {
+	layout: {
+		drawer: {
+			fs: '.88rem',
+			breakpoint: 1023
+		}
+	},
 	session: {
 		dialog: false,
 		miniMode: true,
 		leftPanel: false,
+		leftPanelMobile: false,
 		rightPanel: false,
+		rightPanelMobile: false,
 		historyTab: 'crm',
-		isSearchActive: false,
 		tab: 'chat',
 		coordinates: {
 			width: 450,
-			height: Quasar.plugins.Screen.height - 160,
+			height: window.innerHeight - 160,
 			top: 60,
-			left: Quasar.plugins.Screen.width - 450
+			left: window.innerWidth - 450
+		},
+		buttonCoordinates: {
+			top: window.innerHeight - 82,
+			left: window.innerWidth - 62
 		}
 	},
 	local: {
 		isSoundNotification: null,
 		isDesktopNotification: false,
-		sendByEnter: true
+		sendByEnter: true,
+		roomSoundNotificationsOff: {
+			crm: [],
+			global: [],
+			group: [],
+			private: [],
+			user: []
+		},
+		roomsExpanded: []
 	},
 	data: {
 		amountOfNewMessages: 0,
-		chatEntries: [],
+		roomList: {
+			private: {},
+			group: {},
+			global: {},
+			crm: {},
+			user: {}
+		},
 		currentRoom: {},
-		roomList: {},
-		participants: [],
-		showMoreButton: null
+		history: {
+			chatEntries: [],
+			showMoreButton: null
+		}
 	},
 	config: {
 		isChatAllowed: null,
@@ -35,6 +61,12 @@ export default {
 		refreshRoomTime: null,
 		maxLengthMessage: null,
 		refreshTimeGlobal: null,
-		showNumberOfNewMessages: null
+		showNumberOfNewMessages: null,
+		showRoleName: null,
+		dynamicAddingRooms: null,
+		draggableButton: null,
+		detailPreview: { id: null, module: null },
+		activeRoomTypes: [],
+		userRoomPin: null
 	}
 }

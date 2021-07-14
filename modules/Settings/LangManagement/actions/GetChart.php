@@ -4,7 +4,7 @@
  * GetChart Action Class for LangManagement Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_LangManagement_GetChart_Action extends Settings_Vtiger_Basic_Action
@@ -14,7 +14,7 @@ class Settings_LangManagement_GetChart_Action extends Settings_Vtiger_Basic_Acti
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$qualifiedModuleName = $request->getModule(false);
 		$langBase = $request->getByType('langBase', 1);

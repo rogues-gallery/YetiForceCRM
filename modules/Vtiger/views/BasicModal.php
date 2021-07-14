@@ -4,7 +4,7 @@
  * Basic Modal Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -17,12 +17,12 @@ class Vtiger_BasicModal_View extends Vtiger_IndexAjax_View
 	 */
 	protected $modalClass = '';
 
-	public function getSize(\App\Request $request)
+	public function getSize(App\Request $request)
 	{
 		return '';
 	}
 
-	public function preProcess(\App\Request $request, $display = true)
+	public function preProcess(App\Request $request, $display = true)
 	{
 		$moduleName = $request->getModule();
 		$viewName = $request->getByType('view', 1);
@@ -32,7 +32,7 @@ class Vtiger_BasicModal_View extends Vtiger_IndexAjax_View
 		}
 	}
 
-	public function postProcess(\App\Request $request, $display = true)
+	public function postProcess(App\Request $request, $display = true)
 	{
 		foreach ($this->getModalScripts($request) as $script) {
 			echo '<script type="' . $script->getType() . '" src="' . $script->getSrc() . '"></script>';
@@ -40,14 +40,14 @@ class Vtiger_BasicModal_View extends Vtiger_IndexAjax_View
 		echo '</div></div></div>';
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$this->preProcess($request);
 		//Content
 		$this->postProcess($request);
 	}
 
-	public function getModalScripts(\App\Request $request)
+	public function getModalScripts(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$viewName = $request->getByType('view', 1);
@@ -57,7 +57,7 @@ class Vtiger_BasicModal_View extends Vtiger_IndexAjax_View
 		]);
 	}
 
-	public function getModalCss(\App\Request $request)
+	public function getModalCss(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$viewName = $request->getByType('view', 1);

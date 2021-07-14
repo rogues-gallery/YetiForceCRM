@@ -4,7 +4,7 @@
  * Calendar right panel view model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 {
@@ -31,7 +31,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 		return "Standard/$tplFile";
 	}
 
-	public function getUsersList(\App\Request $request)
+	public function getUsersList(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -40,7 +40,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 		$clendarallorecords = $roleInstance->get('clendarallorecords');
 		switch ($clendarallorecords) {
 			case 3:
-				if (App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST')) {
+				if (App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST') && !\App\Config::module($moduleName, 'DISABLED_SHOW_OWNER_ONLY_IN_LIST', false)) {
 					$usersAndGroup = \App\Fields\Owner::getInstance($moduleName, $currentUser)->getUsersAndGroupForModuleList();
 					$users = $usersAndGroup['users'];
 				} else {
@@ -56,7 +56,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 		if (!empty($users) && $favouriteUsers = $currentUser->getFavouritesUsers()) {
 			uksort($users,
 				function ($a, $b) use ($favouriteUsers) {
-					return !isset($favouriteUsers[$a]) && isset($favouriteUsers[$b]);
+					return (int) (!isset($favouriteUsers[$a]) && isset($favouriteUsers[$b]));
 				});
 			$viewer->assign('FAVOURITES_USERS', $favouriteUsers);
 		}
@@ -67,7 +67,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 		$viewer->view($this->getTpl('RightPanel.tpl'), $moduleName);
 	}
 
-	public function getGroupsList(\App\Request $request)
+	public function getGroupsList(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -82,7 +82,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 				$groups = \App\Fields\Owner::getInstance(false, $currentUser)->getAccessibleGroups();
 				break;
 			case 3:
-				if (App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST')) {
+				if (App\Config::performance('SEARCH_SHOW_OWNER_ONLY_IN_LIST') && !\App\Config::module($moduleName, 'DISABLED_SHOW_OWNER_ONLY_IN_LIST', false)) {
 					$usersAndGroup = \App\Fields\Owner::getInstance($moduleName, $currentUser)->getUsersAndGroupForModuleList();
 					$groups = $usersAndGroup['group'];
 				} else {
@@ -98,7 +98,7 @@ class Calendar_RightPanel_View extends Vtiger_IndexAjax_View
 		$viewer->view($this->getTpl('RightPanel.tpl'), $moduleName);
 	}
 
-	public function getActivityType(\App\Request $request)
+	public function getActivityType(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

@@ -1,14 +1,19 @@
 <?php
 /**
- * Base class.
+ * Base file.
+ *
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
 namespace App;
 
+/**
+ * Base class.
+ */
 class Base
 {
 	protected $value;
@@ -45,7 +50,7 @@ class Base
 	 */
 	public function get($key)
 	{
-		return isset($this->value[$key]) ? $this->value[$key] : null;
+		return $this->value[$key] ?? null;
 	}
 
 	/**

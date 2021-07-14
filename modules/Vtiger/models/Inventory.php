@@ -3,8 +3,10 @@
 /**
  * Basic Inventory Model Class.
  *
+ * @package Model
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -294,19 +296,36 @@ class Vtiger_Inventory_Model
 	/**
 	 * Function to get data of inventory for record.
 	 *
-	 * @param int    $recordId
-	 * @param string $moduleName
+	 * @param int                       $recordId
+	 * @param string                    $moduleName
+	 * @param \Vtiger_Paging_Model|null $pagingModel
 	 *
 	 * @throws \App\Exceptions\AppException
 	 *
 	 * @return array
 	 */
-	public static function getInventoryDataById(int $recordId, string $moduleName): array
+	public static function getInventoryDataById(int $recordId, string $moduleName, ?Vtiger_Paging_Model $pagingModel = null): array
 	{
 		$inventory = self::getInstance($moduleName);
 		$query = (new \App\Db\Query())->from($inventory->getTableName(self::TABLE_POSTFIX_DATA))->indexBy('id')->where(['crmid' => $recordId]);
 		if ($inventory->isField('seq')) {
 			$query->orderBy(['seq' => SORT_ASC]);
+		}
+		if ($pagingModel) {
+			$pageLimit = $pagingModel->getPageLimit();
+			if (0 !== $pagingModel->get('limit')) {
+				$query->limit($pageLimit + 1)->offset($pagingModel->getStartIndex());
+			}
+			$rows = $query->all();
+			$count = \count($rows);
+			if ($count > $pageLimit) {
+				array_pop($rows);
+				$pagingModel->set('nextPageExists', true);
+			} else {
+				$pagingModel->set('nextPageExists', false);
+			}
+			$pagingModel->calculatePageRange($count);
+			return $rows;
 		}
 		return $query->all();
 	}
@@ -680,27 +699,21 @@ class Vtiger_Inventory_Model
 	/**
 	 * Get tax from the account.
 	 *
-	 * @param int $record Record ID
+	 * @param int $relatedRecord Record ID
 	 *
 	 * @return array
 	 */
-	public function getAccountTax($record)
+	public function getAccountTax($relatedRecord)
 	{
-		$recordName = '';
-		$accountTaxs = [];
 		$sourceModule = 'Accounts';
-		$fieldRel = App\Field::getRelatedFieldForModule($this->getModuleName(), $sourceModule);
-		if ($record && $fieldRel && ($taxFields = Vtiger_Module_Model::getInstance($sourceModule)->getFieldsByUiType(303))) {
-			$taxField = current($taxFields);
-			$recordModel = Vtiger_Record_Model::getInstanceById($record, $this->getModuleName());
-			$relationFieldValue = $recordModel->get($fieldRel['fieldname']);
-			if ($relationFieldValue && \App\Record::getType($relationFieldValue) === $sourceModule) {
-				$accountRecordModel = Vtiger_Record_Model::getInstanceById($relationFieldValue, $sourceModule);
-				$accountTaxs = Vtiger_Taxes_UIType::getValues($accountRecordModel->get($taxField->getName()));
-				$recordName = $accountRecordModel->getName();
-			}
+		$recordName = '';
+		$accountTaxes = [];
+		if (!empty($relatedRecord) && \App\Record::isExists($relatedRecord, $sourceModule) && ($taxField = current(Vtiger_Module_Model::getInstance($sourceModule)->getFieldsByUiType(303))) && $taxField->isActiveField()) {
+			$accountRecordModel = Vtiger_Record_Model::getInstanceById($relatedRecord, $sourceModule);
+			$accountTaxes = Vtiger_Taxes_UIType::getValues($accountRecordModel->get($taxField->getName()));
+			$recordName = $accountRecordModel->getName();
 		}
-		return ['taxs' => $accountTaxs, 'name' => $recordName];
+		return ['taxes' => $accountTaxes, 'name' => $recordName];
 	}
 
 	/**
@@ -770,5 +783,43 @@ class Vtiger_Inventory_Model
 				}
 			}
 		}
+	}
+
+	/**
+	 * Load row data by record Id.
+	 *
+	 * @param int   $recordId
+	 * @param array $params
+	 *
+	 * @return array
+	 */
+	public function loadRowData(int $recordId, array $params = []): array
+	{
+		$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+		$recordModuleName = $recordModel->getModuleName();
+		$data = [
+			'name' => $recordId,
+		];
+		if (!$recordModel->isEmpty('description')) {
+			$data['comment1'] = $recordModel->get('description');
+		}
+		if (\in_array($recordModuleName, ['Products', 'Services'])) {
+			$currencyId = $params['currency'] ?? \App\Fields\Currency::getDefault()['id'];
+			if (($fieldModel = $recordModel->getField('unit_price')) && $fieldModel->isActiveField()) {
+				$data['price'] = $fieldModel->getUITypeModel()->getValueForCurrency($recordModel->get($fieldModel->getName()), $currencyId);
+			}
+			if (($fieldModel = $recordModel->getField('purchase')) && $fieldModel->isActiveField()) {
+				$data['purchase'] = $fieldModel->getUITypeModel()->getValueForCurrency($recordModel->get($fieldModel->getName()), $currencyId);
+			}
+		}
+		if ($autoCompleteField = ($this->getAutoCompleteFields()[$recordModuleName] ?? [])) {
+			foreach ($autoCompleteField as $field) {
+				$fieldModel = $recordModel->getField($field['field']);
+				if ($fieldModel && ($fieldValue = $recordModel->get($field['field']))) {
+					$data[$field['tofield']] = $fieldValue;
+				}
+			}
+		}
+		return $data;
 	}
 }

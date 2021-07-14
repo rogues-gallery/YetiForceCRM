@@ -3,7 +3,7 @@
  * Date time range class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 require_once 'include/utils/CommonUtils.php';
 require_once 'include/fields/DateTimeField.php';
@@ -37,8 +37,9 @@ class DateTimeRange
 			$dateObject = new DateTime($dateObject);
 		}
 		$thisMonth = $dateObject->format('m');
-		$today = $dateObject->format('Y-m-d');
-		$todayName = $dateObject->format('l');
+		$todayObject = clone $dateObject;
+		$today = $todayObject->format('Y-m-d');
+		$todayName = $todayObject->format('l');
 		switch ($type) {
 			case 'today':
 				$dateValue[0] = $today;
@@ -99,14 +100,14 @@ class DateTimeRange
 				$dateValue[1] = $currentMonthEnd;
 				break;
 			case 'lastmonth':
-				$dateObject->modify('last month');
+				$dateObject->modify('first day of last month');
 				$lastMonthStart = $dateObject->format('Y-m-01');
 				$lastMonthEnd = $dateObject->format('Y-m-t');
 				$dateValue[0] = $lastMonthStart;
 				$dateValue[1] = $lastMonthEnd;
 				break;
 			case 'nextmonth':
-				$dateObject->modify('next month');
+				$dateObject->modify('first day of next month');
 				$nextMonthStart = $dateObject->format('Y-m-01');
 				$nextMonthEnd = $dateObject->format('Y-m-t');
 				$dateValue[0] = $nextMonthStart;
@@ -205,6 +206,14 @@ class DateTimeRange
 				break;
 			case 'thisfq':
 				$dateValue = self::getPresentQuarterRange($thisMonth, $dateObject);
+				break;
+			case 'previousworkingday':
+				$dateValue[0] = \App\Fields\Date::getWorkingDayFromDate($todayObject, '-1 day');
+				$dateValue[1] = $dateValue[0];
+				break;
+			case 'nextworkingday':
+				$dateValue[0] = \App\Fields\Date::getWorkingDayFromDate($todayObject, '+1 day');
+				$dateValue[1] = $dateValue[0];
 				break;
 			default:
 				$dateValue[0] = '';

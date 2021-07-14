@@ -3,10 +3,10 @@
 /**
  * Utility for processing tags in text.
  *
- * @package   App
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  */
 
@@ -46,7 +46,19 @@ class Completions
 	 *
 	 * @var string
 	 */
-	const ROW_REGEX = '/(\@|\#){2}(\d+)[_](.*)(?:\@|\#){2}/';
+	const ROW_REGEX = '/(\##|\@@)(\d+)_([^\##|\@@]+)(\##|\@@)/u';
+	/**
+	 * Owner separator.
+	 *
+	 * @var string
+	 */
+	const OWNER_SEPARATOR = '@@';
+	/**
+	 * Record separator.
+	 *
+	 * @var string
+	 */
+	const RECORD_SEPARATOR = '##';
 
 	/**
 	 * Get processed text in display mode.
@@ -76,6 +88,25 @@ class Completions
 	}
 
 	/**
+	 * Get processed text in display Emoji.
+	 *
+	 * @param string $text
+	 *
+	 * @return string
+	 */
+	public static function decodeEmoji(string $text): string
+	{
+		$emojis = static::getEmojis();
+		return \preg_replace_callback(
+			static::EMOJI_REGEX,
+			function (array $matches) use ($emojis) {
+				return $emojis[$matches[0]] ?? $matches[0];
+			},
+			$text
+		);
+	}
+
+	/**
 	 * Get text to edit mode.
 	 *
 	 * @param string $text
@@ -99,10 +130,10 @@ class Completions
 			function (array $matches) {
 				$type = $matches[1];
 				$id = (int) $matches[2];
-				if ('@' === $type) {
-					$label = static::decodeOwnerText($id);
-				} elseif ('#' === $type) {
-					$label = static::decodeRecordText($id);
+				if (self::OWNER_SEPARATOR === $type) {
+					$label = static::decodeOwnerText($id, '-');
+				} elseif (self::RECORD_SEPARATOR === $type) {
+					$label = static::decodeRecordText($id, '-');
 				} else {
 					$label = '';
 				}
@@ -191,7 +222,7 @@ class Completions
 	 *
 	 * @param string $baseText
 	 * @param string $type
-	 * @param int $id
+	 * @param int    $id
 	 * @param string $label
 	 * @param string $format
 	 *
@@ -200,7 +231,7 @@ class Completions
 	private static function decodeRow(string $baseText, string $type, int $id, string $label, string $format = self::FORMAT_HTML): string
 	{
 		$html = '';
-		if ('#' === $type) {
+		if (self::RECORD_SEPARATOR === $type) {
 			switch ($format) {
 				case static::FORMAT_HTML:
 					$html = static::decodeRecord($id, $label);
@@ -208,8 +239,9 @@ class Completions
 				case static::FORMAT_TEXT:
 					$html = static::decodeRecordText($id, $label);
 					break;
+				default: break;
 			}
-		} elseif ('@' === $type) {
+		} elseif (self::OWNER_SEPARATOR === $type) {
 			switch ($format) {
 				case static::FORMAT_HTML:
 					$html = static::decodeOwner($id, $label);
@@ -217,6 +249,7 @@ class Completions
 				case static::FORMAT_TEXT:
 					$html = static::decodeOwnerText($id, $label);
 					break;
+				default: break;
 			}
 		} else {
 			$html = $baseText;
@@ -227,7 +260,7 @@ class Completions
 	/**
 	 * Display record text.
 	 *
-	 * @param int $recordId
+	 * @param int    $recordId
 	 * @param string $recordLabel
 	 *
 	 * @return string
@@ -245,7 +278,7 @@ class Completions
 	/**
 	 * Display record.
 	 *
-	 * @param int $recordId
+	 * @param int    $recordId
 	 * @param string $recordLabel
 	 *
 	 * @return string
@@ -255,7 +288,7 @@ class Completions
 		if (!($moduleName = \App\Record::getType($recordId))) {
 			$html = static::deletedRecordTemplate($recordLabel);
 		} elseif (\App\Privilege::isPermitted($moduleName, 'DetailView', $recordId)) {
-			$html = "<a href=\"index.php?module={$moduleName}&view=Detail&record={$recordId}\" class=\"js-popover-tooltip--record\" data-id=\"#{$recordId}\">" .
+			$html = "<a href=\"index.php?module={$moduleName}&view=Detail&record={$recordId}\" class=\"js-popover-tooltip--record\" target=\"_blank\" data-id=\"#{$recordId}\">" .
 				$recordLabel . '</a>&nbsp;';
 		} else {
 			$html = $recordLabel;
@@ -266,7 +299,7 @@ class Completions
 	/**
 	 * Display owner.
 	 *
-	 * @param int $userId
+	 * @param int    $userId
 	 * @param string $recordLabel
 	 *
 	 * @return string
@@ -276,7 +309,7 @@ class Completions
 		if (!\App\User::isExists($userId)) {
 			$html = static::deletedRecordTemplate($recordLabel);
 		} else {
-			$isRecordPermitted = \App\Privilege::isPermitted('Users', 'DetailView', $userId);
+			$isRecordPermitted = \App\User::getCurrentUserModel()->isAdmin();
 			$popoverRecordClass = $isRecordPermitted ? 'js-popover-tooltip--record' : '';
 			$popoverRecordHref = $isRecordPermitted ? "index.php?module=Users&view=Detail&record={$userId}" : '#';
 			$html = "<a class=\"js-completions__tag $popoverRecordClass\" href=\"$popoverRecordHref\" data-id=\"@$userId\" data-js=\"click\">" .
@@ -289,7 +322,7 @@ class Completions
 	/**
 	 * Display owner text.
 	 *
-	 * @param int $userId
+	 * @param int    $userId
 	 * @param string $recordLabel
 	 *
 	 * @return string

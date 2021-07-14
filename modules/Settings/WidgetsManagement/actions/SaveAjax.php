@@ -2,7 +2,7 @@
 
 /**
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -15,7 +15,7 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 		$this->exposeMethod('delete');
 	}
 
-	public function save(\App\Request $request)
+	public function save(App\Request $request)
 	{
 		$data = $request->getMultiDimensionArray('form', [
 			'id' => 'Integer',
@@ -35,7 +35,13 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 			'type' => 'Text',
 			'filterid' => 'Text',
 			'isdefault' => 'Integer',
+			'skip_year' => 'Integer',
+			'date_fields' => 'Integer',
+			'showFullName' => 'Integer',
 			'owners_all' => [
+				'Standard',
+				'Standard',
+				'Standard',
 				'Standard',
 				'Standard',
 				'Standard',
@@ -50,11 +56,12 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 			'plotTickSize' => 'Integer',
 			'plotLimit' => 'Integer',
 			'defaultFilter' => 'Integer',
-			'__vtrftk' => 'Text',
+			'showUsers' => 'Integer',
+			'_csrf' => 'Text',
 		]);
 		$moduleName = $request->getByType('sourceModule', 2);
 		$addToUser = $request->getBoolean('addToUser');
-		if (!is_array($data) || !$data) {
+		if (!\is_array($data) || !$data) {
 			$result = ['success' => false, 'message' => \App\Language::translate('LBL_INVALID_DATA', $moduleName)];
 		} else {
 			if (!$data['action']) {
@@ -62,14 +69,14 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 			}
 			$action = $data['action'];
 			$widgetsManagementModel = new Settings_WidgetsManagement_Module_Model();
-			$result = $widgetsManagementModel->$action($data, $moduleName, $addToUser);
+			$result = $widgetsManagementModel->{$action}($data, $moduleName, $addToUser);
 		}
 		$response = new Vtiger_Response();
 		$response->setResult($result);
 		$response->emit();
 	}
 
-	public function delete(\App\Request $request)
+	public function delete(App\Request $request)
 	{
 		$data = $request->getMultiDimensionArray('form', [
 			'action' => 'Alnum',
@@ -77,7 +84,7 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 			'blockid' => 'Integer',
 		]);
 		$moduleName = $request->getByType('sourceModule', 2);
-		if (!is_array($data) || !$data) {
+		if (!\is_array($data) || !$data) {
 			$result = ['success' => false, 'message' => \App\Language::translate('LBL_INVALID_DATA', $moduleName)];
 		} else {
 			$action = $data['action'];
@@ -85,7 +92,7 @@ class Settings_WidgetsManagement_SaveAjax_Action extends Settings_Vtiger_Basic_A
 				$action = 'removeWidget';
 			}
 			$widgetsManagementModel = new Settings_WidgetsManagement_Module_Model();
-			$result = $widgetsManagementModel->$action($data);
+			$result = $widgetsManagementModel->{$action}($data);
 		}
 		$response = new Vtiger_Response();
 		$response->setResult($result);

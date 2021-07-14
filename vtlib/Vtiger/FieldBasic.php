@@ -1,4 +1,5 @@
 <?php
+
  /* +**********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
@@ -29,6 +30,7 @@ class FieldBasic
 	public $header_field = false;
 	public $maxlengthtext = 0;
 	public $maxwidthcolumn = 0;
+	public $tabindex = 0;
 	public $masseditable = 1; // Default: Enable massedit for field
 	public $uitype = 1;
 	public $typeofdata = 'V~O';
@@ -45,6 +47,11 @@ class FieldBasic
 	public $info_type = 'BAS';
 	public $block;
 	public $fieldparams = '';
+	public $color = '';
+	/**
+	 * @var string[] Anonymization targets form field ex. logs.
+	 */
+	public $anonymizationTarget = [];
 
 	/**
 	 * Initialize this instance.
@@ -69,6 +76,7 @@ class FieldBasic
 		$this->maximumlength = $valuemap['maximumlength'];
 		$this->maxlengthtext = (int) $valuemap['maxlengthtext'];
 		$this->maxwidthcolumn = (int) $valuemap['maxwidthcolumn'];
+		$this->tabindex = (int) $valuemap['tabindex'];
 		$this->displaytype = (int) $valuemap['displaytype'];
 		$this->generatedtype = (int) $valuemap['generatedtype'];
 		$this->readonly = (int) $valuemap['readonly'];
@@ -80,7 +88,11 @@ class FieldBasic
 		$this->summaryfield = (int) $valuemap['summaryfield'];
 		$this->fieldparams = $valuemap['fieldparams'];
 		$this->visible = (int) $valuemap['visible'];
-		$this->block = $blockInstance ? $blockInstance : Block::getInstance($valuemap['block'], $module);
+		$this->color = $valuemap['color'];
+		$this->block = $blockInstance ?: Block::getInstance($valuemap['block'], $module);
+		if (!empty($valuemap['anonymization_target'])) {
+			$this->anonymizationTarget = \App\Json::decode($valuemap['anonymization_target']);
+		}
 	}
 
 	/** Cache (Record) the schema changes to improve performance */
@@ -166,7 +178,6 @@ class FieldBasic
 				}
 			}
 		}
-		$this->createAdditionalField();
 		if (!$this->maximumlength && method_exists($this, 'getRangeValues')) {
 			$this->maximumlength = $this->getRangeValues();
 		}
@@ -201,24 +212,6 @@ class FieldBasic
 		\App\Log::trace("Creating field $this->name ... DONE", __METHOD__);
 	}
 
-	/**
-	 * Create additional fields.
-	 */
-	public function createAdditionalField()
-	{
-		if (11 === $this->uitype) {
-			$fieldInstance = new Field();
-			$fieldInstance->name = $this->name . '_extra';
-			$fieldInstance->table = $this->table;
-			$fieldInstance->label = 'FL_PHONE_CUSTOM_INFORMATION';
-			$fieldInstance->column = $this->column . '_extra';
-			$fieldInstance->uitype = 1;
-			$fieldInstance->displaytype = 3;
-			$fieldInstance->typeofdata = 'V~O';
-			$fieldInstance->save($this->block);
-		}
-	}
-
 	public function __update()
 	{
 		$this->clearCache();
@@ -243,12 +236,6 @@ class FieldBasic
 					break;
 				}
 			}
-		} elseif (11 === $this->uitype) {
-			$rowExtra = (new \App\Db\Query())->from('vtiger_field')->where(['fieldname' => $this->name . '_extra'])->one();
-			if (false === $rowExtra) {
-				throw new \App\Exceptions\AppException('Extra field does not exist');
-			}
-			$db->createCommand()->delete('vtiger_field', ['fieldid' => $rowExtra['fieldid']])->execute();
 		}
 		$this->clearCache();
 		\App\Log::trace("Deleteing Field $this->name ... DONE", __METHOD__);
@@ -271,7 +258,7 @@ class FieldBasic
 			return $this->tabid;
 		}
 		if (!empty($this->block)) {
-			return $this->block->module->id;
+			return $this->block->tabid;
 		}
 		return false;
 	}
@@ -283,10 +270,15 @@ class FieldBasic
 	 */
 	public function getModuleName()
 	{
+		$moduleName = '';
 		if ($this->tabid) {
-			return \App\Module::getModuleName($this->tabid);
+			$moduleName = \App\Module::getModuleName($this->tabid);
+		} elseif (!empty($this->block) && \is_object($this->block)) {
+			$moduleName = $this->block->module->name;
+		} elseif (!empty($this->module)) {
+			$moduleName = $this->module->getName();
 		}
-		return (!empty($this->block) && \is_object($this->block)) ? $this->block->module->name : '';
+		return $moduleName;
 	}
 
 	/**
@@ -385,6 +377,8 @@ class FieldBasic
 	protected function clearCache()
 	{
 		\App\Cache::staticDelete('ModuleFields', $this->getModuleId());
+		\App\Cache::delete('AllFieldForModule', $this->getModuleId());
 		\App\Cache::staticDelete('module', $this->getModuleName());
+		\App\Cache::delete('BlocksForModule', $this->getModuleId());
 	}
 }

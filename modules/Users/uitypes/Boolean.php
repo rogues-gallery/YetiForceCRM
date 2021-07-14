@@ -4,7 +4,7 @@
  * UIType Boolean Field Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -15,12 +15,11 @@ class Users_Boolean_UIType extends Vtiger_Boolean_UIType
 	 */
 	public function getDBValue($value, $recordModel = false)
 	{
-		if ($this->getFieldModel()->getFieldName() === 'is_admin') {
-			if ($value === 'on' || $value === 1) {
+		if ('is_admin' === $this->getFieldModel()->getName()) {
+			if ('on' === $value || '1' === (string) $value) {
 				return 'on';
-			} else {
-				return 'off';
 			}
+			return 'off';
 		}
 		return parent::getDBValue($value, $recordModel);
 	}
@@ -28,11 +27,11 @@ class Users_Boolean_UIType extends Vtiger_Boolean_UIType
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setValueFromRequest(\App\Request $request, Vtiger_Record_Model $recordModel, $requestFieldName = false)
+	public function setValueFromRequest(App\Request $request, Vtiger_Record_Model $recordModel, $requestFieldName = false)
 	{
 		$currentModel = \App\User::getCurrentUserModel();
-		if ($this->getFieldModel()->getFieldName() === 'is_admin' && (!$currentModel->isAdmin() || $currentModel->getId() === $recordModel->getId())) {
-			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $this->getFieldModel()->getFieldName() . '||' . $this->getFieldModel()->getModuleName(), 406);
+		if ('is_admin' === $this->getFieldModel()->getName() && (!$currentModel->isAdmin() || $currentModel->getId() === $recordModel->getId())) {
+			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $this->getFieldModel()->getName() . '||' . $this->getFieldModel()->getModuleName(), 406);
 		}
 		parent::setValueFromRequest($request, $recordModel, $requestFieldName);
 	}

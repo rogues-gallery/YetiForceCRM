@@ -3,13 +3,13 @@
  * NoResults component
  *
  * @description Global component
- * @license YetiForce Public License 3.0
+ * @license YetiForce Public License 4.0
  * @author Tomasz Poradzewski <t.poradzewski@yetiforce.com>
  */
 -->
 <template>
   <div class="flex items-center q-px-lg q-py-sm">
-    <q-icon name="mdi-alert-outline" class="q-mr-sm"></q-icon>
+    <q-icon class="q-mr-sm" name="mdi-alert-outline"></q-icon>
     {{ translate('JS_NO_RESULTS_FOUND') }}
   </div>
 </template>
@@ -18,5 +18,4 @@ export default {
   name: 'NoResults'
 }
 </script>
-<style scoped>
-</style>
+<style scoped></style>

@@ -4,7 +4,7 @@
  * OSSTimeControl module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 {
@@ -25,22 +25,6 @@ class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 			'linkurl' => $this->getCalendarViewUrl(),
 			'linkicon' => 'fas fa-calendar-alt'
 		]));
-		if (isset($linkParams['ACTION']) && 'Calendar' === $linkParams['ACTION']) {
-			$links['SIDEBARWIDGET'][] = Vtiger_Link_Model::getInstanceFromValues([
-				'linktype' => 'SIDEBARWIDGET',
-				'linklabel' => 'LBL_USERS',
-				'linkurl' => 'module=' . $this->getName() . '&view=RightPanel&mode=getUsersList',
-				'linkicon' => '',
-				'linkclass' => 'js-calendar__filter--users',
-			]);
-			$links['SIDEBARWIDGET'][] = Vtiger_Link_Model::getInstanceFromValues([
-				'linktype' => 'SIDEBARWIDGET',
-				'linklabel' => 'LBL_TYPE',
-				'linkurl' => 'module=' . $this->getName() . '&view=RightPanel&mode=getTypesList',
-				'linkicon' => '',
-				'linkclass' => 'js-calendar__filter--types',
-			]);
-		}
 		return $links;
 	}
 
@@ -74,7 +58,7 @@ class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 
 		$userTime = [
 			'labels' => [],
-			'title' => \App\Language::translate('LBL_SUM', $this->getName()) . ': ' . \App\Fields\RangeTime::formatHourToDisplay($totalTime, 'full'),
+			'title' => \App\Language::translate('LBL_SUM', $this->getName()) . ': ' . \App\Fields\RangeTime::displayElapseTime($totalTime, 'i', 'i', false),
 			'datasets' => [
 				[
 					'data' => [],
@@ -90,7 +74,8 @@ class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 			$color = App\Fields\Owner::getColor($row['smownerid']);
 			$userTime['labels'][] = \App\Utils::getInitials($ownerName);
 			$userTime['datasets'][0]['tooltips'][] = $ownerName;
-			$userTime['datasets'][0]['data'][] = (float) $row['sumtime'];
+			$userTime['datasets'][0]['data'][] = round((float) $row['sumtime'] / 60, 2);
+			$userTime['datasets'][0]['dataFormatted'][] = \App\Fields\RangeTime::displayElapseTime($row['sumtime']);
 			$userTime['datasets'][0]['backgroundColor'][] = $color;
 			$userTime['datasets'][0]['borderColor'][] = $color;
 		}
@@ -136,7 +121,7 @@ class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 				$chartData['datasets'][0]['backgroundColor'][] = $color;
 				$chartData['datasets'][0]['borderColor'][] = $color;
 			}
-			$chartData['show_chart'] = count($chartData['datasets']) && count($chartData['datasets'][0]['data']);
+			$chartData['show_chart'] = \count($chartData['datasets']) && \count($chartData['datasets'][0]['data']);
 			$dataReader->close();
 		}
 		return $chartData;
@@ -148,9 +133,17 @@ class OSSTimeControl_Module_Model extends Vtiger_Module_Model
 	public function getFieldsForSave(Vtiger_Record_Model $recordModel)
 	{
 		$fields = parent::getFieldsForSave($recordModel);
-		if (!in_array('sum_time', $fields)) {
+		if (!\in_array('sum_time', $fields)) {
 			$fields[] = 'sum_time';
 		}
 		return $fields;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getLayoutTypeForQuickCreate(): string
+	{
+		return 'standard';
 	}
 }

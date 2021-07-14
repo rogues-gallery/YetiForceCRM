@@ -70,17 +70,47 @@ class Vtiger_Response
 	 * Set error data to send.
 	 *
 	 * @param mixed      $code
-	 * @param null|mixed $message
+	 * @param mixed|null $message
 	 * @param mixed      $trace
+	 *
+	 * @return void
 	 */
-	public function setError($code, $message = null, $trace = false)
+	public function setError($code = 500, $message = null, $trace = false): void
 	{
 		if (null === $message) {
 			$message = $code;
 		}
 		$error = ['code' => $code, 'message' => $message, 'trace' => $trace];
 		$this->error = $error;
-		http_response_code($code);
+		if (is_numeric($code)) {
+			http_response_code($code);
+		}
+	}
+
+	/**
+	 * Set exception error to send.
+	 *
+	 * @param Throwable $e
+	 *
+	 * @return void
+	 */
+	public function setException(Throwable $e): void
+	{
+		$error = [
+			'code' => $e->getCode(),
+		];
+		if (\Config\Debug::$DISPLAY_EXCEPTION_BACKTRACE) {
+			$error['trace'] = str_replace(ROOT_DIRECTORY . \DIRECTORY_SEPARATOR, '', $e->getTraceAsString());
+		}
+		$message = $e->getMessage();
+		$show = \Config\Debug::$EXCEPTION_ERROR_TO_SHOW || 0 === strpos($message, 'ERR_');
+		$reasonPhrase = $error['message'] = $show ? $message : \App\Language::translate('ERR_OCCURRED_ERROR');
+		if ($show && ($e instanceof \App\Exceptions\AppException)) {
+			$error['message'] = $e->getDisplayMessage();
+		}
+		$this->setHeader(\App\Request::_getServer('SERVER_PROTOCOL') . ' ' . $e->getCode() . ' ' . str_ireplace(["\r\n", "\r", "\n"], ' ', $reasonPhrase));
+		$this->error = $error;
+		http_response_code($e->getCode());
 	}
 
 	/**
@@ -231,13 +261,13 @@ class Vtiger_Response
 	protected function emitText()
 	{
 		if (null === $this->result) {
-			if (is_string($this->error)) {
+			if (\is_string($this->error)) {
 				echo $this->error;
 			} else {
 				echo \App\Json::encode($this->prepareResponse());
 			}
 		} else {
-			if (is_string($this->result)) {
+			if (\is_string($this->result)) {
 				echo $this->result;
 			} else {
 				echo \App\Json::encode($this->prepareResponse());
@@ -251,7 +281,7 @@ class Vtiger_Response
 	protected function emitRaw()
 	{
 		if (null === $this->result) {
-			echo (is_string($this->error)) ? $this->error : var_export($this->error, true);
+			echo (\is_string($this->error)) ? $this->error : var_export($this->error, true);
 		}
 		echo $this->result;
 	}

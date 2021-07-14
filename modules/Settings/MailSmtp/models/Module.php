@@ -4,14 +4,14 @@
  * MailSmtp module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Adrian Koń <a.kon@yetiforce.com>
  */
 class Settings_MailSmtp_Module_Model extends Settings_Vtiger_Module_Model
 {
 	public $baseTable = 's_#__mail_smtp';
 	public $baseIndex = 'id';
-	public $listFields = ['name' => 'LBL_NAME', 'host' => 'LBL_HOST', 'port' => 'LBL_PORT', 'username' => 'LBL_USERNAME', 'from_email' => 'LBL_FROM_EMAIL'];
+	public $listFields = ['name' => 'LBL_NAME', 'host' => 'LBL_HOST', 'port' => 'LBL_PORT', 'username' => 'LBL_USERNAME', 'from_email' => 'LBL_FROM_EMAIL', 'default' => 'LBL_DEFAULT'];
 	public $name = 'MailSmtp';
 
 	/**

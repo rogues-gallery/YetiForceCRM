@@ -4,16 +4,12 @@
  * OSSPasswords module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSPasswords_Module_Model extends Vtiger_Module_Model
 {
-	/**
-	 * Function returns Settings Links.
-	 *
-	 * @return array
-	 */
-	public function getSettingLinks()
+	/** {@inheritdoc} */
+	public function getSettingLinks(): array
 	{
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		$settingLinks = parent::getSettingLinks();

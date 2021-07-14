@@ -1,4 +1,5 @@
 <?php
+
  /* +***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
@@ -9,10 +10,13 @@
  * Contributor(s): YetiForce.com.
  * *********************************************************************************** */
 
-class Install_Index_View extends \App\Controller\View
+class Install_Index_View extends \App\Controller\View\Base
 {
 	use \App\Controller\ExposeMethod;
-
+	/**
+	 * {@inheritdoc}
+	 */
+	public $csrfActive = false;
 	/**
 	 * @var bool
 	 */
@@ -35,6 +39,9 @@ class Install_Index_View extends \App\Controller\View
 		parent::__construct();
 		$this->exposeMethod('step1');
 		$this->exposeMethod('step2');
+		$this->exposeMethod('stepChooseHost');
+		$this->exposeMethod('showBuyModal');
+		$this->exposeMethod('showProductModal');
 		$this->exposeMethod('step3');
 		$this->exposeMethod('step4');
 		$this->exposeMethod('step5');
@@ -64,11 +71,14 @@ class Install_Index_View extends \App\Controller\View
 			$lang = '';
 			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
 				$languages = Install_Utils_Model::getLanguages();
-				array_walk($languages, function (&$shortCode, $code) {
-					$shortCode = Locale::getPrimaryLanguage($code);
-				});
+				foreach ($languages as $code => &$data) {
+					$data = Locale::getPrimaryLanguage($code);
+				}
 				foreach (explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']) as $code) {
-					if (isset($languages[$code]) || false !== ($code = array_search(Locale::acceptFromHttp($code), $languages))) {
+					if (isset($languages[$code]) ||
+						(($code = str_replace('_', '-', Locale::acceptFromHttp($code))) && isset($languages[$code])) ||
+						false !== ($code = array_search(Locale::acceptFromHttp($code), $languages))
+					) {
 						$lang = $code;
 						break;
 					}
@@ -99,11 +109,12 @@ class Install_Index_View extends \App\Controller\View
 			$defaultView = $defaultModuleInstance->getDefaultViewName();
 			header('location: ../index.php?module=' . $defaultModule . '&view=' . $defaultView);
 		}
-		$_SESSION['default_language'] = $defaultLanguage = ($request->getByType('lang', 1)) ? $request->getByType('lang', 1) : \App\Language::DEFAULT_LANG;
+		$_SESSION['language'] = $defaultLanguage = ($request->getByType('lang', 1)) ? $request->getByType('lang', 1) : \App\Language::DEFAULT_LANG;
 		App\Language::setTemporaryLanguage($defaultLanguage);
 		$this->loadJsConfig($request);
 		$this->viewer = new Vtiger_Viewer();
 		$this->viewer->setTemplateDir('install/tpl/');
+		$this->viewer->assign('IS_IE', \App\RequestUtil::getBrowserInfo()->ie);
 		$this->viewer->assign('LANGUAGE_STRINGS', $this->getJSLanguageStrings($request));
 		$this->viewer->assign('LANG', $request->getByType('lang', 1));
 		$this->viewer->assign('NEXT_STEP', 'step' . ($this->stepNumber + 1));
@@ -149,14 +160,74 @@ class Install_Index_View extends \App\Controller\View
 
 	public function step2(App\Request $request)
 	{
-		if ('pl-PL' === $_SESSION['default_language']) {
+		if ('pl-PL' === $_SESSION['language']) {
 			$license = file_get_contents('licenses/LicensePL.txt');
 		} else {
 			$license = file_get_contents('licenses/LicenseEN.txt');
 		}
 		$this->viewer->assign('LIBRARIES', \App\Installer\Credits::getCredits());
 		$this->viewer->assign('LICENSE', nl2br($license));
-		$this->viewer->display('StepLicense.tpl');
+		if ($request->getRaw('session_id') !== session_id()) {
+			$this->viewer->display('SessionError.tpl');
+		} else {
+			$this->viewer->display('StepLicense.tpl');
+		}
+	}
+
+	/**
+	 * Show choose host step.
+	 *
+	 * @param App\Request $request
+	 *
+	 * @return void
+	 */
+	public function stepChooseHost(App\Request $request)
+	{
+		$this->viewer->assign('PRODUCT_ClOUD', \App\YetiForce\Shop::getProduct('YetiForceInstallInCloud'));
+		$this->viewer->assign('PRODUCT_SHARED', \App\YetiForce\Shop::getProduct('YetiForceInstallInHosting'));
+		$this->viewer->display('StepChooseHost.tpl');
+	}
+
+	/**
+	 * Show buy modal in choose host step.
+	 *
+	 * @param App\Request $request
+	 *
+	 * @return void
+	 */
+	public function showBuyModal(App\Request $request)
+	{
+		$request = new \App\Request([
+			'product' => $request->getByType('product'),
+			'module' => 'YetiForce',
+			'parent' => 'Settings',
+			'installation' => true
+		], false);
+		$instance = new Settings_YetiForce_BuyModal_View();
+		$instance->preProcessAjax($request);
+		$instance->process($request);
+		$instance->postProcessAjax($request);
+	}
+
+	/**
+	 * Show product modal in choose host step.
+	 *
+	 * @param App\Request $request
+	 *
+	 * @return void
+	 */
+	public function showProductModal(App\Request $request)
+	{
+		$request = new \App\Request([
+			'product' => $request->getByType('product'),
+			'module' => 'YetiForce',
+			'parent' => 'Settings',
+			'installation' => true
+		], false);
+		$instance = new Settings_YetiForce_ProductModal_View();
+		$instance->preProcessAjax($request);
+		$instance->process($request);
+		$instance->postProcessAjax($request);
 	}
 
 	public function step3(App\Request $request)
@@ -255,7 +326,7 @@ class Install_Index_View extends \App\Controller\View
 					case 'user_name':
 						$blacklist = require ROOT_DIRECTORY . '/config/username_blacklist.php';
 						$value = $request->get($name);
-						if (\in_array($value, $blacklist) || !preg_match('/^[a-zA-Z0-9_.@]{3,64}$/', $value)) {
+						if (\in_array($value, $blacklist) || !preg_match('/^[a-zA-Z0-9_.@-]{3,64}$/', $value)) {
 							$value = '';
 							$error = true;
 						}
@@ -286,7 +357,6 @@ class Install_Index_View extends \App\Controller\View
 		$this->viewer->assign('BREAK_INSTALL', $error);
 		$this->viewer->assign('DB_CONNECTION_INFO', $dbConnection);
 		$this->viewer->assign('INFORMATION', $_SESSION['config_file_info'] ?? []);
-		$this->viewer->assign('AUTH_KEY', $_SESSION['config_file_info']['authentication_key'] = sha1(microtime()));
 		if (!$error) {
 			$this->viewer->assign('CONF_REPORT_RESULT', \App\Utils\ConfReport::getByType(['database']));
 		}
@@ -310,23 +380,19 @@ class Install_Index_View extends \App\Controller\View
 		}
 		$configFile->set('application_unique_key', '');
 		$configFile->create();
-		$this->viewer->assign('AUTH_KEY', $_SESSION['config_file_info']['authentication_key']);
 		$this->viewer->display('StepCompanyDetails.tpl');
 	}
 
 	public function step7(App\Request $request)
 	{
 		set_time_limit(0);
-		if (\App\Config::main('application_unique_key', false)) {
-			if ($_SESSION['config_file_info']['authentication_key'] !== $request->get('auth_key')) {
-				Install_Utils_Model::cleanConfiguration();
-				throw new \App\Exceptions\AppException('ERR_NOT_AUTHORIZED_TO_PERFORM_THE_OPERATION');
-			}
+		if (\App\Config::main('application_unique_key', false) && !empty($_SESSION['config_file_info'])) {
 			// Initialize and set up tables
 			$initSchema = new Install_InitSchema_Model();
 			try {
 				$initSchema->initialize();
 				$initSchema->setCompanyDetails($request);
+				chmod(ROOT_DIRECTORY . '/cron/cron.sh', 0744);
 			} catch (\Throwable $e) {
 				$_SESSION['installation_success'] = false;
 				\App\Log::error($e->__toString());
@@ -336,6 +402,8 @@ class Install_Index_View extends \App\Controller\View
 		}
 		if (!($success = $_SESSION['installation_success'] ?? false)) {
 			Install_Utils_Model::cleanConfiguration();
+		} else {
+			unset($_SESSION['language']);
 		}
 		$this->viewer->assign('INSTALLATION_SUCCESS', $success);
 		$this->viewer->display('StepInstall.tpl');
@@ -388,10 +456,19 @@ class Install_Index_View extends \App\Controller\View
 	 */
 	public function getFooterScripts(App\Request $request)
 	{
+		$viewScripts = [];
 		if ('step7' === $request->getMode()) {
 			return [];
 		}
-		return array_merge(parent::getFooterScripts($request), $this->checkAndConvertJsScripts([
+		if ('stepChooseHost' === $request->getMode()) {
+			$viewScripts = $this->checkAndConvertJsScripts([
+				'~layouts/resources/Field.js',
+				'~layouts/resources/validator/BaseValidator.js',
+				'~layouts/resources/validator/FieldValidator.js',
+				'modules.Settings.YetiForce.resources.Shop'
+			]);
+		}
+		return array_merge(parent::getFooterScripts($request), $viewScripts, $this->checkAndConvertJsScripts([
 			'~libraries/datatables.net/js/jquery.dataTables.js',
 			'~libraries/datatables.net-bs4/js/dataTables.bootstrap4.js',
 			'~libraries/datatables.net-responsive/js/dataTables.responsive.js',

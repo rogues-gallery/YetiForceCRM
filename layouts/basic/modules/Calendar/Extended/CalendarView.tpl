@@ -1,11 +1,12 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Calendar-Extended-CalendarView -->
-	<input value="{\App\Purifier::encodeHtml($CURRENT_USER->get('activity_view'))}" type="hidden" id="activity_view"/>
-	<input value="{$CURRENT_USER->get('date_format')}" type="hidden" id="date_format"/>
+	<input value="{\App\Purifier::encodeHtml($CURRENT_USER->getDetail('activity_view'))}" type="hidden" id="activity_view"/>
+	<input value="{$CURRENT_USER->getDetail('date_format')}" type="hidden" id="date_format"/>
 	<input value="current" type="hidden" id="showType"/>
 	<input value="workDays" type="hidden" id="switchingDays"/>
 	<input value="{$EVENT_CREATE}" type="hidden" id="eventCreate"/>
+	<input value="{$EVENT_EDIT}" type="hidden" id="eventEdit"/>
 	<input value="{$WEEK_COUNT}" type="hidden" id="weekCount"/>
 	<input value="{$WEEK_VIEW}" type="hidden" id="weekView"/>
 	<input value="{$DAY_VIEW}" type="hidden" id="dayView"/>
@@ -19,7 +20,7 @@
 		<div class="o-calendar__container mt-2" data-js="offset">
 			<div class="d-none js-calendar__header-buttons">
 				<div class="js-calendar__view-btn mb-1 mb-sm-0 mr-1">
-					{include file=\App\Layout::getTemplatePath('ButtonViewLinks.tpl') LINKS=$QUICK_LINKS['SIDEBARLINK'] CLASS='listViewMassActions u-remove-dropdown-icon' BTN_CLASS='btn-light o-calendar__view-btn'}
+					{include file=\App\Layout::getTemplatePath('ButtonViewLinks.tpl') LINKS=$QUICK_LINKS['SIDEBARLINK'] CLASS='listViewMassActions u-remove-dropdown-icon' BTN_CLASS='btn-light o-calendar__view-btn d-flex align-items-center'}
 				</div>
 				<div class="js-calendar__filter-container">
 					{if $CUSTOM_VIEWS|@count gt 0}

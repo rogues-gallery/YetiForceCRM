@@ -13,7 +13,7 @@ class Users_Logout_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		return true;
 	}
@@ -21,20 +21,20 @@ class Users_Logout_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
-		$eventHandler = new App\EventHandler();
-		$eventHandler->trigger('UserLogoutBefore');
-		if (App\Config::main('session_regenerate_id')) {
-			App\Session::regenerateId(true); // to overcome session id reuse.
-		}
-		OSSMail_Logout_Model::logoutCurrentUser();
-		App\Session::destroy();
-
 		//Track the logout History
 		$moduleName = $request->getModule();
 		$moduleModel = Users_Module_Model::getInstance($moduleName);
 		$moduleModel->saveLogoutHistory();
+
+		$eventHandler = new App\EventHandler();
+		$eventHandler->trigger('UserLogoutBefore');
+		if (\Config\Security::$loginSessionRegenerate) {
+			App\Session::regenerateId(true); // to overcome session id reuse.
+		}
+		OSSMail_Logout_Model::logoutCurrentUser();
+		App\Session::destroy();
 		//End
 		header('location: index.php');
 	}
@@ -42,7 +42,7 @@ class Users_Logout_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function validateRequest(\App\Request $request)
+	public function validateRequest(App\Request $request)
 	{
 		$request->validateReadAccess();
 	}

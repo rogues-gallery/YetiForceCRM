@@ -2,10 +2,10 @@
 /**
  * Changes configuration in files.
  *
- * @package   App
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -31,6 +31,7 @@ class ConfigFile extends Base
 		'sounds',
 		'search',
 		'component',
+		'layout',
 	];
 
 	/** @var string Type of configuration file */
@@ -51,7 +52,7 @@ This file is auto-generated.
 @package Config
 
 @copyright YetiForce Sp. z o.o
-@license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+@license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
 ';
 
 	/**
@@ -95,6 +96,7 @@ This file is auto-generated.
 		if (!\file_exists($this->templatePath)) {
 			throw new Exceptions\IllegalValue('ERR_NOT_ALLOWED_VALUE||' . $this->templatePath, 406);
 		}
+		Cache::resetFileCache($this->templatePath);
 		$data = require "{$this->templatePath}";
 		if ('component' === $this->type) {
 			if (!isset($data[$this->component])) {
@@ -156,8 +158,21 @@ This file is auto-generated.
 		if (!isset($this->template[$key])) {
 			throw new Exceptions\IllegalValue('ERR_NOT_ALLOWED_VALUE||' . $key, 406);
 		}
+		if (isset($this->template[$key]['validationValues']) && \is_array($this->template[$key]['validationValues'])) {
+			return \in_array($value, $this->template[$key]['validationValues']);
+		}
+		if (!empty($this->template[$key]['loopValidate'])) {
+			$status = true;
+			foreach ($value as $row) {
+				if (true !== \call_user_func_array($this->template[$key]['validation'], [$row])) {
+					$status = false;
+					break;
+				}
+			}
+			return $status;
+		}
 		if (!isset($this->template[$key]['validation']) || !\is_callable($this->template[$key]['validation'])) {
-			throw new Exceptions\AppException("ERR_CONTENTS_VARIABLE_CANT_CALLED_FUNCTION ||{$this->template[$key]['validation']}", 406);
+			throw new Exceptions\AppException("ERR_CONTENTS_VARIABLE_CANT_CALLED_FUNCTION||{$key}||{$this->template[$key]['validation']}", 406);
 		}
 		return true === \call_user_func_array($this->template[$key]['validation'], [$value]);
 	}
@@ -175,9 +190,6 @@ This file is auto-generated.
 	 */
 	public function sanitize(string $key, $value)
 	{
-		if (!isset($this->template[$key])) {
-			throw new Exceptions\IllegalValue('ERR_NOT_ALLOWED_VALUE||' . $key, 406);
-		}
 		if (isset($this->template[$key]['sanitization'])) {
 			if (!\is_callable($this->template[$key]['sanitization'])) {
 				throw new Exceptions\AppException("ERR_CONTENTS_VARIABLE_CANT_CALLED_FUNCTION ||{$this->template[$key]['sanitization']}", 406);
@@ -219,7 +231,7 @@ This file is auto-generated.
 		$file = new \Nette\PhpGenerator\PhpFile();
 		$file->addComment($this->license);
 		$class = $file->addClass($className);
-		$class->addComment('Configuration Class.');
+		$class->addComment("Configuration file: $className.");
 		foreach ($this->template as $parameterName => $parameter) {
 			if (isset($parameter['type']) && 'function' === $parameter['type']) {
 				$class->addMethod($parameterName)->setStatic()->setBody($parameter['default'])->addComment($parameter['description']);

@@ -2,8 +2,10 @@
 /**
  * Config main class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -32,6 +34,18 @@ class Config
 	public static function getJsEnv()
 	{
 		return Json::encode(self::$jsEnv);
+	}
+
+	/**
+	 * Get js configuration by key.
+	 *
+	 * @param string $key
+	 *
+	 * @return mixed
+	 */
+	public static function getJsEnvByKey(string $key)
+	{
+		return self::$jsEnv[$key] ?? null;
 	}
 
 	/**
@@ -159,6 +173,22 @@ class Config
 	public static function developer(?string $arg = null, $default = null)
 	{
 		$class = '\\Config\\Developer';
+		return self::get($class, $arg, $default);
+	}
+
+	/**
+	 * Gets layout configuration.
+	 *
+	 * @param string|null $arg
+	 * @param mixed       $default
+	 *
+	 * @throws \ReflectionException
+	 *
+	 * @return mixed
+	 */
+	public static function layout(?string $arg = null, $default = null)
+	{
+		$class = '\\Config\\Layout';
 		return self::get($class, $arg, $default);
 	}
 

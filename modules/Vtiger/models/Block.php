@@ -51,21 +51,21 @@ class Vtiger_Block_Model extends vtlib\Block
 	public function get($propertyName)
 	{
 		if (property_exists($this, $propertyName)) {
-			return $this->$propertyName;
+			return $this->{$propertyName};
 		}
 	}
 
 	public function set($propertyName, $value)
 	{
 		if (property_exists($this, $propertyName)) {
-			$this->$propertyName = $value;
+			$this->{$propertyName} = $value;
 		}
 		return $this;
 	}
 
 	public function isCustomized()
 	{
-		return ($this->iscustom != 0) ? true : false;
+		return (0 != $this->iscustom) ? true : false;
 	}
 
 	/**
@@ -76,39 +76,6 @@ class Vtiger_Block_Model extends vtlib\Block
 		App\Db::getInstance()->createCommand()
 			->update('vtiger_blocks', ['blocklabel' => $this->label, 'display_status' => $this->display_status], ['blockid' => $this->id])
 			->execute();
-	}
-
-	/**
-	 * Function to check whether the current block is hide.
-	 *
-	 * @param Vtiger_Record_Model $record
-	 * @param string              $view
-	 *
-	 * @return bool
-	 */
-	public function isHideBlock($record, $view)
-	{
-		$key = $this->get('id') . '_' . $record->getId() . '_' . $view;
-		if (\App\Cache::staticHas(__METHOD__, $key)) {
-			return \App\Cache::staticGet(__METHOD__, $key);
-		}
-		$showBlock = false;
-		$query = (new \App\Db\Query())->from('vtiger_blocks_hide')->where(['enabled' => 1, 'blockid' => $this->get('id')])->andWhere(['like', 'view', $view]);
-		$hideBlocks = $query->all();
-		if ($hideBlocks) {
-			Vtiger_Loader::includeOnce('~/modules/com_vtiger_workflow/VTJsonCondition.php');
-			$conditionStrategy = new VTJsonCondition();
-			foreach ($hideBlocks as $hideBlock) {
-				$expr = \App\Json::decode($hideBlock['conditions']);
-				if (!$record->getId() && $expr) {
-					continue;
-				}
-				$showBlock = $conditionStrategy->evaluate($hideBlock['conditions'], $record);
-			}
-		}
-		\App\Cache::staticSave(__METHOD__, $key, !$showBlock);
-
-		return !$showBlock;
 	}
 
 	/**
@@ -164,21 +131,14 @@ class Vtiger_Block_Model extends vtlib\Block
 	/**
 	 * Function to retrieve block instances for a module.
 	 *
-	 * @param <type> $moduleModel - module instance
+	 * @param vtlib\ModuleBasic $moduleModel - module instance
 	 *
-	 * @return <array> - list of Vtiger_Block_Model
+	 * @return Vtiger_Block_Model[] List of Vtiger_Block_Model
 	 */
 	public static function getAllForModule(vtlib\ModuleBasic $moduleModel)
 	{
-		$blockObjects = Vtiger_Cache::get('ModuleBlock', $moduleModel->getName());
-
-		if (!$blockObjects) {
-			$blockObjects = parent::getAllForModule($moduleModel);
-			Vtiger_Cache::set('ModuleBlock', $moduleModel->getName(), $blockObjects);
-		}
 		$blockModelList = [];
-
-		if ($blockObjects) {
+		if ($blockObjects = parent::getAllForModule($moduleModel)) {
 			foreach ($blockObjects as $blockObject) {
 				$blockModelList[] = self::getInstanceFromBlockObject($blockObject);
 			}
@@ -204,7 +164,7 @@ class Vtiger_Block_Model extends vtlib\Block
 		$blockClassName = Vtiger_Loader::getComponentClassName('Model', 'Block', $blockObject->module->name);
 		$blockModel = new $blockClassName();
 		foreach ($objectProperties as $properName => $propertyValue) {
-			$blockModel->$properName = $propertyValue;
+			$blockModel->{$properName} = $propertyValue;
 		}
 		return $blockModel;
 	}
@@ -273,6 +233,7 @@ class Vtiger_Block_Model extends vtlib\Block
 	 *
 	 * @param string $blockLabel
 	 * @param number ModuleId
+	 * @param mixed $tabId
 	 *
 	 * @return bool true/false
 	 */

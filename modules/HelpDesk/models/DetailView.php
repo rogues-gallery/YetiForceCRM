@@ -11,14 +11,14 @@
 
 class HelpDesk_DetailView_Model extends Vtiger_DetailView_Model
 {
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getDetailViewRelatedLinks()
 	{
 		$recordModel = $this->getRecord();
-		$moduleName = $recordModel->getModuleName();
-
 		$relatedLinks = parent::getDetailViewRelatedLinks();
-		$parentModel = Vtiger_Module_Model::getInstance('OSSTimeControl');
-		if ($parentModel->isActive()) {
+		if (Vtiger_Module_Model::getInstance('OSSTimeControl')->isActive()) {
 			$relatedLinks[] = [
 				'linktype' => 'DETAILVIEWTAB',
 				'linklabel' => 'LBL_CHARTS',
@@ -28,12 +28,9 @@ class HelpDesk_DetailView_Model extends Vtiger_DetailView_Model
 				'related' => 'Charts',
 			];
 		}
-		if (App\Config::module($moduleName, 'SHOW_SUMMARY_PRODUCTS_SERVICES')) {
-			$relations = \Vtiger_Relation_Model::getAllRelations($this->getModule(), false);
-			if (isset($relations[\App\Module::getModuleId('Products')]) ||
-				isset($relations[\App\Module::getModuleId('Services')]) ||
-				isset($relations[\App\Module::getModuleId('Assets')]) ||
-				isset($relations[\App\Module::getModuleId('OSSSoldServices')])) {
+		if (App\Config::module($recordModel->getModuleName(), 'SHOW_SUMMARY_PRODUCTS_SERVICES')) {
+			$relations = \Vtiger_Relation_Model::getAllRelations($this->getModule(), false, true, true, 'modulename');
+			if (isset($relations['Products']) || isset($relations['Services']) || isset($relations['Assets']) || isset($relations['OSSSoldServices'])) {
 				$relatedLinks[] = [
 					'linktype' => 'DETAILVIEWTAB',
 					'linklabel' => 'LBL_RECORD_SUMMARY_PRODUCTS_SERVICES',

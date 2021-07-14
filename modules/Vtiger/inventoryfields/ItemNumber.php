@@ -6,7 +6,7 @@
  * @package   InventoryField
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -17,29 +17,23 @@ class Vtiger_ItemNumber_InventoryField extends Vtiger_Basic_InventoryField
 	protected $columnName = 'seq';
 	protected $purifyType = \App\Purifier::INTEGER;
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditTemplateName()
 	{
 		return 'inventoryTypes/ItemNumber.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, ?string $name = '')
 	{
 		return (int) $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, string $columnName, bool $isUserFormat, $originalValue = null)
 	{
-		if (null !== $value && false === filter_var($value, FILTER_VALIDATE_INT)) {
-			throw new \App\Exceptions\Security("ERR_ILLEGAL_FIELD_VALUE||$columnName||$value", 406);
+		if ($value && $value !== filter_var($value, FILTER_VALIDATE_INT)) {
+			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $columnName . '||' . $this->getModuleName() . '||' . $value, 406);
 		}
 	}
 }

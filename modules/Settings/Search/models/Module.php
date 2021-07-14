@@ -4,7 +4,7 @@
  * Settings search Module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_Search_Module_Model extends Settings_Vtiger_Module_Model
 {
@@ -29,19 +29,20 @@ class Settings_Search_Module_Model extends Settings_Vtiger_Module_Model
 				$query->where(['tabid' => $tabId]);
 			}
 		}
-		$query->orderBy('sequence');
+		$query->orderBy('vtiger_entityname.sequence');
 		$dataReader = $query->createCommand()->query();
 		$moduleEntity = [];
 		while ($row = $dataReader->read()) {
 			$moduleEntity[$row['tabid']] = $row;
 		}
 		$dataReader->close();
-
 		return $moduleEntity;
 	}
 
 	/**
 	 * Get fields.
+	 *
+	 * @param mixed $blocks
 	 *
 	 * @return array
 	 */
@@ -79,18 +80,19 @@ class Settings_Search_Module_Model extends Settings_Vtiger_Module_Model
 		$db = App\Db::getInstance();
 		$name = $params['name'];
 		$tabId = (int) $params['tabid'];
-		if ($name === 'searchcolumn' || $name === 'fieldname') {
-			if (array_diff($params['value'], array_keys(self::getFieldFromModule(false)[$tabId]))) {
+		if ('searchcolumn' === $name || 'fieldname' === $name) {
+			if (empty($params['value']) || array_diff($params['value'], array_keys(self::getFieldFromModule(false)[$tabId]))) {
 				throw new \App\Exceptions\AppException('ERR_NOT_ALLOWED_VALUE');
 			}
 			$db->createCommand()
 				->update('vtiger_entityname', [$name => implode(',', $params['value'])], ['tabid' => $tabId])
 				->execute();
-		} elseif ($name === 'turn_off') {
+		} elseif ('turn_off' === $name) {
 			$db->createCommand()
 				->update('vtiger_entityname', ['turn_off' => (int) $params['value']], ['tabid' => $tabId])
 				->execute();
 		}
+		\App\Cache::delete('ModuleEntityInfo', '');
 		return true;
 	}
 
@@ -98,14 +100,20 @@ class Settings_Search_Module_Model extends Settings_Vtiger_Module_Model
 	 * Update labels.
 	 *
 	 * @param array $params
+	 *
+	 * @return void
 	 */
-	public static function updateLabels($params)
+	public static function updateLabels($params): void
 	{
 		$moduleName = App\Module::getModuleName((int) $params['tabid']);
 		$db = App\Db::getInstance();
-		$db->createCommand()->update('u_#__crmentity_search_label', ['searchlabel' => ''], ['setype' => $moduleName])->execute();
-		$subQuery = (new \App\Db\Query())->select(['crmid'])->from('vtiger_crmentity')->where(['setype' => $moduleName]);
-		$db->createCommand()->delete('u_#__crmentity_label', ['crmid' => $subQuery])->execute();
+		if ('Users' === $moduleName) {
+			(new \App\BatchMethod(['method' => '\App\User::updateLabels', 'params' => [0]]))->save();
+		} else {
+			$db->createCommand()->delete('u_#__crmentity_search_label', ['tabid' => $params['tabid']])->execute();
+			$subQuery = (new \App\Db\Query())->select(['crmid'])->from('vtiger_crmentity')->where(['setype' => $moduleName]);
+			$db->createCommand()->delete('u_#__crmentity_label', ['crmid' => $subQuery])->execute();
+		}
 	}
 
 	/**

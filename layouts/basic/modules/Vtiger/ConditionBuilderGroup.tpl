@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Base-ConditionBuilderGroup c-condition-builder__group pt-2 js-condition-builder-group-container">
 		<div class="btn-group btn-group-toggle js-condition-switch mr-2" data-toggle="buttons">
@@ -13,7 +13,7 @@
 		</div>
 		<div class="btn-group btn-group-toggle">
 			<button type="button" class="btn btn-sm btn-success js-condition-add" data-js="click">
-				<span class="adminIcon-user mr-1"></span>{\App\Language::translate('LBL_ADD_CONDITION',$MODULE_NAME)}
+				<span class="yfi yfi-users-2 mr-1"></span>{\App\Language::translate('LBL_ADD_CONDITION',$MODULE_NAME)}
 			</button>
 			<button type="button" class="btn btn-sm c-btn-light-green js-group-add" data-js="click">
 				<span class="adminIcon-groups mr-1"></span>{\App\Language::translate('LBL_ADD_CONDITION_GROUP',$MODULE_NAME)}

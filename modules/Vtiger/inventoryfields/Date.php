@@ -6,7 +6,7 @@
  * @package   InventoryField
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -19,20 +19,16 @@ class Vtiger_Date_InventoryField extends Vtiger_Basic_InventoryField
 	protected $onlyOne = false;
 	protected $purifyType = \App\Purifier::DATE_USER_FORMAT;
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, ?string $name = '')
 	{
 		if (!isset($this->dbValue[$value])) {
-			$this->dbValue[$value] = \App\Fields\Date::formatToDb($value);
+			$this->dbValue[$value] = empty($value) ? '' : \App\Fields\Date::formatToDb($value);
 		}
 		return $this->dbValue[$value];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, string $columnName, bool $isUserFormat, $originalValue = null)
 	{
 		if ($value) {
@@ -46,9 +42,7 @@ class Vtiger_Date_InventoryField extends Vtiger_Basic_InventoryField
 		}
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditValue($value)
 	{
 		if (empty($value)) {
@@ -57,9 +51,7 @@ class Vtiger_Date_InventoryField extends Vtiger_Basic_InventoryField
 		return \App\Purifier::encodeHtml(DateTimeField::convertToUserFormat($value));
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, array $rowData = [], bool $rawText = false)
 	{
 		if (empty($value)) {

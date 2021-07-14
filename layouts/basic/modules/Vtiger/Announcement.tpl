@@ -1,17 +1,17 @@
 {strip}
-	{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+	{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 	{assign var="AMODULE" value='Announcements'}
 	<div id="announcements">
 		{foreach item=ANNOUNCEMENT from=$ANNOUNCEMENTS->getAnnouncements()}
 			<div class="announcement d-none" data-id="{$ANNOUNCEMENT->getId()}">
 				<div class="modal fade">
-					<div class="modal-dialog">
+					<div class="modal-dialog modal-xl">
 						<div class="modal-content">
 							<div class="modal-header">
 								<h5 class="modal-title">{$ANNOUNCEMENT->getDisplayValue('subject')}</h5>
 							</div>
 							<div class="modal-body">
-								{$ANNOUNCEMENT->getDisplayValue('description')}
+								{$ANNOUNCEMENT->getDisplayValue('description',false,false,'full')}
 							</div>
 							<div class="modal-footer">
 								{if !$ANNOUNCEMENT->get('is_mandatory')}

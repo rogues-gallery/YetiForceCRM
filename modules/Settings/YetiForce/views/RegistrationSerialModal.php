@@ -6,7 +6,7 @@
  * @package   Modules
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
  */
 
@@ -27,7 +27,7 @@ class Settings_YetiForce_RegistrationSerialModal_View extends \App\Controller\Mo
 	 *
 	 * @param \App\Request $request
 	 */
-	public function preProcessAjax(\App\Request $request)
+	public function preProcessAjax(App\Request $request)
 	{
 		$qualifiedModuleName = $request->getModule(false);
 		$this->modalIcon = 'fas fa-receipt';
@@ -40,7 +40,7 @@ class Settings_YetiForce_RegistrationSerialModal_View extends \App\Controller\Mo
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$qualifiedModuleName = $request->getModule(false);
 		$viewer = $this->getViewer($request);

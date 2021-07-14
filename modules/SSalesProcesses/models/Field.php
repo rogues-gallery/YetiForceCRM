@@ -4,7 +4,7 @@
  * Field Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class SSalesProcesses_Field_Model extends Vtiger_Field_Model
@@ -17,9 +17,12 @@ class SSalesProcesses_Field_Model extends Vtiger_Field_Model
 	public function getValidator()
 	{
 		$validator = [];
-		if ($this->getName() === 'estimated_date') {
+		if ('estimated_date' === $this->getName()) {
 			$validator[] = ['name' => 'greaterThanDependentField',
-				'params' => ['startdate', 'estimated_date'], ];
+				'params' => ['startdate',  $this->getName()], ];
+		} elseif ('estimated_margin' === $this->getName()) {
+			$validator[] = ['name' => 'lessThanDependentField',
+				'params' => ['estimated', $this->getName()], ];
 		} else {
 			$validator = parent::getValidator();
 		}

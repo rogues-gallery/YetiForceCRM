@@ -3,14 +3,14 @@
  * Components config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 return [
 	'AddressFinder' => [
 		'REMAPPING_OPENCAGE' => [
 			'type' => 'function',
 			'default' => 'return null;',
-			'description' => 'Main function to remapping fields for OpenCage. It should be function.'
+			'description' => 'The main function to remapping fields for OpenCage. It should be a function.'
 		],
 		'REMAPPING_OPENCAGE_FOR_COUNTRY' => [
 			'type' => 'function',
@@ -32,9 +32,59 @@ return [
 	];",
 			'description' => 'Function to remapping fields in countries for OpenCage. It should be function.'
 		],
-		'OPENCAGE_COUNTRY_CODE' => [
+		'nominatimMapUrlCustomOptions' => [
 			'default' => [],
-			'description' => "Restricts the results to the specified country or countries.\nThe country code is a two letter code as defined by the ISO 3166-1 Alpha 2\n(https://en.wikipedia.org/wiki/ISO_3166-1_alpha-, It should be array such like ['en','fr']"
+			'description' => "Additional headers for connections with NominatimGeocoder API e.g. \n['auth' => ['username', 'password']]\n['auth' => ['username', 'password', 'digest']]\n['headers' => 'X-KAY' => 'key-x']"
+		],
+		'nominatimRemapping' => [
+			'type' => 'function',
+			'default' => 'return null;',
+			'description' => 'Main function to remapping fields for NominatimGeocoder. It should be function.'
+		],
+		'nominatimRemappingForCountry' => [
+			'type' => 'function',
+			'default' => "return [
+			'AU' => function (\$row) {
+				return [
+					'addresslevel1' => [\$row['address']['country'] ?? '', \$row['address']['country_code'] ?? ''],
+					'addresslevel2' => \$row['address']['state'] ?? '',
+					'addresslevel3' => \$row['address']['state_district'] ?? '',
+					'addresslevel4' => \$row['address']['county'] ?? '',
+					'addresslevel5' => \$row['address']['suburb'] ?? \$row['address']['neighbourhood'] ?? \$row['address']['city_district'] ?? '',
+					'addresslevel6' => \$row['address']['city'] ?? \$row['address']['town'] ?? \$row['address']['village'] ?? '',
+					'addresslevel7' => \$row['address']['postcode'] ?? '',
+					'addresslevel8' => \$row['address']['road'] ?? '',
+					'buildingnumber' => \$row['address']['house_number'] ?? '',
+					'localnumber' => \$row['address']['local_number'] ?? '',
+				];
+			},
+		];",
+			'description' => 'Function to remapping fields in countries for Nominatim. It should be a function.'
+		],
+		'yetiForceRemapping' => [
+			'type' => 'function',
+			'default' => 'return null;',
+			'description' => 'Main function to remapping fields for YetiForceGeocoder. It should be a function.'
+		],
+		'yetiForceRemappingForCountry' => [
+			'type' => 'function',
+			'default' => "return [
+			'AU' => function (\$row) {
+				return [
+					'addresslevel1' => [\$row['address']['country'] ?? '', \$row['address']['country_code'] ?? ''],
+					'addresslevel2' => \$row['address']['state'] ?? '',
+					'addresslevel3' => \$row['address']['state_district'] ?? '',
+					'addresslevel4' => \$row['address']['county'] ?? '',
+					'addresslevel5' => \$row['address']['suburb'] ?? \$row['address']['neighbourhood'] ?? \$row['address']['city_district'] ?? '',
+					'addresslevel6' => \$row['address']['city'] ?? \$row['address']['town'] ?? \$row['address']['village'] ?? '',
+					'addresslevel7' => \$row['address']['postcode'] ?? '',
+					'addresslevel8' => \$row['address']['road'] ?? '',
+					'buildingnumber' => \$row['address']['house_number'] ?? '',
+					'localnumber' => \$row['address']['local_number'] ?? '',
+				];
+			},
+		];",
+			'description' => 'Function to remapping fields in countries for YetiForceGeocoder. It should be a function.'
 		],
 	],
 	'Backup' => [
@@ -78,25 +128,73 @@ return [
 		],
 		'RC_COMPOSE_ADDRESS_MODULES' => [
 			'default' => ['Accounts', 'Contacts', 'OSSEmployees', 'Leads', 'Vendors', 'Partners', 'Competition'],
-			'description' => 'List of of modules from which you can choose e-mail address in the mail.'
+			'description' => 'List of modules from which you can choose e-mail address in the mail.'
 		],
-		'HELPDESK_NEXT_WAIT_FOR_RESPONSE_STATUS' => [
-			'default' => 'Answered',
-			'description' => 'What status should be set when a new mail is received regarding a ticket, whose status is awaiting response.'
+		'rcListCheckRbl' => [
+			'default' => true,
+			'description' => 'Should the message sender on the mail list be verified in the mail client?'
 		],
-		'HELPDESK_OPENTICKET_STATUS' => [
-			'default' => 'Open',
-			'description' => 'What status should be set when a ticket is closed, but a new mail regarding the ticket is received.'
+		'rcListAcceptAutomatically' => [
+			'default' => false,
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool',
+			'description' => 'Should the system accept spam reports automatically?'
+		],
+		'rcListSendReportAutomatically' => [
+			'default' => false,
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool',
+			'description' => 'Should the system send reports automatically to https://soc.yetiforce.com?'
 		],
 		'MAILER_REQUIRED_ACCEPTATION_BEFORE_SENDING' => [
 			'default' => false,
 			'description' => 'Required acceptation before sending mails.'
-		]
+		],
+		'defaultRelationModule' => [
+			'default' => '',
+			'description' => "Default selected relation module in mail bar.\n@var string Module name"
+		],
+		'autoCompleteFields' => [
+			'default' => [
+				'Accounts' => ['accountname' => 'subject'],
+				'Leads' => ['lastname' => 'fromNameSecondPart', 'company' => 'fromName'],
+				'Vendors' => ['vendorname' => 'subject'],
+				'Partners' => ['subject' => 'subject'],
+				'Competition' => ['subject' => 'subject'],
+				'OSSEmployees' => ['name' => 'fromNameFirstPart', 'last_name' => 'fromNameSecondPart'],
+				'Contacts' => ['firstname' => 'fromNameFirstPart', 'lastname' => 'fromNameSecondPart'],
+				'SSalesProcesses' => ['subject' => 'subject'],
+				'Project' => ['projectname' => 'subject'],
+				'ServiceContracts' => ['subject' => 'subject'],
+				'Campaigns' => ['campaignname' => 'subject'],
+				'FBookkeeping' => ['subject' => 'subject'],
+				'HelpDesk' => ['ticket_title' => 'subject'],
+				'ProjectMilestone' => ['projectmilestonename' => 'subject'],
+				'SQuoteEnquiries' => ['subject' => 'subject'],
+				'SRequirementsCards' => ['subject' => 'subject'],
+				'SCalculations' => ['subject' => 'subject'],
+				'SQuotes' => ['subject' => 'subject'],
+				'SSingleOrders' => ['subject' => 'subject'],
+				'SRecurringOrders' => ['subject' => 'subject'],
+				'FInvoice' => ['subject' => 'subject'],
+				'SVendorEnquiries' => ['subject' => 'subject'],
+				'ProjectTask' => ['projecttaskname' => 'subject'],
+				'Services' => ['servicename' => 'subject'],
+				'Products' => ['productname' => 'subject']
+			],
+			'description' => "Default auto-complete data from mail bar.\n@var array Map. Example ['Accounts' => ['accountname' => 'subject']]"
+		],
+		'showEmailsInMassMail' => [
+			'default' => false,
+			'description' => "Show emails in Mass mail view.\n@var bool",
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool',
+		],
 	],
 	'YetiForce' => [
-		'statusUrl' => [
+		'watchdogUrl' => [
 			'default' => '',
-			'description' => 'Service URL',
+			'description' => 'YetiForce watchdog monitor URL',
 			'validation' => function () {
 				$arg = func_get_arg(0);
 				return empty($arg) || \App\Validator::url($arg);
@@ -146,19 +244,25 @@ return [
 		],
 		'spaceRoot' => [
 			'default' => false,
-			'description' => 'Root space',
+			'description' => 'Root CRM directory space',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
 		'spaceStorage' => [
 			'default' => false,
-			'description' => 'Storage space',
+			'description' => 'Storage directory space',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
 		'spaceTemp' => [
 			'default' => false,
 			'description' => 'Temporary directory space',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'spaceBackup' => [
+			'default' => false,
+			'description' => 'Backup directory space',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
@@ -216,6 +320,12 @@ return [
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
+		'pathVerification' => [
+			'default' => false,
+			'description' => 'Path verification',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
 	],
 	'Social' => [
 		'TWITTER_ENABLE_FOR_MODULES' => [
@@ -223,52 +333,113 @@ return [
 			'description' => 'List of modules for which Twitter has been enabled.',
 		]
 	],
-	'Magento' => [
-		'connector' => [
-			'default' => 'Token',
-			'description' => 'Type of connector for integration with magento.',
-		],
-		'addressApi' => [
-			'default' => '',
-			'description' => 'Address url magento',
-			'validation' => function () {
-				$arg = func_get_arg(0);
-				return empty($arg) || \App\Validator::url($arg);
-			}
-		],
-		'username' => [
-			'default' => '',
-			'description' => 'Username to account in magento.',
-		],
-		'password' => [
-			'default' => '',
-			'description' => 'Password to account in magento.',
-		],
-		'masterSource' => [
-			'default' => 'magento',
-			'description' => 'Set master source: yetiforce or magento',
-		],
-	],
 	'Branding' => [
-		'isCustomerBrandingActive' => [
-			'default' => false,
-			'description' => "Determines whether client branding is active.\nAny modifications of this parameter require the vendor's consent.\nAny unauthorised modification breaches the terms and conditions of YetiForce Public License.",
-		],
 		'footerName' => [
-			'default' => 'YetiForce',
+			'default' => '',
 			'description' => 'Footer\'s name',
+			'validation' => function () {
+				return true;
+			},
+			'sanitization' => function () {
+				return \App\Purifier::purify(func_get_arg(0));
+			}
 		],
 		'urlLinkedIn' => [
 			'default' => 'https://www.linkedin.com/groups/8177576',
 			'description' => 'LinkedIn URL',
+			'validation' => function () {
+				return true;
+			},
+			'sanitization' => function () {
+				return \App\Purifier::purify(func_get_arg(0));
+			}
 		],
 		'urlTwitter' => [
 			'default' => 'https://twitter.com/YetiForceEN',
 			'description' => 'Twitter URL',
+			'validation' => function () {
+				return true;
+			},
+			'sanitization' => function () {
+				return \App\Purifier::purify(func_get_arg(0));
+			}
 		],
 		'urlFacebook' => [
 			'default' => 'https://www.facebook.com/YetiForce-CRM-158646854306054/',
 			'description' => 'Facebook URL',
+			'validation' => function () {
+				return true;
+			},
+			'sanitization' => function () {
+				return \App\Purifier::purify(func_get_arg(0));
+			}
+		],
+	],
+	'MeetingService' => [
+		'emailTemplateDefault' => [
+			'default' => 0,
+			'description' => 'Default email templates.',
+		],
+		'emailTemplateModule' => [
+			'default' => [],
+			'description' => "List of default email templates.\n@example ['Calendar'=>1]",
+		],
+	],
+	'Phone' => [
+		'defaultPhoneCountry' => [
+			'default' => true,
+			'description' => 'Determines the way the default country in the phone field is downloaded. True retrieves the value from the countries panel, false retrieves the country from the users default language.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+	],
+	'InterestsConflict' => [
+		'isActive' => [
+			'default' => false,
+			'description' => 'Is the conflict of interests functionality enabled?.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'confirmationTimeInterval' => [
+			'default' => '30 day',
+			'description' => "Time interval that defines how often the system should force a confirmation about the absence of conflict of interests.\n30 day, 5 weeks, 2 month, 2 years.",
+			'validation' => '\App\Validator::alnumSpace',
+		],
+		'confirmUsersAccess' => [
+			'default' => [],
+			'description' => 'Access to confirmation panel, users ids',
+			'loopValidate' => true,
+			'validation' => '\App\Validator::integer',
+		],
+		'unlockUsersAccess' => [
+			'default' => [],
+			'description' => 'Email addresses for notifications, users ids',
+			'loopValidate' => true,
+			'validation' => '\App\Validator::integer',
+		],
+		'notificationsEmails' => [
+			'default' => '',
+			'description' => 'Email addresses for notifications.',
+			'validation' => '\App\Validator::emails',
+		],
+		'sendMailAccessRequest' => [
+			'default' => false,
+			'description' => 'E-mail sent to the person requesting access.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'sendMailAccessResponse' => [
+			'default' => false,
+			'description' => 'E-mail sent to the above people.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'modules' => [
+			'default' => [],
+			'description' => 'List of modules where the conflict of interests mechanism is enabled.',
+			'validation' => function () {
+				return true;
+			},
 		],
 	],
 ];

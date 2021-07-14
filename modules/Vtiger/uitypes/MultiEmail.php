@@ -3,24 +3,22 @@
 /**
  * UIType multi email Field Class.
  *
+ * @package   UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Vtiger_MultiEmail_UIType extends Vtiger_Email_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDbConditionBuilderValue($value, string $operator)
 	{
 		return \App\Purifier::decodeHtml($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function setValueFromRequest(App\Request $request, Vtiger_Record_Model $recordModel, $requestFieldName = false)
 	{
 		$fieldName = $this->getFieldModel()->getFieldName();
@@ -62,17 +60,13 @@ class Vtiger_MultiEmail_UIType extends Vtiger_Email_UIType
 		}
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
 		return $value ? \App\Json::encode($value) : '';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
 	{
 		if (empty($value)) {
@@ -84,18 +78,20 @@ class Vtiger_MultiEmail_UIType extends Vtiger_Email_UIType
 		}
 		$emails = [];
 		foreach ($value as $item) {
+			if ($rawText) {
+				$emails[] = parent::getDisplayValue($item['e'], $record, $recordModel, $rawText, $length);
+				continue;
+			}
 			if ($item['o']) {
 				$emails[] = parent::getDisplayValue($item['e'], $record, $recordModel, $rawText, $length) . '<span class="fas fa-check text-success ml-2" title="' . \App\Language::translate('LBL_CONSENT_TO_SEND') . '"></span>';
 			} else {
 				$emails[] = parent::getDisplayValue($item['e'], $record, $recordModel, true, $length) . '<span class="fas fa-ban text-danger ml-2"></span>';
 			}
 		}
-		return implode('<br>', $emails);
+		return implode($rawText ? ', ' : '<br>', $emails);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
 		if (empty($value)) {
@@ -108,33 +104,25 @@ class Vtiger_MultiEmail_UIType extends Vtiger_Email_UIType
 		return $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getListViewDisplayValue($value, $record = false, $recordModel = false, $rawText = false)
 	{
 		return strip_tags($this->getDisplayValue($value, $record, $recordModel, $rawText), '<br>');
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getTemplateName()
 	{
 		return 'Edit/Field/MultiEmail.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getQueryOperators()
 	{
 		return ['c', 'k', 'y', 'ny'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function isAjaxEditable()
 	{
 		return false;

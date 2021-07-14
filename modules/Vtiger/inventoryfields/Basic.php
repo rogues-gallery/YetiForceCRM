@@ -6,7 +6,7 @@
  * @package   InventoryField
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -135,7 +135,7 @@ class Vtiger_Basic_InventoryField extends \App\Base
 	 *
 	 * @return mixed
 	 */
-	public function getValueForSave(array $item, bool $userFormat, string $column = null)
+	public function getValueForSave(array $item, bool $userFormat = false, string $column = null)
 	{
 		if (null === $column) {
 			$column = $this->getColumnName();
@@ -294,6 +294,20 @@ class Vtiger_Basic_InventoryField extends \App\Base
 	}
 
 	/**
+	 * Function to get the list value in display view.
+	 *
+	 * @param mixed $value
+	 * @param array $rowData
+	 * @param bool  $rawText
+	 *
+	 * @return mixed
+	 */
+	public function getListViewDisplayValue($value, array $rowData = [], bool $rawText = false)
+	{
+		return $this->getDisplayValue($value, $rowData, $rawText);
+	}
+
+	/**
 	 * Getting value to display.
 	 *
 	 * @param type $value
@@ -447,7 +461,7 @@ class Vtiger_Basic_InventoryField extends \App\Base
 	public function validate($value, string $columnName, bool $isUserFormat, $originalValue = null)
 	{
 		if (!is_numeric($value) && (\is_string($value) && $value !== strip_tags($value))) {
-			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $columnName ?? $this->getColumnName() . '||' . $this->getModuleName() . '||' . $value, 406);
+			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . ($columnName ?? $this->getColumnName()) . '||' . $this->getModuleName() . '||' . $value, 406);
 		}
 		if (App\TextParser::getTextLength($value) > $this->maximumLength) {
 			throw new \App\Exceptions\Security('ERR_VALUE_IS_TOO_LONG||' . $columnName ?? $this->getColumnName() . '||' . $this->getModuleName() . '||' . $value, 406);
@@ -496,6 +510,7 @@ class Vtiger_Basic_InventoryField extends \App\Base
 		if ($userFormat && $baseValue) {
 			$baseValue = $this->getDBValue($baseValue, $column);
 		}
+
 		$this->validate($value, $column, false, $baseValue);
 		$recordModel->setInventoryItemPart($item['id'], $column, $value);
 		if ($customColumn = $this->getCustomColumn()) {

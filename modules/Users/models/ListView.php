@@ -22,20 +22,15 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 	{
 		$linkTypes = ['LISTVIEWBASIC', 'LISTVIEW', 'LISTVIEWSETTING'];
 		$links = Vtiger_Link_Model::getAllByType($this->getModule()->getId(), $linkTypes, $linkParams);
-
-		$basicLinks = [
-			[
+		if (App\User::getCurrentUserModel()->isAdmin()) {
+			$links['LISTVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues([
 				'linktype' => 'LISTVIEWBASIC',
 				'linklabel' => 'LBL_ADD_RECORD',
 				'linkurl' => $this->getModule()->getCreateRecordUrl(),
 				'linkicon' => '',
 				'linkclass' => 'btn-light'
-			],
-		];
-		foreach ($basicLinks as $basicLink) {
-			$links['LISTVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues($basicLink);
+			]);
 		}
-
 		$advancedLinks = $this->getAdvancedLinks();
 		foreach ($advancedLinks as $advancedLink) {
 			$links['LISTVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($advancedLink);
@@ -52,15 +47,14 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 	 */
 	public function getListViewMassActions($linkParams)
 	{
-		$links = [];
-		$privilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
+		$links['LISTVIEWMASSACTION'] = [];
 		$massActionLinks = [];
-		if ($linkParams['MODULE'] === 'Users' && $linkParams['ACTION'] === 'List' && $privilegesModel->isAdminUser()) {
+		if ('Users' === $linkParams['MODULE'] && 'List' === $linkParams['ACTION'] && App\User::getCurrentUserModel()->isAdmin()) {
 			$massActionLinks[] = [
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_MASS_EDIT',
 				'linkurl' => 'javascript:Vtiger_List_Js.triggerMassEdit("index.php?module=Users&view=MassActionAjax&mode=showMassEditForm");',
-				'linkicon' => 'fas fa-edit'
+				'linkicon' => 'yfi yfi-full-editing-view'
 			];
 			$massActionLinks[] = [
 				'linktype' => 'LISTVIEWMASSACTION',
@@ -68,7 +62,7 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 				'linkurl' => 'index.php?module=Users&view=PasswordModal&mode=massReset',
 				'linkicon' => 'fas fa-redo-alt',
 			];
-			if (App\Config::security('USER_AUTHY_MODE') !== 'TOTP_OFF') {
+			if ('TOTP_OFF' !== App\Config::security('USER_AUTHY_MODE')) {
 				$massActionLinks[] = [
 					'linktype' => 'LISTVIEWMASSACTION',
 					'linklabel' => 'BTN_MASS_OFF_2FA',
@@ -102,8 +96,8 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 		$searchParams = $this->getArray('search_params');
 		foreach ($searchParams as &$params) {
 			foreach ($params as &$param) {
-				if ($param['field_name'] === 'is_admin') {
-					$param['value'] = $param['value'] == '0' ? 'off' : 'on';
+				if ('is_admin' === $param['field_name']) {
+					$param['value'] = '0' == $param['value'] ? 'off' : 'on';
 				}
 			}
 		}
@@ -121,7 +115,7 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 		$headerFieldModels = [];
 		$headerFields = $this->getQueryGenerator()->getListViewFields();
 		foreach ($headerFields as $fieldName => &$fieldsModel) {
-			if ($fieldsModel && ((!$fieldsModel->isViewable() && $fieldsModel->getUitype() !== 106) || !$fieldsModel->getPermissions())) {
+			if ($fieldsModel && ((!$fieldsModel->isViewable() && 106 !== $fieldsModel->getUitype()) || !$fieldsModel->getPermissions())) {
 				continue;
 			}
 			$headerFieldModels[$fieldName] = $fieldsModel;
@@ -129,11 +123,11 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 		return $headerFieldModels;
 	}
 
-	/*
-	 * Function to give advance links of Users module
+	/**
+	 * Function to give advance links of Users module.
+	 *
 	 * @return array of advanced links
 	 */
-
 	public function getAdvancedLinks()
 	{
 		$moduleModel = $this->getModule();
@@ -155,5 +149,25 @@ class Users_ListView_Model extends Vtiger_ListView_Model
 			];
 		}
 		return $advancedLinks;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function loadListViewOrderBy()
+	{
+		$orderBy = $this->getForSql('orderby');
+		if (!empty($orderBy)) {
+			[$fieldName, $moduleName, $sourceFieldName] = array_pad(explode(':', $orderBy), 3, false);
+			if ($sourceFieldName) {
+				return $this->getQueryGenerator()->setRelatedOrder([
+					'sourceField' => $sourceFieldName,
+					'relatedModule' => $moduleName,
+					'relatedField' => $fieldName,
+					'relatedSortOrder' => $this->getForSql('sortorder')
+				]);
+			}
+			return $this->getQueryGenerator()->setOrder($orderBy, $this->getForSql('sortorder'));
+		}
 	}
 }

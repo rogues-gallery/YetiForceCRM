@@ -46,54 +46,31 @@ class Contacts_Record_Model extends Vtiger_Record_Model
 	}
 
 	/**
-	 * The function decide about mandatory save record.
-	 *
-	 * @return bool
-	 */
-	public function isMandatorySave()
-	{
-		return $_FILES ? true : false;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function delete()
-	{
-		parent::delete();
-		\App\Db::getInstance()->createCommand()->update('vtiger_customerdetails', [
-			'portal' => 0,
-			'support_start_date' => null,
-			'support_end_date' => null,
-			], ['customerid' => $this->getId()])->execute();
-	}
-
-	/**
 	 * {@inheritdoc}
 	 */
 	public function getRecordRelatedListViewLinksLeftSide(Vtiger_RelationListView_Model $viewModel)
 	{
 		$links = parent::getRecordRelatedListViewLinksLeftSide($viewModel);
 		if (App\Config::main('isActiveSendingMails') && \App\Privilege::isPermitted('OSSMail')) {
-			if (Users_Record_Model::getCurrentUserModel()->get('internal_mailer') == 1) {
+			if (1 == Users_Record_Model::getCurrentUserModel()->get('internal_mailer')) {
 				$links['LBL_SEND_EMAIL'] = Vtiger_Link_Model::getInstanceFromValues([
-						'linklabel' => 'LBL_SEND_EMAIL',
-						'linkhref' => true,
-						'linkurl' => OSSMail_Module_Model::getComposeUrl($this->getModuleName(), $this->getId(), 'Detail', 'new'),
-						'linkicon' => 'fas fa-envelope',
-						'linkclass' => 'btn-xs btn-default',
-						'linktarget' => '_blank',
+					'linklabel' => 'LBL_SEND_EMAIL',
+					'linkhref' => true,
+					'linkurl' => OSSMail_Module_Model::getComposeUrl($this->getModuleName(), $this->getId(), 'Detail', 'new'),
+					'linkicon' => 'fas fa-envelope',
+					'linkclass' => 'btn-sm btn-default',
+					'linktarget' => '_blank',
 				]);
 			} else {
 				$urldata = OSSMail_Module_Model::getExternalUrl($this->getModuleName(), $this->getId(), 'Detail', 'new');
-				if ($urldata && $urldata !== 'mailto:?') {
+				if ($urldata && 'mailto:?' !== $urldata) {
 					$links[] = Vtiger_Link_Model::getInstanceFromValues([
-							'linklabel' => 'LBL_CREATEMAIL',
-							'linkhref' => true,
-							'linkurl' => $urldata,
-							'linkicon' => 'fas fa-envelope',
-							'linkclass' => 'btn-xs btn-default',
-							'relatedModuleName' => 'OSSMailView',
+						'linklabel' => 'LBL_CREATEMAIL',
+						'linkhref' => true,
+						'linkurl' => $urldata,
+						'linkicon' => 'fas fa-envelope',
+						'linkclass' => 'btn-sm btn-default',
+						'relatedModuleName' => 'OSSMailView',
 					]);
 				}
 			}
@@ -114,7 +91,7 @@ class Contacts_Record_Model extends Vtiger_Record_Model
 			preg_match('/<a href="+/', $data[0], $matches);
 			if (!empty($matches)) {
 				preg_match('/[.\s]+/', $data[0], $dashes);
-				preg_match("/<a(.*)>(.*)<\/a>/i", $data[0], $name);
+				preg_match('/<a(.*)>(.*)<\\/a>/i', $data[0], $name);
 
 				$recordModel = Vtiger_Record_Model::getCleanInstance($this->getModuleName());
 				$recordModel->setId($competitionId);

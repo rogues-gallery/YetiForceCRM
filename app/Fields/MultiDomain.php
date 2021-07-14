@@ -3,10 +3,10 @@
 /**
  * MultiDomain class.
  *
- * @package   App
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o.
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Rafal Pospiech <r.pospiech@yetiforce.com>
  */
 
@@ -28,14 +28,14 @@ class MultiDomain
 	 */
 	public static function findIdByDomain(string $moduleName, string $fieldName, string $domain)
 	{
-		$crmids = [];
+		$ids = [];
 		$queryGenerator = new \App\QueryGenerator($moduleName);
 		$queryGenerator->permissions = false;
 		if ($queryGenerator->getModuleField($fieldName)) {
 			$queryGenerator->setFields(['id']);
-			$queryGenerator->addNativeCondition(['like', $fieldName, ",$domain,"]);
-			$crmids = $queryGenerator->createQuery()->column();
+			$queryGenerator->addCondition($fieldName, $domain, 'a');
+			$ids = $queryGenerator->createQuery()->column();
 		}
-		return $crmids;
+		return $ids;
 	}
 }

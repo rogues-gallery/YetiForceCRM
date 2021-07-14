@@ -21,6 +21,7 @@ class PackageExport
 	public $_export_modulexml_file;
 	protected $moduleInstance = false;
 	private $zipFileName;
+	private $openNode = 0;
 
 	/**
 	 * Constructor.
@@ -35,12 +36,22 @@ class PackageExport
 	/** Output Handlers */
 	public function openNode($node, $delimiter = PHP_EOL)
 	{
-		$this->__write("<$node>$delimiter");
+		$pre = '';
+		if ('' === $delimiter || PHP_EOL === $delimiter) {
+			$pre = str_repeat("\t", $this->openNode);
+		}
+		$this->__write($pre . "<$node>$delimiter");
+		++$this->openNode;
 	}
 
-	public function closeNode($node, $delimiter = PHP_EOL)
+	public function closeNode($node, $delimiter = PHP_EOL, $space = true)
 	{
-		$this->__write("</$node>$delimiter");
+		--$this->openNode;
+		$pre = '';
+		if ($space) {
+			$pre = str_repeat("\t", $this->openNode);
+		}
+		$this->__write($pre . "</$node>$delimiter");
 	}
 
 	public function outputNode($value, $node = '')
@@ -50,7 +61,7 @@ class PackageExport
 		}
 		$this->__write($value);
 		if ('' != $node) {
-			$this->closeNode($node);
+			$this->closeNode($node, PHP_EOL, false);
 		}
 	}
 
@@ -74,6 +85,8 @@ class PackageExport
 
 	/**
 	 * Initialize Export.
+	 *
+	 * @param mixed $module
 	 */
 	public function __initExport($module)
 	{
@@ -119,12 +132,12 @@ class PackageExport
 	/**
 	 * Export Module as a zip file.
 	 *
-	 * @param Module Instance of module
-	 * @param Path Output directory path
-	 * @param string Zipfilename to use
-	 * @param bool True for sending the output as download
+	 * @param \vtlib\Module $moduleInstance Instance of module
+	 * @param string        $todir          Output directory path
+	 * @param string        $zipFileName    Zipfilename to use
+	 * @param bool          $directDownload True for sending the output as download
 	 */
-	public function export(\vtlib\Module $moduleInstance, $todir = '', $zipFileName = '', $directDownload = false)
+	public function export(Module $moduleInstance, $todir = '', $zipFileName = '', $directDownload = false)
 	{
 		$this->zipFileName = $zipFileName;
 		$this->moduleInstance = $moduleInstance;
@@ -234,7 +247,6 @@ class PackageExport
 	public function __copyLanguageFiles(\App\Zip $zip, $module)
 	{
 		foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator('languages', \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $item) {
-			// @var $item \SplFileInfo
 			if ($item->isFile() && $item->getFilename() === $module . '.json') {
 				$zip->addFile($item->getPath() . \DIRECTORY_SEPARATOR . $item->getFilename());
 			}
@@ -278,13 +290,18 @@ class PackageExport
 	public function exportModule()
 	{
 		$moduleId = $this->moduleInstance->id;
-		$row = (new \App\Db\Query())->select(['name', 'tablabel', 'version', 'type'])->from('vtiger_tab')->where(['tabid' => $moduleId])->one();
+		$row = (new \App\Db\Query())
+			->select(['name', 'tablabel', 'version', 'type', 'premium'])
+			->from('vtiger_tab')
+			->where(['tabid' => $moduleId])
+			->one();
 		$tabVersion = $row['version'] ?? false;
 		$tabType = $row['type'];
 		$this->openNode('module');
 		$this->outputNode(date('Y-m-d H:i:s'), 'exporttime');
 		$this->outputNode($row['name'], 'name');
-		$this->outputNode($row['tablabel'], 'tablabel');
+		$this->outputNode($row['tablabel'], 'label');
+		$this->outputNode($row['premium'], 'premium');
 
 		if (!$this->moduleInstance->isentitytype) {
 			$type = 'extension';
@@ -397,6 +414,7 @@ class PackageExport
 	 * Export fields related to a module block.
 	 *
 	 * @param ModuleBasic $moduleInstance
+	 * @param int         $blockid
 	 */
 	public function exportFields(ModuleBasic $moduleInstance, $blockid)
 	{
@@ -541,7 +559,9 @@ class PackageExport
 				$this->openNode('field');
 				$this->outputNode($cvRow['field_name'], 'fieldname');
 				$this->outputNode($cvRow['module_name'], 'modulename');
-				$this->outputNode($cvRow['source_field_name'], 'sourcefieldname');
+				if ($cvRow['source_field_name']) {
+					$this->outputNode($cvRow['source_field_name'], 'sourcefieldname');
+				}
 				$this->outputNode($cvRow['columnindex'], 'columnindex');
 				$this->closeNode('field');
 			}
@@ -637,6 +657,11 @@ class PackageExport
 				$this->outputNode($row['label'], 'label');
 				$this->outputNode($row['sequence'], 'sequence');
 				$this->outputNode($row['presence'], 'presence');
+				$this->outputNode($row['favorites'], 'favorites');
+				$this->outputNode($row['creator_detail'], 'creator_detail');
+				$this->outputNode($row['relation_comment'], 'relation_comment');
+				$this->outputNode($row['view_type'], 'view_type');
+				$this->outputNode($row['field_name'], 'field_name');
 				$actionText = $row['actions'];
 				if (!empty($actionText)) {
 					$this->openNode('actions');
@@ -645,6 +670,13 @@ class PackageExport
 						$this->outputNode($action, 'action');
 					}
 					$this->closeNode('actions');
+				}
+				if ($fields = \App\Field::getFieldsFromRelation($row['relation_id'])) {
+					$this->openNode('fields');
+					foreach ($fields as $field) {
+						$this->outputNode($field, 'field');
+					}
+					$this->closeNode('fields');
 				}
 				$this->closeNode('relatedlist');
 			}
@@ -663,6 +695,11 @@ class PackageExport
 				$this->outputNode($row['label'], 'label');
 				$this->outputNode($row['sequence'], 'sequence');
 				$this->outputNode($row['presence'], 'presence');
+				$this->outputNode($row['favorites'], 'favorites');
+				$this->outputNode($row['creator_detail'], 'creator_detail');
+				$this->outputNode($row['relation_comment'], 'relation_comment');
+				$this->outputNode($row['view_type'], 'view_type');
+				$this->outputNode($row['field_name'], 'field_name');
 				$actionText = $row['actions'];
 				if (!empty($actionText)) {
 					$this->openNode('actions');
@@ -671,6 +708,13 @@ class PackageExport
 						$this->outputNode($action, 'action');
 					}
 					$this->closeNode('actions');
+				}
+				if ($fields = \App\Field::getFieldsFromRelation($row['relation_id'])) {
+					$this->openNode('fields');
+					foreach ($fields as $field) {
+						$this->outputNode($field, 'field');
+					}
+					$this->closeNode('fields');
 				}
 				$this->closeNode('inrelatedlist');
 			}
@@ -719,7 +763,7 @@ class PackageExport
 			$this->outputNode($cronTask->getName(), 'name');
 			$this->outputNode($cronTask->getFrequency(), 'frequency');
 			$this->outputNode($cronTask->getStatus(), 'status');
-			$this->outputNode($cronTask->getHandlerFile(), 'handler');
+			$this->outputNode($cronTask->getHandlerClass(), 'handler');
 			$this->outputNode($cronTask->getSequence(), 'sequence');
 			$this->outputNode($cronTask->getDescription(), 'description');
 			$this->closeNode('cron');

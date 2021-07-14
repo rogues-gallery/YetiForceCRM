@@ -11,13 +11,11 @@
 
 class Vtiger_Multipicklist_UIType extends Vtiger_Base_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDbConditionBuilderValue($value, string $operator)
 	{
 		$values = [];
-		if (!is_array($value)) {
+		if (!\is_array($value)) {
 			$value = $value ? explode('##', $value) : [];
 		}
 		foreach ($value as $val) {
@@ -26,99 +24,98 @@ class Vtiger_Multipicklist_UIType extends Vtiger_Base_UIType
 		return implode('##', $values);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
-		if (is_array($value)) {
+		if (\is_array($value)) {
 			$value = implode(' |##| ', $value);
 		}
 		return \App\Purifier::decodeHtml($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, $isUserFormat = false)
 	{
-		$hashValue = is_array($value) ? implode('|', $value) : $value;
+		$hashValue = \is_array($value) ? implode('|', $value) : $value;
 		if (isset($this->validate[$hashValue]) || empty($value)) {
 			return;
 		}
-		if (is_string($value)) {
+		if (\is_string($value)) {
 			$value = explode(' |##| ', $value);
 		}
-		if (!is_array($value)) {
+		if (!\is_array($value)) {
 			throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $this->getFieldModel()->getFieldName() . '||' . $this->getFieldModel()->getModuleName() . '||' . $value, 406);
 		}
 		foreach ($value as $item) {
-			if (!is_string($item)) {
+			if (!\is_string($item)) {
 				throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $this->getFieldModel()->getFieldName() . '||' . $this->getFieldModel()->getModuleName() . '||' . $value, 406);
-			} elseif ($item != strip_tags($item)) {
+			}
+			if ($item != strip_tags($item)) {
 				throw new \App\Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $this->getFieldModel()->getFieldName() . '||' . $this->getFieldModel()->getModuleName() . '||' . $value, 406);
 			}
 		}
 		$this->validate[$hashValue] = true;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
 	{
 		if (empty($value)) {
 			return null;
 		}
+		$valueRaw = $valueHtml = '';
 		$values = explode(' |##| ', $value);
-		$trValue = [];
+		$trValueRaw = $trValue = [];
 		$moduleName = $this->getFieldModel()->getModuleName();
-		$countValue = count($values);
-		for ($i = 0; $i < $countValue; ++$i) {
-			$trValue[] = App\Language::translate($values[$i], $moduleName);
+		$fieldName = App\Colors::sanitizeValue($this->getFieldModel()->getFieldName());
+		foreach ($values as $value) {
+			$displayValue = App\Language::translate($value, $moduleName);
+			$value = App\Colors::sanitizeValue($value);
+			$trValueRaw[] = $displayValue;
+			$trValue[] = "<span class=\"picklistValue picklistLb_{$moduleName}_{$fieldName}_{$value}\">$displayValue</span>";
 		}
-		$value = str_ireplace(' |##| ', ', ', implode(' |##| ', $trValue));
-		if (is_int($length)) {
-			$value = \App\TextParser::textTruncate($value, $length);
+		if ($rawText) {
+			$valueRaw = str_ireplace(' |##| ', ', ', implode(' |##| ', $trValueRaw));
+			if (\is_int($length)) {
+				$valueRaw = \App\TextParser::textTruncate($valueRaw, $length);
+			}
+		} else {
+			$valueHtml = str_ireplace(' |##| ', ' ', implode(' |##| ', $trValue));
+			if (\is_int($length)) {
+				$valueHtml = \App\TextParser::htmlTruncate($valueHtml, $length);
+			}
 		}
-		return \App\Purifier::encodeHtml($value);
+		return $rawText ? $valueRaw : $valueHtml;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
+		if (\is_array($value)) {
+			return $value;
+		}
 		return explode(' |##| ', \App\Purifier::encodeHtml($value));
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getTemplateName()
 	{
 		return 'Edit/Field/MultiPicklist.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getListSearchTemplateName()
 	{
 		return 'List/Field/MultiPicklist.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getAllowedColumnTypes()
 	{
 		return ['text'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getQueryOperators()
 	{
 		return ['e', 'n', 'c', 'k', 'y', 'ny'];

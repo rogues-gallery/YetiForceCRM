@@ -4,11 +4,23 @@
  * Verify user data action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Users_VerifyData_Action extends \App\Controller\Action
 {
+	use \App\Controller\ExposeMethod;
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->exposeMethod('recordPreSave');
+		$this->exposeMethod('validatePassword');
+	}
+
 	/**
 	 * Function to check permission.
 	 *
@@ -16,7 +28,7 @@ class Users_VerifyData_Action extends \App\Controller\Action
 	 *
 	 * @throws \App\Exceptions\NoPermitted
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$currentUser = Users_Record_Model::getCurrentUserModel();
 		if (!$currentUser->isAdminUser() && $currentUser->getId() != $request->getInteger('record')) {
@@ -25,11 +37,11 @@ class Users_VerifyData_Action extends \App\Controller\Action
 	}
 
 	/**
-	 * Process.
+	 * Verify record pre save.
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function recordPreSave(App\Request $request): void
 	{
 		$message = '';
 		$moduleName = $request->getModule();
@@ -57,6 +69,26 @@ class Users_VerifyData_Action extends \App\Controller\Action
 		}
 		$response = new Vtiger_Response();
 		$response->setResult(['message' => $message]);
+		$response->emit();
+	}
+
+	/**
+	 * Validate user password.
+	 *
+	 * @param \App\Request $request
+	 */
+	public function validatePassword(App\Request $request): void
+	{
+		if (App\User::checkPreviousPassword($request->getInteger('record'), $request->getRaw('password'))) {
+			$message = \App\Language::translate('ERR_PASSWORD_HAS_ALREADY_BEEN_USED', 'Other:Exceptions');
+		} else {
+			$message = Settings_Password_Record_Model::checkPassword($request->getRaw('password'));
+		}
+		$response = new Vtiger_Response();
+		$response->setResult([
+			'type' => $message ? 'error' : 'success',
+			'message' => $message ?: \App\Language::translate('LBL_USER_PASSWORD_IS_OK', $request->getModule()),
+		]);
 		$response->emit();
 	}
 }

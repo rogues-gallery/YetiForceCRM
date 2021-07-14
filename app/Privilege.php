@@ -5,8 +5,10 @@ namespace App;
 /**
  * Privilege basic class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -67,6 +69,7 @@ class Privilege
 		if (!$userId) {
 			$userId = \App\User::getCurrentUserId();
 		}
+		$userId = (int) $userId;
 		$userPrivileges = \App\User::getPrivilegesFile($userId);
 		$permission = false;
 		$tabId = Module::getModuleId($moduleName);
@@ -125,7 +128,7 @@ class Privilege
 		}
 		//If no actionid, then allow action is vtiger_tab permission is available
 		if ('' === $actionId || null === $actionId) {
-			if (0 == $userPrivileges['profile_tabs_permission'][$tabId]) {
+			if (isset($userPrivileges['profile_tabs_permission'][$tabId]) && 0 == $userPrivileges['profile_tabs_permission'][$tabId]) {
 				$permission = true;
 			} else {
 				$permission = false;
@@ -175,8 +178,8 @@ class Privilege
 		}
 		//Checking and returning true if recorid is null
 		if (empty($record)) {
-			static::$isPermittedLevel = 'SEC_RECORID_IS_NULL';
-			\App\Log::trace('Exiting isPermitted method ... - SEC_RECORID_IS_NULL');
+			static::$isPermittedLevel = 'SEC_RECORD_ID_IS_NULL';
+			\App\Log::trace('Exiting isPermitted method ... - SEC_RECORD_ID_IS_NULL');
 			return true;
 		}
 		//If modules is Products,Vendors,Faq,PriceBook then no sharing
@@ -207,7 +210,8 @@ class Privilege
 			}
 			return false;
 		}
-		if (\App\Config::security('PERMITTED_BY_PRIVATE_FIELD') && $recordMetaData['private']) {
+		if (\App\Config::security('PERMITTED_BY_PRIVATE_FIELD') && $recordMetaData['private']
+			&& ($fieldInfo = \App\Field::getFieldInfo('private', $recordMetaData['setype'])) && \in_array($fieldInfo['presence'], [0, 2])) {
 			$level = 'SEC_PRIVATE_RECORD_NO';
 			$isPermittedPrivateRecord = false;
 			$recOwnId = $recordMetaData['smownerid'];
@@ -223,9 +227,9 @@ class Privilege
 					$isPermittedPrivateRecord = true;
 				}
 			}
-			if (!$isPermittedPrivateRecord) {
-				$shownerids = Fields\SharedOwner::getById($record);
-				if (\in_array($userId, $shownerids) || \count(array_intersect($shownerids, $userPrivileges['groups'])) > 0) {
+			if (!$isPermittedPrivateRecord && \App\Config::security('PERMITTED_BY_SHARED_OWNERS')) {
+				$shownerIds = Fields\SharedOwner::getById($record);
+				if (\in_array($userId, $shownerIds) || \count(array_intersect($shownerIds, $userPrivileges['groups'])) > 0) {
 					$level = 'SEC_PRIVATE_RECORD_SHARED_OWNER';
 					$isPermittedPrivateRecord = true;
 				}
@@ -248,6 +252,18 @@ class Privilege
 				return true;
 			}
 		}
+		if (($modules = \App\Config::security('permittedModulesByCreatorField')) && \in_array($moduleName, $modules) && $userId === $recordMetaData['smcreatorid']) {
+			if (3 == $actionId || 4 == $actionId) {
+				static::$isPermittedLevel = 'SEC_RECORD_CREATOR_CURRENT_USER_READ_ACCESS';
+				\App\Log::trace('Exiting isPermitted method ... - SEC_RECORD_CREATOR_CURRENT_USER_READ_ACCESS');
+				return true;
+			}
+			if (\App\Config::security('permittedWriteAccessByCreatorField') && (0 == $actionId || 1 == $actionId)) {
+				static::$isPermittedLevel = 'SEC_RECORD_CREATOR_CURRENT_USER_WRITE_ACCESS';
+				\App\Log::trace('Exiting isPermitted method ... - SEC_RECORD_CREATOR_CURRENT_USER_WRITE_ACCESS');
+				return true;
+			}
+		}
 		if (\App\Config::security('PERMITTED_BY_SHARED_OWNERS')) {
 			$shownerids = Fields\SharedOwner::getById($record);
 			if (\in_array($userId, $shownerids) || \count(array_intersect($shownerids, $userPrivileges['groups'])) > 0) {
@@ -261,15 +277,15 @@ class Privilege
 		$recOwnType = Fields\Owner::getType($recOwnId);
 		if ('Users' === $recOwnType) {
 			//Checking if the Record Owner is the current User
-			if ($userId == $recOwnId) {
+			if ($userId === $recOwnId) {
 				static::$isPermittedLevel = 'SEC_RECORD_OWNER_CURRENT_USER';
 				\App\Log::trace('Exiting isPermitted method ... - SEC_RECORD_OWNER_CURRENT_USER');
 				return true;
 			}
 			if (\App\Config::security('PERMITTED_BY_ROLES')) {
 				//Checking if the Record Owner is the Subordinate User
-				foreach ($userPrivileges['subordinate_roles_users'] as &$userids) {
-					if (\in_array($recOwnId, $userids)) {
+				foreach ($userPrivileges['subordinate_roles_users'] as $usersByRole) {
+					if (isset($usersByRole[$recOwnId])) {
 						static::$isPermittedLevel = 'SEC_RECORD_OWNER_SUBORDINATE_USER';
 						\App\Log::trace('Exiting isPermitted method ... - SEC_RECORD_OWNER_SUBORDINATE_USER');
 						return true;
@@ -297,7 +313,7 @@ class Privilege
 					foreach ($permissionsRelatedField as $row) {
 						switch ($row) {
 							case 0:
-								$relatedPermission = $recordMetaData['smownerid'] == $userId || \in_array($recordMetaData['smownerid'], $userPrivileges['groups']);
+								$relatedPermission = $recordMetaData['smownerid'] === $userId || \in_array($recordMetaData['smownerid'], $userPrivileges['groups']);
 								break;
 							case 1:
 								$relatedPermission = \in_array($userId, Fields\SharedOwner::getById($parentRecord));
@@ -361,7 +377,7 @@ class Privilege
 		return true;
 	}
 
-	/** Function to check if the currently logged in user has Read Access due to Sharing for the specified record
+	/** Function to check if the currently logged in user has Read Access due to Sharing for the specified record.
 	 * @param $moduleName -- Module Name:: Type varchar
 	 * @param $actionId   -- Action Id:: Type integer
 	 * @param $recordId   -- Record Id:: Type integer
@@ -461,7 +477,7 @@ class Privilege
 		return false;
 	}
 
-	/** Function to check if the currently logged in user has Write Access due to Sharing for the specified record
+	/** Function to check if the currently logged in user has Write Access due to Sharing for the specified record.
 	 * @param $moduleName -- Module Name:: Type varchar
 	 * @param $actionId   -- Action Id:: Type integer
 	 * @param $recordid   -- Record Id:: Type integer
@@ -509,9 +525,8 @@ class Privilege
 			}
 		}
 		//Checking for the Related Sharing Permission
-		$relatedModuleArray = $sharingPrivileges['relatedModuleShare'][$tabId];
-		if (\is_array($relatedModuleArray)) {
-			foreach ($relatedModuleArray as $parModId) {
+		if (isset($sharingPrivileges['relatedModuleShare'][$tabId]) && \is_array($sharingPrivileges['relatedModuleShare'][$tabId])) {
+			foreach ($sharingPrivileges['relatedModuleShare'][$tabId] as $parModId) {
 				$parRecordOwner = PrivilegeUtil::getParentRecordOwner($tabId, $parModId, $recordId);
 				if (!empty($parRecordOwner)) {
 					$parModName = Module::getModuleName($parModId);
@@ -552,7 +567,6 @@ class Privilege
 			}
 		}
 		\App\Log::trace('Exiting isReadWritePermittedBySharing method ...');
-
 		return false;
 	}
 

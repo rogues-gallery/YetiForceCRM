@@ -2,16 +2,14 @@
 
 /**
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class OSSPasswords_QuickCreateAjax_View extends Vtiger_QuickCreateAjax_View
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function process(\App\Request $request)
+	/** {@inheritdoc} */
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		parent::process($request);
@@ -22,10 +20,8 @@ class OSSPasswords_QuickCreateAjax_View extends Vtiger_QuickCreateAjax_View
 			\App\Language::translate('Medium', $moduleName) . ',' . \App\Language::translate('Strong', $moduleName) . ',' . \App\Language::translate('Very Strong', $moduleName));
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getFooterScripts(\App\Request $request)
+	/** {@inheritdoc} */
+	public function getFooterScripts(App\Request $request)
 	{
 		return array_merge(parent::getFooterScripts($request), $this->checkAndConvertJsScripts([
 			"modules.{$request->getModule()}.resources.gen_pass",

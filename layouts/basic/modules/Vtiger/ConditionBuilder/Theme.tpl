@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Base-ConditionBuilder-Theme">
 		{assign var=PICKLIST_VALUES value=Vtiger_Theme::getAllSkins()}
@@ -9,7 +9,7 @@
 			{foreach item=PICKLIST_VALUE key=PICKLIST_NAME from=$PICKLIST_VALUES}
 				<option class="u-bg-{$PICKLIST_NAME} text-light u-hover-bold"
 						value="{\App\Purifier::encodeHtml($PICKLIST_NAME)}"
-						{if in_array($PICKLIST_NAME, $FIELD_VALUES)} selected {/if}>{\App\Purifier::encodeHtml(ucfirst($PICKLIST_NAME))}</option>
+						{if in_array($PICKLIST_NAME, $FIELD_VALUES)} selected {/if}>{\App\Purifier::encodeHtml(\App\Utils::mbUcfirst($PICKLIST_NAME))}</option>
 			{/foreach}
 		</select>
 	</div>

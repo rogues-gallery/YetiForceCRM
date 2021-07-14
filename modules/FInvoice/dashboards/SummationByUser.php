@@ -4,7 +4,7 @@
  * FInvoice Summation By User Dashboard Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -15,19 +15,18 @@ class FInvoice_SummationByUser_Dashboard extends Vtiger_IndexAjax_View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$widget = Vtiger_Widget_Model::getInstance($request->getInteger('linkid'), \App\User::getCurrentUserId());
 		$time = $request->getDateRange('time');
 		if (empty($time)) {
 			$time = Settings_WidgetsManagement_Module_Model::getDefaultDateRange($widget);
 		}
-		$time = \App\Fields\Date::formatRangeToDisplay($time);
 		$moduleName = $request->getModule();
 		$param = \App\Json::decode($widget->get('data'));
 		$data = $this->getWidgetData($moduleName, $param, $time);
 		$viewer = $this->getViewer($request);
-		$viewer->assign('DTIME', $time);
+		$viewer->assign('DTIME', \App\Fields\Date::formatRangeToDisplay($time));
 		$viewer->assign('DATA', $data);
 		$viewer->assign('WIDGET', $widget);
 		$viewer->assign('PARAM', $param);
@@ -72,21 +71,21 @@ class FInvoice_SummationByUser_Dashboard extends Vtiger_IndexAjax_View
 			],
 			'show_chart' => false
 		];
-		if ($widgetParam['showUser']) {
+		if (!empty($widgetParam['showUsers'])) {
 			$chartData['fullLabels'] = [];
 		}
 		while ($row = $dataReader->read()) {
 			$label = \App\Fields\Owner::getLabel($row['assigned_user_id']);
-			$chartData['datasets'][0]['data'][] = (int) $row['s'];
+			$chartData['datasets'][0]['data'][] = round((float) $row['s'], 2);
 			$chartData['datasets'][0]['backgroundColor'][] = $currentUserId === (int) $row['assigned_user_id'] ? \App\Fields\Owner::getColor($row['assigned_user_id']) : 'rgba(0,0,0,0.25)';
-			$chartData['labels'][] = $widgetParam['showUser'] ? \App\Utils::getInitials($label) : '';
-			if ($widgetParam['showUser'] || $currentUserId === (int) $row['assigned_user_id']) {
+			$chartData['labels'][] = $widgetParam['showUsers'] ? \App\Utils::getInitials($label) : '';
+			if ($widgetParam['showUsers'] || $currentUserId === (int) $row['assigned_user_id']) {
 				$chartData['fullLabels'][] = $label;
 			} else {
 				$chartData['fullLabels'][] = '';
 			}
 		}
-		$chartData['show_chart'] = (bool) count($chartData['datasets'][0]['data']);
+		$chartData['show_chart'] = (bool) \count($chartData['datasets'][0]['data']);
 		$dataReader->close();
 		return $chartData;
 	}

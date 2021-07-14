@@ -4,10 +4,15 @@
  * OSSMailView record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSMailView_Record_Model extends Vtiger_Record_Model
 {
+	const TYPE_COLORS = [
+		0 => 'bgGreen',
+		1 => 'bgDanger',
+		2 => 'bgBlue',
+	];
 	protected $modules_email_actions_widgets = [];
 
 	public function __construct()
@@ -25,10 +30,7 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 	public function get($key)
 	{
 		$value = parent::get($key);
-		if ('content' === $key && 'Detail' === \App\Request::_get('view')) {
-			return vtlib\Functions::getHtmlOrPlainText($value);
-		}
-		if ('uid' === $key || 'content' === $key) {
+		if ('uid' === $key) {
 			return App\Purifier::decodeHtml($value);
 		}
 		return $value;
@@ -80,6 +82,7 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 		if ('' !== $config['widget_limit']) {
 			$query->limit($config['widget_limit']);
 		}
+
 		$dataReader = $query->createCommand()->query();
 		while ($row = $dataReader->read()) {
 			$from = $this->findRecordsById($row['from_id']);
@@ -92,10 +95,22 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 			} else {
 				$subject = \App\Purifier::encodeHtml($row['subject']);
 			}
+			$firstLetterBg = self::TYPE_COLORS[$row['type']];
+			$firstLetter = strtoupper(App\TextParser::textTruncate(trim(strip_tags($from)), 1, false));
+			if ($row['orginal_mail'] && '-' !== $row['orginal_mail']) {
+				$rblInstance = \App\Mail\Rbl::getInstance([]);
+				$rblInstance->set('rawBody', $row['orginal_mail']);
+				$rblInstance->parse();
+				if (($verifySender = $rblInstance->verifySender()) && !$verifySender['status']) {
+					$firstLetter = '<span class="fas fa-exclamation-triangle text-danger" title="' . \App\Purifier::encodeHtml($verifySender['info']) . '"></span>';
+					$firstLetterBg = 'bg-warning';
+				}
+			}
 			$return[] = [
 				'id' => $row['ossmailviewid'],
 				'date' => $row['date'],
-				'firstLetter' => strtoupper(App\TextParser::textTruncate(trim(strip_tags($from)), 1, false)),
+				'firstLetter' => $firstLetter,
+				'firstLetterBg' => $firstLetterBg,
 				'subjectRaw' => \App\Purifier::encodeHtml($row['subject']),
 				'subject' => $subject,
 				'attachments' => $row['attachments_exist'],
@@ -106,13 +121,12 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 				'to' => $to,
 				'url' => "index.php?module=OSSMailView&view=Preview&record={$row['ossmailviewid']}&srecord=$srecord&smodule=$smodule",
 				'type' => $row['type'],
-				'teaser' => App\TextParser::textTruncate(trim(preg_replace('/[ \t]+/', ' ', strip_tags($content))), 100),
+				'teaser' => App\TextParser::textTruncate(\App\Utils::htmlToText($content), 190),
 				'body' => $content,
 				'bodyRaw' => $row['content'],
 			];
 		}
 		$dataReader->close();
-
 		return $return;
 	}
 
@@ -155,31 +169,41 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 		return trim($return, ',');
 	}
 
-	public function findEmail($record, $module)
+	/**
+	 * Find email for record.
+	 *
+	 * @param int    $record
+	 * @param string $module
+	 *
+	 * @return string
+	 */
+	public function findEmail(int $record, string $module): string
 	{
 		if (!\App\Record::isExists($record)) {
 			return false;
 		}
 		$returnEmail = '';
 		if (\in_array($module, ['HelpDesk', 'Project', 'SSalesProcesses'])) {
-			$accountId = '';
 			$recordModel = Vtiger_Record_Model::getInstanceById($record, $module);
-			switch ($module) {
-				case 'HelpDesk':
-					$accountId = $recordModel->get('parent_id');
-					break;
-				case 'Project':
-					$accountId = $recordModel->get('linktoaccountscontacts');
-					break;
-				case 'SSalesProcesses':
-					$accountId = $recordModel->get('related_to');
-					break;
-				default:
-					break;
-			}
-			if (\App\Record::isExists($accountId)) {
-				$setype = \App\Record::getType($accountId);
-				$returnEmail = $this->findEmail($accountId, $setype);
+			$returnEmail = $this->findEmailInRelated($recordModel);
+			if (!$returnEmail) {
+				$accountId = '';
+				switch ($module) {
+					case 'HelpDesk':
+						$accountId = $recordModel->get('parent_id');
+						break;
+					case 'Project':
+						$accountId = $recordModel->get('linktoaccountscontacts');
+						break;
+					case 'SSalesProcesses':
+						$accountId = $recordModel->get('related_to');
+						break;
+					default:
+						break;
+				}
+				if (\App\Record::isExists($accountId)) {
+					$returnEmail = $this->findEmail($accountId, \App\Record::getType($accountId));
+				}
 			}
 		} else {
 			$emailFields = OSSMailScanner_Record_Model::getEmailSearch($module);
@@ -195,6 +219,41 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 			}
 		}
 		return $returnEmail;
+	}
+
+	/**
+	 * Find email in related records.
+	 *
+	 * @param Vtiger_Record_Model $recordModel
+	 *
+	 * @return string
+	 */
+	public function findEmailInRelated(Vtiger_Record_Model $recordModel): string
+	{
+		$relationListView = Vtiger_RelationListView_Model::getInstance($recordModel, 'Contacts');
+		$query = $relationListView->getRelationQuery();
+		$tabIndex = $relationListView->getRelatedModuleModel()->getEntityInstance()->tab_name_index;
+		$query->select(['vtiger_crmentity.crmid']);
+		$emailFields = OSSMailScanner_Record_Model::getEmailSearch('Contacts');
+		$where = ['or'];
+		foreach ($emailFields as $fieldParams) {
+			$query->addSelect([$fieldParams['fieldname'] => $fieldParams['tablename'] . '.' . $fieldParams['columnname']]);
+			$where[] = ['<>', $fieldParams['tablename'] . '.' . $fieldParams['columnname'], ''];
+			if (!\in_array($fieldParams['tablename'], $query->from) && !\in_array($fieldParams['tablename'], array_column($query->join, 1))) {
+				$query->leftJoin($fieldParams['tablename'], "vtiger_crmentity.crmid = {$fieldParams['tablename']}.{$tabIndex[$fieldParams['tablename']]}");
+			}
+		}
+		$query->andWhere($where);
+		$dataReader = $query->createCommand()->query();
+		$emails = [];
+		while ($row = $dataReader->read()) {
+			foreach ($emailFields as $fieldParams) {
+				if (!empty($row[$fieldParams['fieldname']])) {
+					$emails[] = $row[$fieldParams['fieldname']];
+				}
+			}
+		}
+		return implode(',', $emails);
 	}
 
 	public function deleteRel($recordId)
@@ -262,6 +321,9 @@ class OSSMailView_Record_Model extends Vtiger_Record_Model
 	public function checkMailExist($uid, $folder, $rcId, $mbox)
 	{
 		$mail = OSSMail_Record_Model::getMail($mbox, $uid, false);
+		if (!$mail) {
+			return false;
+		}
 		$where = ['cid' => $mail->getUniqueId()];
 		if (!\Config\Modules\OSSMailScanner::$ONE_MAIL_FOR_MULTIPLE_RECIPIENTS) {
 			$where['mbox'] = $folder;

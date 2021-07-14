@@ -4,7 +4,7 @@
  * RelationAjax Class for MultiCompany.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class MultiCompany_RelationAjax_Action extends Vtiger_RelationAjax_Action
@@ -18,7 +18,7 @@ class MultiCompany_RelationAjax_Action extends Vtiger_RelationAjax_Action
 		$this->exposeMethod('getHierarchyCount');
 	}
 
-	public function getHierarchyCount(\App\Request $request)
+	public function getHierarchyCount(App\Request $request)
 	{
 		$sourceModule = $request->getModule();
 		$recordId = $request->getInteger('record');
@@ -28,7 +28,7 @@ class MultiCompany_RelationAjax_Action extends Vtiger_RelationAjax_Action
 		$focus = CRMEntity::getInstance($sourceModule);
 		$hierarchy = $focus->getHierarchy($recordId);
 		$response = new Vtiger_Response();
-		$response->setResult(count($hierarchy['entries']) - 1);
+		$response->setResult(\count($hierarchy['entries']) - 1);
 		$response->emit();
 	}
 }

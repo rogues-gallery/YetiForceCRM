@@ -25,9 +25,17 @@ class Cron
 	public static $STATUS_RUNNING = 2;
 	public static $STATUS_COMPLETED = 3;
 	protected $data;
+	/**
+	 * Cron instance.
+	 *
+	 * @var \App\Cron
+	 */
+	protected $cronInstance;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param mixed $values
 	 */
 	protected function __construct($values)
 	{
@@ -38,12 +46,25 @@ class Cron
 	/**
 	 * set the value to the data.
 	 *
-	 * @param type $value ,$key
+	 * @param type  $value ,$key
+	 * @param mixed $key
 	 */
 	public function set($key, $value)
 	{
 		$this->data[$key] = $value;
 		return $this;
+	}
+
+	/**
+	 * Set cron instance.
+	 *
+	 * @param \App\Cron $cronInstance
+	 *
+	 * @return void
+	 */
+	public function setCronInstance(\App\Cron $cronInstance): void
+	{
+		$this->cronInstance = $cronInstance;
 	}
 
 	/**
@@ -107,13 +128,12 @@ class Cron
 	 */
 	public function getLastEndDateTime()
 	{
-		if ($this->data['lastend'] !== null) {
+		if (null !== $this->data['lastend']) {
 			$lastEndDateTime = new \DateTimeField(date('Y-m-d H:i:s', $this->data['lastend']));
 
 			return $lastEndDateTime->getDisplayDateTimeValue();
-		} else {
-			return '';
 		}
+		return '';
 	}
 
 	/**
@@ -121,13 +141,12 @@ class Cron
 	 */
 	public function getLastStartDateTime()
 	{
-		if ($this->data['laststart'] !== null) {
+		if (null !== $this->data['laststart']) {
 			$lastStartDateTime = new \DateTimeField(date('Y-m-d H:i:s', $this->data['laststart']));
 
 			return $lastStartDateTime->getDisplayDateTimeValue();
-		} else {
-			return '';
 		}
+		return '';
 	}
 
 	/**
@@ -141,9 +160,9 @@ class Cron
 	/**
 	 * Get the configured handler file.
 	 */
-	public function getHandlerFile()
+	public function getHandlerClass()
 	{
-		return $this->data['handler_file'];
+		return $this->data['handler_class'];
 	}
 
 	/**
@@ -172,7 +191,7 @@ class Cron
 
 	public function getLockStatus()
 	{
-		return isset($this->data['lockStatus']) ? $this->data['lockStatus'] : false;
+		return $this->data['lockStatus'] ?? false;
 	}
 
 	/**
@@ -190,6 +209,8 @@ class Cron
 
 	/**
 	 * Helper function to check the status value.
+	 *
+	 * @param mixed $value
 	 */
 	public function statusEqual($value)
 	{
@@ -272,12 +293,11 @@ class Cron
 	{
 		$lock = $this->getLockStatus();
 		$time = time();
-		$contitions = ['lastend' => $time];
+		$contitions = ['lastend' => $time, 'lase_error' => ''];
 		if (!$lock) {
 			$contitions['status'] = self::$STATUS_ENABLED;
 		}
 		\App\Db::getInstance()->createCommand()->update(self::$baseTable, $contitions, ['id' => $this->getId()])->execute();
-
 		return $this->set('lastend', $time);
 	}
 
@@ -289,32 +309,42 @@ class Cron
 		if (!$this->isRunning()) {
 			return false;
 		}
-		$maxExecutionTime = (int) (ini_get('max_execution_time'));
-		if ($maxExecutionTime == 0) {
-			$maxExecutionTime = \App\Config::main('maxExecutionCronTime');
-		}
 		$time = $this->getLastEnd();
-		if ($time == 0) {
+		if (0 == $time) {
 			$time = $this->getLastStart();
 		}
-		if (time() > ($time + $maxExecutionTime)) {
+		if (time() > ($time + \App\Cron::getMaxExecutionTime())) {
+			return true;
+		}
+		if (!empty($this->data['max_exe_time']) && time() >= (($this->data['max_exe_time'] * 60) + $time)) {
 			return true;
 		}
 		return false;
 	}
 
 	/**
+	 * Check cron task timeout.
+	 *
+	 * @return bool
+	 */
+	public function checkTimeout(): bool
+	{
+		return $this->cronInstance->checkCronTimeout()
+		|| (!empty($this->data['max_exe_time']) && $this->getLastStart() && time() >= (($this->data['max_exe_time'] * 60) + $this->getLastStart()));
+	}
+
+	/**
 	 * Register cron task.
 	 *
 	 * @param string $name
-	 * @param string $handler_file
+	 * @param string $handlerClass
 	 * @param int    $frequency
 	 * @param string $module
 	 * @param int    $status
 	 * @param int    $sequence
 	 * @param string $description
 	 */
-	public static function register($name, $handler_file, $frequency, $module = 'Home', $status = 1, $sequence = 0, $description = '')
+	public static function register($name, $handlerClass, $frequency, $module = 'Home', $status = 1, $sequence = 0, $description = '')
 	{
 		$db = \App\Db::getInstance();
 		if (empty($sequence)) {
@@ -322,7 +352,7 @@ class Cron
 		}
 		$db->createCommand()->insert(self::$baseTable, [
 			'name' => $name,
-			'handler_file' => $handler_file,
+			'handler_class' => $handlerClass,
 			'frequency' => $frequency,
 			'status' => $status,
 			'sequence' => $sequence,
@@ -352,7 +382,7 @@ class Cron
 	public static function listAllActiveInstances()
 	{
 		$instances = [];
-		$query = (new \App\Db\Query())->select(['id','name'])->from(self::$baseTable)->where(['<>', 'status', self::$STATUS_DISABLED])->orderBy(['sequence' => SORT_ASC]);
+		$query = (new \App\Db\Query())->select(['id', 'name'])->from(self::$baseTable)->where(['<>', 'status', self::$STATUS_DISABLED])->orderBy(['sequence' => SORT_ASC]);
 		$dataReader = $query->createCommand()->query();
 		while ($row = $dataReader->read()) {
 			$instances[] = new self($row);
@@ -373,8 +403,7 @@ class Cron
 		if (isset(self::$instanceCache["$name"])) {
 			$instance = self::$instanceCache["$name"];
 		}
-
-		if ($instance === false) {
+		if (false === $instance) {
 			$data = (new \App\Db\Query())->from(self::$baseTable)->where(['name' => $name])->one();
 			if ($data) {
 				$instance = new self($data);
@@ -396,7 +425,7 @@ class Cron
 		if (isset(self::$instanceCache[$id])) {
 			$instance = self::$instanceCache[$id];
 		}
-		if ($instance === false) {
+		if (false === $instance) {
 			$data = (new \App\Db\Query())->from(self::$baseTable)->where(['id' => $id])->one();
 			if ($data) {
 				$instance = new self($data);
@@ -437,6 +466,18 @@ class Cron
 	public function unlockTask()
 	{
 		$this->updateStatus(self::$STATUS_ENABLED);
+	}
+
+	/**
+	 * Set error message.
+	 *
+	 * @param string $errorMessage
+	 *
+	 * @return void
+	 */
+	public function setError(string $errorMessage): void
+	{
+		\App\Db::getInstance()->createCommand()->update(self::$baseTable, ['lase_error' => $errorMessage], ['id' => $this->getId()])->execute();
 	}
 
 	/**

@@ -2,8 +2,10 @@
 /**
  * Base Query Field file.
  *
+ * @package UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -49,7 +51,7 @@ class BaseField
 	/**
 	 * @var array Related detail
 	 */
-	protected $related = false;
+	protected $related = [];
 
 	/**
 	 * Constructor.
@@ -96,6 +98,16 @@ class BaseField
 	}
 
 	/**
+	 * Get related details.
+	 *
+	 * @return array
+	 */
+	public function getRelated(): array
+	{
+		return $this->related;
+	}
+
+	/**
 	 *  Get additional field model for list view.
 	 *
 	 * @return bool|\Vtiger_Field_Model
@@ -114,10 +126,8 @@ class BaseField
 	 */
 	public function getOrderBy($order = false)
 	{
-		if ($order && 'DESC' === strtoupper($order)) {
-			return [$this->getColumnName() => SORT_DESC];
-		}
-		return [$this->getColumnName() => SORT_ASC];
+		$order = $order && \App\Db::DESC === strtoupper($order) ? SORT_DESC : SORT_ASC;
+		return [$this->getColumnName() => $order];
 	}
 
 	/**
@@ -163,11 +173,13 @@ class BaseField
 	/**
 	 * Get condition.
 	 *
+	 * @param string|null $operator
+	 *
 	 * @return array|bool
 	 */
-	public function getCondition()
+	public function getCondition(?string $operator = null)
 	{
-		$fn = 'operator' . ucfirst($this->operator);
+		$fn = 'operator' . ucfirst($operator ?? $this->operator);
 		if (method_exists($this, $fn)) {
 			Log::trace("Entering to $fn in " . __CLASS__);
 			return $this->{$fn}();
@@ -183,13 +195,18 @@ class BaseField
 	 */
 	public function operatorA()
 	{
-		if (false !== strpos($this->getValue(), '*')) {
-			return ['like', $this->getColumnName(), str_replace('*', '%', "%{$this->getValue()}%"), false];
-		}
-		if (false !== strpos($this->getValue(), '_')) {
-			return ['like', $this->getColumnName(), "%{$this->getValue()}%", false];
-		}
-		return $this->operatorC();
+		return $this->getCondition($this->getOperator());
+	}
+
+	/**
+	 * Search for a specified pattern in a column.
+	 * Wildcard - asterisk.
+	 *
+	 * @return array
+	 */
+	public function operatorWca()
+	{
+		return ['like', $this->getColumnName(), str_replace('*', '%', "%{$this->getValue()}%"), false];
 	}
 
 	/**
@@ -239,7 +256,8 @@ class BaseField
 	 */
 	public function operatorN()
 	{
-		return ['<>', $this->getColumnName(), $this->getValue()];
+		$value = $this->getValue();
+		return [(\is_array($value) ? 'not in' : '<>'), $this->getColumnName(), $value];
 	}
 
 	/**
@@ -295,5 +313,22 @@ class BaseField
 	{
 		$this->fullColumnName = null;
 		$this->tableName = null;
+	}
+
+	/**
+	 * Gets real operator.
+	 *
+	 * @return string
+	 */
+	public function getOperator()
+	{
+		$operator = $this->operator;
+		if ('a' === $this->operator) {
+			$operator = 'c';
+			if (false !== strpos($this->getValue(), '*')) {
+				$operator = 'wca';
+			}
+		}
+		return $operator;
 	}
 }

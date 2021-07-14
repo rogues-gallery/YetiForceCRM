@@ -5,7 +5,7 @@
  * @package Model
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Faq_Module_Model extends Vtiger_Module_Model
@@ -15,7 +15,11 @@ class Faq_Module_Model extends Vtiger_Module_Model
 	 */
 	public function getKnowledgeBaseViewName()
 	{
-		return 'KnowledgeBase';
+		$defaultView = 'KnowledgeBase';
+		if (\App\RequestUtil::getBrowserInfo()->ie) {
+			$defaultView = 'List';
+		}
+		return $defaultView;
 	}
 
 	/**
@@ -32,12 +36,14 @@ class Faq_Module_Model extends Vtiger_Module_Model
 	public function getSideBarLinks($linkParams)
 	{
 		$links = parent::getSideBarLinks($linkParams);
-		$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
-			'linktype' => 'SIDEBARLINK',
-			'linklabel' => 'LBL_VIEW_KNOWLEDGE_BASE',
-			'linkurl' => $this->getKnowledgeBaseViewUrl(),
-			'linkicon' => 'fas fa-book-open',
-		]);
+		if (!\App\RequestUtil::getBrowserInfo()->ie) {
+			$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
+				'linktype' => 'SIDEBARLINK',
+				'linklabel' => 'LBL_VIEW_KNOWLEDGE_BASE',
+				'linkurl' => $this->getKnowledgeBaseViewUrl(),
+				'linkicon' => 'fas fa-book-open',
+			]);
+		}
 		return $links;
 	}
 }

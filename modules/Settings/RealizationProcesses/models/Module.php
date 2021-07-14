@@ -4,7 +4,7 @@
  * Settings RealizationProcesses module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_RealizationProcesses_Module_Model extends Settings_Vtiger_Module_Model
 {
@@ -23,7 +23,7 @@ class Settings_RealizationProcesses_Module_Model extends Settings_Vtiger_Module_
 			$moduleName = App\Module::getModuleName($moduleId);
 			$return[$moduleName]['id'] = $moduleId;
 			$status = \App\Json::decode(html_entity_decode($row['status_indicate_closing']));
-			if (!is_array($status)) {
+			if (!\is_array($status)) {
 				$status = [$status];
 			}
 			$return[$moduleName]['status'] = $status;
@@ -38,6 +38,9 @@ class Settings_RealizationProcesses_Module_Model extends Settings_Vtiger_Module_
 
 	/**
 	 * Update status.
+	 *
+	 * @param mixed $moduleId
+	 * @param mixed $status
 	 *
 	 * @return - array of status
 	 */

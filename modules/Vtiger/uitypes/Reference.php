@@ -11,9 +11,7 @@
 
 class Vtiger_Reference_UIType extends Vtiger_Base_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
 		if (empty($value)) {
@@ -22,17 +20,13 @@ class Vtiger_Reference_UIType extends Vtiger_Base_UIType
 		return (int) $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDbConditionBuilderValue($value, string $operator)
 	{
 		return \App\Purifier::decodeHtml($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, $isUserFormat = false)
 	{
 		if (empty($value) || isset($this->validate[$value])) {
@@ -54,79 +48,103 @@ class Vtiger_Reference_UIType extends Vtiger_Base_UIType
 	/**
 	 * Function to get the Display Value, for the current field type with given DB Insert Value.
 	 *
-	 * @param <Object> $value
+	 * @param int $value
 	 *
-	 * @return <Object>
+	 * @return Vtiger_Module_Model|null
 	 */
-	public function getReferenceModule($value)
+	public function getReferenceModule($value): ?Vtiger_Module_Model
 	{
 		$fieldModel = $this->getFieldModel();
 		$referenceModuleList = $fieldModel->getReferenceList();
 		$referenceEntityType = \App\Record::getType($value);
-		if (!empty($referenceModuleList) && in_array($referenceEntityType, $referenceModuleList)) {
+		if (!empty($referenceModuleList) && \in_array($referenceEntityType, $referenceModuleList)) {
 			return Vtiger_Module_Model::getInstance($referenceEntityType);
-		} elseif (!empty($referenceModuleList) && in_array('Users', $referenceModuleList)) {
+		}
+		if (!empty($referenceModuleList) && \in_array('Users', $referenceModuleList)) {
 			return Vtiger_Module_Model::getInstance('Users');
 		}
 		return null;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
 	{
-		$referenceModule = $this->getReferenceModule($value);
-		if (!$referenceModule || empty($value)) {
+		if (empty($value) || !($referenceModule = $this->getReferenceModule($value))) {
 			return '';
 		}
-		$referenceModuleName = $referenceModule->get('name');
-		if ($referenceModuleName === 'Users' || $referenceModuleName === 'Groups') {
+		$referenceModuleName = $referenceModule->getName();
+
+		if ('Users' === $referenceModuleName || 'Groups' === $referenceModuleName) {
 			return \App\Fields\Owner::getLabel($value);
 		}
-		$name = \App\Record::getLabel($value);
-		if (is_int($length)) {
-			$name = \App\TextParser::textTruncate($name, $length);
-		} elseif ($length !== true) {
-			$name = App\TextParser::textTruncate($name, \App\Config::main('href_max_length'));
+		if (!\App\Record::isExists($value)) {
+			return '';
 		}
+		$label = \App\Record::getLabel($value, $rawText);
 		if ($rawText || ($value && !\App\Privilege::isPermitted($referenceModuleName, 'DetailView', $value))) {
-			return $name;
+			return $label;
 		}
-		if (\App\Record::getState($value) !== 'Active') {
-			$name = '<s>' . $name . '</s>';
+		if (\is_int($length)) {
+			$label = \App\TextParser::textTruncate($label, $length);
+		} elseif (true !== $length) {
+			$label = App\TextParser::textTruncate($label, \App\Config::main('href_max_length'));
 		}
-		return "<a class='modCT_$referenceModuleName showReferenceTooltip js-popover-tooltip--record' href='index.php?module=$referenceModuleName&view=" . $referenceModule->getDetailViewName() . "&record=$value' title='" . App\Language::translateSingularModuleName($referenceModuleName) . "'>$name</a>";
+		if ('Active' !== \App\Record::getState($value)) {
+			$label = '<s>' . $label . '</s>';
+		}
+		$url = "index.php?module={$referenceModuleName}&view={$referenceModule->getDetailViewName()}&record={$value}";
+		if (!empty($this->fullUrl)) {
+			$url = Config\Main::$site_URL . $url;
+		}
+		return "<a class='modCT_$referenceModuleName showReferenceTooltip js-popover-tooltip--record' href='$url'>$label</a>";
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
-		$referenceModuleName = $this->getReferenceModule($value);
-		if ($referenceModuleName === 'Users' || $referenceModuleName === 'Groups') {
+		if (empty($value)) {
+			return '';
+		}
+		if (($referenceModule = $this->getReferenceModule($value)) && ('Users' === $referenceModule->getName() || 'Groups' === $referenceModule->getName())) {
 			return \App\Fields\Owner::getLabel($value);
 		}
 		return \App\Record::getLabel($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewValue($value, $recordModel = false)
 	{
 		return (int) $value;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
+	public function getApiDisplayValue($value, Vtiger_Record_Model $recordModel)
+	{
+		if (empty($value) || !($referenceModule = $this->getReferenceModule($value))) {
+			return '';
+		}
+		$referenceModuleName = $referenceModule->getName();
+		if ('Users' === $referenceModuleName || 'Groups' === $referenceModuleName) {
+			return \App\Fields\Owner::getLabel($value);
+		}
+		if (!\App\Record::isExists($value)) {
+			return '';
+		}
+		return [
+			'value' => \App\Record::getLabel($value, true),
+			'record' => $value,
+			'referenceModule' => $referenceModuleName,
+			'state' => \App\Record::getState($value),
+			'isPermitted' => \App\Privilege::isPermitted($referenceModuleName, 'DetailView', $value),
+		];
+	}
+
+	/** {@inheritdoc} */
 	public function getListSearchTemplateName()
 	{
 		$fieldModel = $this->getFieldModel();
 		$fieldName = $fieldModel->getName();
-		if ($fieldName === 'modifiedby') {
+		if ('modifiedby' === $fieldName) {
 			return 'List/Field/Owner.tpl';
 		}
 		if (App\Config::performance('SEARCH_REFERENCE_BY_AJAX')) {
@@ -135,26 +153,20 @@ class Vtiger_Reference_UIType extends Vtiger_Base_UIType
 		return parent::getListSearchTemplateName();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getTemplateName()
 	{
 		return 'Edit/Field/Reference.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getAllowedColumnTypes()
 	{
 		return ['bigint', 'integer', 'smallint'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function  getQueryOperators()
+	/** {@inheritdoc} */
+	public function getQueryOperators()
 	{
 		return ['e', 'n', 's', 'ew', 'c', 'k', 'y', 'ny'];
 	}

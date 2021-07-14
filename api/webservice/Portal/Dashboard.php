@@ -1,12 +1,14 @@
 <?php
 /**
- * Dashboard class.
+ * Dashboard model file.
  *
  * @package Api
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
+ * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
 namespace Api\Portal;
@@ -16,30 +18,24 @@ use App\Language;
 use App\Module;
 
 /**
- * Model dashboard.
+ * Dashboard model class.
  */
 class Dashboard
 {
-	/**
-	 * Module name.
-	 *
-	 * @var string
-	 */
-	public $moduleName;
+	/** @var string Module name. */
+	protected $moduleName;
 
-	/**
-	 * Type of dashboard.
-	 *
-	 * @var int
-	 */
-	public $dashboardType;
+	/** @var int Type of dashboard. */
+	protected $dashboardType;
 
-	/**
-	 * Id application.
-	 *
-	 * @var int
-	 */
-	public $application;
+	/** @var int Id application. */
+	protected $application;
+
+	/** @var string[] Id application. */
+	public static $supportedWidgetsTypes = [
+		'Mini List' => 'getMiniList',
+		'ChartFilter' => 'getChartFilter',
+	];
 
 	/**
 	 * Function to get instance.
@@ -47,6 +43,8 @@ class Dashboard
 	 * @param string $moduleName
 	 * @param int    $dashboardType
 	 * @param int    $application
+	 *
+	 * @return self
 	 */
 	public static function getInstance(string $moduleName, int $dashboardType, int $application): self
 	{
@@ -58,13 +56,35 @@ class Dashboard
 	}
 
 	/**
+	 * Gets tabs.
+	 *
+	 * @return array
+	 */
+	public function getTabs(): array
+	{
+		$tabs = [];
+		$dataReader = (new \App\Db\Query())->select(['u_#__dashboard_type.*'])->from('u_#__dashboard_type')
+			->innerJoin('vtiger_module_dashboard_blocks', 'u_#__dashboard_type.dashboard_id = vtiger_module_dashboard_blocks.dashboard_id')
+			->where(['vtiger_module_dashboard_blocks.authorized' => $this->application])
+			->distinct()->createCommand()->query();
+		while ($dashboard = $dataReader->read()) {
+			$tabs[] = [
+				'name' => \App\Language::translate($dashboard['name'], $this->moduleName),
+				'id' => $dashboard['dashboard_id'],
+				'system' => $dashboard['system']
+			];
+		}
+		return $tabs;
+	}
+
+	/**
 	 * Return data about all added widgets in this dashboard.
 	 *
 	 * @return array
 	 */
-	public function getData()
+	public function getData(): array
 	{
-		$dataReader = (new Query())->select(['vtiger_module_dashboard.*', 'vtiger_links.linklabel'])
+		$query = (new Query())->select(['vtiger_module_dashboard.*', 'vtiger_links.linklabel'])
 			->from('vtiger_module_dashboard')
 			->innerJoin('vtiger_module_dashboard_blocks', 'vtiger_module_dashboard_blocks.id = vtiger_module_dashboard.blockid')
 			->innerJoin('vtiger_links', 'vtiger_links.linkid = vtiger_module_dashboard.linkid')
@@ -72,50 +92,72 @@ class Dashboard
 				'vtiger_module_dashboard_blocks.dashboard_id' => $this->dashboardType,
 				'vtiger_module_dashboard_blocks.tabid' => Module::getModuleId($this->moduleName),
 				'vtiger_module_dashboard_blocks.authorized' => $this->application,
-			])
-			->createCommand()->query();
+			]);
 		$widgets = [];
+		$dataReader = $query->createCommand()->query();
 		while ($row = $dataReader->read()) {
 			$row['linkid'] = $row['id'];
-			if ('Mini List' === $row['linklabel']) {
-				$minilistWidgetModel = new \Vtiger_MiniList_Model();
-				$minilistWidgetModel->setWidgetModel(\Vtiger_Widget_Model::getInstanceFromValues($row));
-				$headers = $records = [];
-				$headerFields = $minilistWidgetModel->getHeaders();
-				foreach ($headerFields as $fieldName => $fieldModel) {
-					$headers[$fieldName] = Language::translate($fieldModel->getFieldLabel(), $fieldModel->getModuleName());
-				}
-				foreach ($minilistWidgetModel->getRecords('all') as $recordModel) {
-					foreach ($headerFields as $fieldName => $fieldModel) {
-						$records[$recordModel->getId()][$fieldName] = $recordModel->getDisplayValue($fieldName, $recordModel->getId(), true);
-					}
-				}
-				$widgets[] = [
-					'type' => $row['linklabel'],
-					'data' => [
-						'title' => \App\Language::translate($minilistWidgetModel->getTitle(), $minilistWidgetModel->getTargetModule()),
-						'modulename' => $minilistWidgetModel->getTargetModule(),
-						'headers' => $headers,
-						'records' => $records
-					]
-				];
-			} elseif ('ChartFilter' == $row['linklabel']) {
-				$chartFilterWidgetModel = new \Vtiger_ChartFilter_Model();
-				$chartFilterWidgetModel->setWidgetModel(\Vtiger_Widget_Model::getInstanceFromValues($row));
-				$widgets[] = [
-					'type' => $row['linklabel'],
-					'data' => [
-						'title' => $chartFilterWidgetModel->getTitle(),
-						'modulename' => $chartFilterWidgetModel->getTargetModule(),
-						'stacked' => $chartFilterWidgetModel->isStacked() ? 1 : 0,
-						'colorsFromDividingField' => $chartFilterWidgetModel->areColorsFromDividingField() ? 1 : 0,
-						'filterIds' => $chartFilterWidgetModel->getFilterIds(),
-						'typeChart' => $chartFilterWidgetModel->getType(),
-						'widgetData' => $chartFilterWidgetModel->getChartData(),
-					]
-				];
+			if (isset(self::$supportedWidgetsTypes[$row['linklabel']])) {
+				$widgets[] = $this->{self::$supportedWidgetsTypes[$row['linklabel']]}($row);
 			}
 		}
 		return $widgets;
+	}
+
+	/**
+	 * Get mini list widget data.
+	 *
+	 * @param array $row
+	 *
+	 * @return array
+	 */
+	public function getMiniList(array $row): array
+	{
+		$widgetModel = new \Vtiger_MiniList_Model();
+		$widgetModel->setWidgetModel(\Vtiger_Widget_Model::getInstanceFromValues($row));
+		$headers = $records = [];
+		$headerFields = $widgetModel->getHeaders();
+		foreach ($headerFields as $fieldName => $fieldModel) {
+			$headers[$fieldName] = Language::translate($fieldModel->getFieldLabel(), $fieldModel->getModuleName());
+		}
+		foreach ($widgetModel->getRecords('all') as $recordModel) {
+			foreach ($headerFields as $fieldName => $fieldModel) {
+				$records[$recordModel->getId()][$fieldName] = $recordModel->getDisplayValue($fieldName, $recordModel->getId(), true);
+			}
+		}
+		return [
+			'type' => $row['linklabel'],
+			'data' => [
+				'title' => \App\Language::translate($widgetModel->getTitle(), $widgetModel->getTargetModule()),
+				'modulename' => $widgetModel->getTargetModule(),
+				'headers' => $headers,
+				'records' => $records
+			]
+		];
+	}
+
+	/**
+	 * Get chart filter widget data.
+	 *
+	 * @param array $row
+	 *
+	 * @return array
+	 */
+	public function getChartFilter(array $row): array
+	{
+		$widgetModel = new \Vtiger_ChartFilter_Model();
+		$widgetModel->setWidgetModel(\Vtiger_Widget_Model::getInstanceFromValues($row));
+		return [
+			'type' => $row['linklabel'],
+			'data' => [
+				'title' => $widgetModel->getTitle(),
+				'modulename' => $widgetModel->getTargetModule(),
+				'stacked' => $widgetModel->isStacked() ? 1 : 0,
+				'colorsFromDividingField' => $widgetModel->areColorsFromDividingField() ? 1 : 0,
+				'filterIds' => $widgetModel->getFilterIds(),
+				'typeChart' => $widgetModel->getType(),
+				'widgetData' => $widgetModel->getChartData(),
+			]
+		];
 	}
 }

@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Calendar-QuickCreateEvents form-row px-0 mx-0 col-12 eventsTable">
 		{foreach from=$DATES item=DATE name="iteration"}
@@ -55,7 +55,7 @@
 									</a>
 									{if $SHOW_COMPANIES}
 										<div class="cut-string">
-											<span class="calIcon userIcon-{$EVENT['linkm']}"></span>
+											<span class="calIcon yfm-{$EVENT['linkm']}"></span>
 											{$EVENT['linkl']}
 										</div>
 									{/if}

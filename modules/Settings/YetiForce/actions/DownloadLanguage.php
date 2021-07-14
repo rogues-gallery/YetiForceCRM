@@ -6,7 +6,7 @@
  * @package   Settings
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Poradzewski <t.poradzewski@yetiforce.com>
  */
 
@@ -22,7 +22,7 @@ class Settings_YetiForce_DownloadLanguage_Action extends Settings_Vtiger_Save_Ac
 	 *
 	 * @throws \App\Exceptions\NoPermitted
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$result = \App\Installer\Languages::download($request->getByType('prefix'));
 		$message = \App\Language::translate('LBL_DOWNLOADED_LANGUAGE', $request->getModule(false));

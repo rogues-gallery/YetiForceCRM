@@ -3,25 +3,23 @@
 /**
  * UIType ReferenceLink Field Class.
  *
+ * @package   UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Vtiger_ReferenceLink_UIType extends Vtiger_Reference_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getReferenceList()
 	{
-		$modules = \App\ModuleHierarchy::getModulesByLevel();
+		$modules = \App\ModuleHierarchy::getModulesByLevel(0);
 
 		return array_keys($modules);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getListSearchTemplateName()
 	{
 		if (App\Config::performance('SEARCH_REFERENCE_BY_AJAX')) {
@@ -30,18 +28,14 @@ class Vtiger_ReferenceLink_UIType extends Vtiger_Reference_UIType
 		return Vtiger_Base_UIType::getListSearchTemplateName();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function isAjaxEditable()
 	{
 		return false;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function  getQueryOperators()
+	/** {@inheritdoc} */
+	public function getQueryOperators()
 	{
 		return ['e', 'n', 'l', 'g', 'm', 'h', 'y', 'ny'];
 	}

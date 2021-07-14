@@ -4,7 +4,7 @@
  * Wdiget to show neglected accounts.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 class Accounts_NeglectedAccounts_Dashboard extends Vtiger_IndexAjax_View
@@ -51,7 +51,7 @@ class Accounts_NeglectedAccounts_Dashboard extends Vtiger_IndexAjax_View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$currentUser = \App\User::getCurrentUserModel();
 		$moduleName = $request->getModule();
@@ -63,7 +63,7 @@ class Accounts_NeglectedAccounts_Dashboard extends Vtiger_IndexAjax_View
 		}
 		$accessibleUsers = \App\Fields\Owner::getInstance($moduleName, $currentUser)->getAccessibleUsersForModule();
 		$accessibleGroups = \App\Fields\Owner::getInstance($moduleName, $currentUser)->getAccessibleGroupForModule();
-		if ($user == 'all') {
+		if ('all' == $user) {
 			$user = array_keys($accessibleUsers);
 		}
 		$page = $request->getInteger('page');

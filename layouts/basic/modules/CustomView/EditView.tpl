@@ -12,7 +12,7 @@
 {strip}
 	<div class="tpl-CustomView-EditView modal fade js-filter-modal__container" data-js="container">
 		<div class="modal-dialog modal-fullscreen">
-			<div class="modal-content pl-3 pr-3">
+			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-title">
 						<span class="fas fa-filter fa-sm mr-1"></span>
@@ -26,6 +26,9 @@
 					{if !empty($RECORD_ID)}
 						<input type="hidden" name="record" id="record" value="{$RECORD_ID}"/>
 					{/if}
+					{if !empty($MID)}
+						<input type="hidden" name="mid" value="{$MID}"/>
+					{/if}
 					<input type="hidden" name="module" value="{$MODULE_NAME}"/>
 					<input type="hidden" name="action" value="Save"/>
 					<input type="hidden" name="source_module" value="{$SOURCE_MODULE}"/>
@@ -34,12 +37,14 @@
 					<input type="hidden" id="status" name="status" value="{$CV_PRIVATE_VALUE}"/>
 					<input type="hidden" id="sourceModule" value="{$SOURCE_MODULE}"/>
 					{assign var=SELECTED_FIELDS value=$CUSTOMVIEW_MODEL->getSelectedFields()}
-					<div class="childrenMarginTopX">
+					<div class="modal-body">
 						<div class="js-toggle-panel c-panel" data-js="click">
-							<div class="blockHeader  c-panel__header">
-					<span class="iconToggle fas fa-chevron-down fa-xs m-1 mt-2" data-hide="fas fa-chevron-right"
-						  data-show="fas fa-chevron-down"></span>
-								<h5 class="">{\App\Language::translate('LBL_BASIC_DETAILS',$MODULE_NAME)}</h5>
+							<div class="blockHeader c-panel__header py-2">
+								<span class="iconToggle fas fa-chevron-down fa-xs m-1 mt-2" data-hide="fas fa-chevron-right" data-show="fas fa-chevron-down"></span>
+								<h5>
+									<span class="fas fa-columns mr-2" aria-hidden="true"></span>
+									{\App\Language::translate('LBL_BASIC_DETAILS',$MODULE_NAME)}
+								</h5>
 							</div>
 							<div class="c-panel__body py-1">
 								<div class="form-group">
@@ -55,9 +60,7 @@
 									</div>
 								</div>
 								<div class="form-group">
-									<label class=" col-form-label"><span
-												class="redColor">*</span> {\App\Language::translate('LBL_CHOOSE_COLUMNS',$MODULE_NAME)}
-										({\App\Language::translate('LBL_MAX_NUMBER_FILTER_COLUMNS')}):</label>
+									<label class=" col-form-label"><span class="redColor">*</span> {\App\Language::translate('LBL_CHOOSE_COLUMNS',$MODULE_NAME)}</label>
 									<div class="columnsSelectDiv col-md-12">
 										{assign var=MANDATORY_FIELDS value=[]}
 										<div class="">
@@ -126,11 +129,14 @@
 										<label class="float-left col-form-label ">{\App\Language::translate('LBL_COLOR_VIEW',$MODULE_NAME)}
 											:</label>
 										<div class="col-md-7">
+											{assign var=COLOR value=$CUSTOMVIEW_MODEL->get('color')}
 											<div class="input-group js-color-picker" data-js="color-picker">
-												<input type="text" class="form-control" name="color"
-													   value="{$CUSTOMVIEW_MODEL->get('color')}"/>
+												<input type="text" class="form-control js-color-picker__field" name="color"
+													   value="{$COLOR}"/>
 												<div class="input-group-append">
-													<div class="input-group-text colorpicker-input-addon"><i></i></div>
+													<div class="input-group-text" >
+														<span class="c-circle c-circle--small js-color-picker__color" style="background-color: {$COLOR}"></span>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -139,30 +145,32 @@
 							</div>
 						</div>
 						<div class="js-toggle-panel c-panel" data-js="click">
-							<div class="blockHeader c-panel__header">
-					<span class="iconToggle fas fa-chevron-right fa-xs m-1 mt-2" data-hide="fas fa-chevron-right"
-						  data-show="fas fa-chevron-down"></span>
-								<h5 class="">{\App\Language::translate('LBL_DESCRIPTION_INFORMATION',$MODULE_NAME)}</h5>
+							<div class="blockHeader c-panel__header py-2">
+								<span class="iconToggle fas fa-chevron-right fa-xs m-1 mt-2" data-hide="fas fa-chevron-right" data-show="fas fa-chevron-down"></span>
+								<h5>
+									<span class="yfi-company-detlis mr-2" aria-hidden="true"></span>
+									{\App\Language::translate('LBL_DESCRIPTION_INFORMATION',$MODULE_NAME)}
+								</h5>
 							</div>
 							<div class="c-panel__body py-1 d-none">
-								<textarea name="description" id="description" class="js-editor"
-										  data-js="ckeditor">{$CUSTOMVIEW_MODEL->get('description')}</textarea>
+								<textarea name="description" id="description" class="js-editor" data-js="ckeditor">{$CUSTOMVIEW_MODEL->get('description')}</textarea>
 							</div>
 						</div>
 						<div class="js-toggle-panel c-panel" data-js="click">
-							<div class="blockHeader c-panel__header">
-					<span class="iconToggle fas fa-chevron-right fa-xs m-1 mt-2" data-hide="fas fa-chevron-right"
-						  data-show="fas fa-chevron-down"></span>
-								<h5 class="">{\App\Language::translate('LBL_FIND_DUPLICATES',$MODULE_NAME)}</h5>
+							<div class="blockHeader c-panel__header py-2">
+								<span class="iconToggle fas fa-chevron-right fa-xs m-1 mt-2" data-hide="fas fa-chevron-right" data-show="fas fa-chevron-down"></span>
+								<h5>
+									<span class="mdi mdi-content-duplicate mr-2" aria-hidden="true"></span>
+									{\App\Language::translate('LBL_FIND_DUPLICATES',$MODULE_NAME)}
+								</h5>
+
 							</div>
 							<div class="c-panel__body py-1 d-none">
 								<input type="hidden" name="duplicatefields" value="">
-								<button type="button" class="btn btn-success btn-sm js-duplicate-add-field mb-1"
-										data-js="click"><span
-											class="fa fa-plus mr-1"></span>{\App\Language::translate('LBL_ADD_FIELD',$MODULE_NAME)}
+								<button type="button" class="btn btn-success btn-sm js-duplicate-add-field mb-1" data-js="click">
+									<span class="fa fa-plus mr-1"></span>{\App\Language::translate('LBL_ADD_FIELD',$MODULE_NAME)}
 								</button>
-								<div class="js-duplicates-field-template js-duplicates-row d-none"
-									 data-js="container|clone">
+								<div class="js-duplicates-field-template js-duplicates-row d-none" data-js="container|clone">
 									{include file=\App\Layout::getTemplatePath('DuplicateRow.tpl', $MODULE_NAME)}
 								</div>
 								<div class="js-duplicates-container" data-js="container">
@@ -175,11 +183,12 @@
 							</div>
 						</div>
 						<div class="js-toggle-panel c-panel" data-js="click">
-							<div class="blockHeader c-panel__header">
-					<span class="iconToggle fas fa-chevron-down fa-xs m-1 mt-2" data-hide="fas fa-chevron-right"
-						  data-show="fas fa-chevron-down"></span>
-								<h5 class="">{\App\Language::translate('LBL_CHOOSE_FILTER_CONDITIONS', $MODULE_NAME)}
-									:</h5>
+							<div class="blockHeader c-panel__header py-2">
+								<span class="iconToggle fas fa-chevron-down fa-xs m-1 mt-2" data-hide="fas fa-chevron-right" data-show="fas fa-chevron-down"></span>
+								<h5>
+									<span class="yfi yfi-users-2 mr-2"></span>
+									{\App\Language::translate('LBL_CHOOSE_FILTER_CONDITIONS', $MODULE_NAME)}:
+								</h5>
 							</div>
 							<div class="c-panel__body py-1">
 								<div class="filterConditionsDiv">
@@ -192,11 +201,10 @@
 							</div>
 						</div>
 					</div>
-					<div class="modal-footer d-flex flex-md-row flex-column justify-content-start px-0">
-						<div class="w-75 btn-group js-filter-preferences btn-group-toggle flex-wrap align-items-stretch mt-1  c-btn-block-sm-down pl-1 flex-xl-row flex-column"
+					<div class="modal-footer d-flex flex-md-row flex-column justify-content-start">
+						<div class="w-75 btn-group js-filter-preferences btn-group-toggle flex-wrap align-items-stretch m-0 mt-1 c-btn-block-sm-down pl-1 flex-xl-row flex-column"
 							 data-toggle="buttons" data-js="change">
-							<label class="c-btn-block-sm-down btn btn-outline-dark{if $CUSTOMVIEW_MODEL->isDefault()} active{/if}"
-								   title="{\App\Language::translate('LBL_SET_AS_DEFAULT',$MODULE_NAME)}">
+							<label class="c-btn-block-sm-down btn btn-outline-dark{if $CUSTOMVIEW_MODEL->isDefault()} active{/if}" title="{\App\Language::translate('LBL_SET_AS_DEFAULT',$MODULE_NAME)}">
 								<input name="setdefault" value="1" type="checkbox"
 									   class="js-filter-preference"
 									   data-js="change"
@@ -218,14 +226,15 @@
 									  data-check="fa-eye" data-unchecked="fa-eye-slash"></span>
 								{\App\Language::translate('LBL_SET_AS_PUBLIC',$MODULE_NAME)}
 							</label>
-							<label class="c-btn-block-sm-down mt-1 mt-sm-0 btn btn-outline-dark{if $CUSTOMVIEW_MODEL->isFeatured(true)} active{/if}"
+							<label class="c-btn-block-sm-down mt-1 mt-sm-0 btn btn-outline-dark{if $CUSTOMVIEW_MODEL->isFeatured()} active{/if}"
 								   title="{\App\Language::translate('LBL_FEATURED',$MODULE_NAME)}">
 								<input name="featured" value="1" type="checkbox"
 									   class="js-filter-preference"
 									   data-js="change" id="featured"
-										{if $CUSTOMVIEW_MODEL->isFeatured(true)} checked="checked"{/if}
+										{if $CUSTOMVIEW_MODEL->isFeatured()} checked="checked"{/if}
+										{if !$CUSTOMVIEW_MODEL->isFeaturedEditable()} disabled="disabled" {/if}
 									   autocomplete="off"/>
-								<span class="{if $CUSTOMVIEW_MODEL->isFeatured(true)}fas{else}far{/if} fa-star mr-1"
+								<span class="{if $CUSTOMVIEW_MODEL->isFeatured()}fas{else}far{/if} fa-star mr-1"
 									  data-check="fas" data-unchecked="far"></span>
 								{\App\Language::translate('LBL_FEATURED',$MODULE_NAME)}
 							</label>
@@ -244,8 +253,7 @@
 								{\App\Language::translate('LBL_LIST_IN_METRICS',$MODULE_NAME)}
 							</label>
 						</div>
-						<div class="w-25 d-flex flex-wrap flex-md-nowrap justify-content-end  pr-0 mt-1  c-btn-block-sm-down ml-0 pr-1 pr-md-0">
-
+						<div class="w-25 d-flex flex-wrap flex-md-nowrap justify-content-end m-0 pr-0 mt-1  c-btn-block-sm-down ml-0 pr-1 pr-md-0">
 							<button class="btn btn-success mr-md-1" type="submit">
 								<span class="fa fa-check u-mr-5px"></span>{\App\Language::translate('LBL_SAVE', $MODULE_NAME)}
 							</button>

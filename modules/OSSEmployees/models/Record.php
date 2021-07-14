@@ -4,7 +4,7 @@
  * OSSEmployees record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSEmployees_Record_Model extends Vtiger_Record_Model
 {
@@ -19,9 +19,9 @@ class OSSEmployees_Record_Model extends Vtiger_Record_Model
 		$hierarchy = $focus->getEmployeeHierarchy($this->getId());
 		foreach ($hierarchy['entries'] as $employeeId => $employeeInfo) {
 			preg_match('/<a href="+/', $employeeInfo[0], $matches);
-			if ($matches !== null) {
+			if (null !== $matches) {
 				preg_match('/[.\s]+/', $employeeInfo[0], $dashes);
-				preg_match("/<a(.*)>(.*)<\/a>/i", $employeeInfo[0], $name);
+				preg_match('/<a(.*)>(.*)<\\/a>/i', $employeeInfo[0], $name);
 				if (empty($name[2])) {
 					$label = $employeeInfo[0];
 				} else {

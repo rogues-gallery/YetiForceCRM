@@ -7,13 +7,13 @@
  * @package Config
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 
 namespace Config;
 
 /**
- * Configuration Class.
+ * Configuration file: Config\Security.
  */
 class Security
 {
@@ -48,7 +48,13 @@ class Security
 	public static $PERMITTED_BY_ADVANCED_PERMISSION = true;
 
 	/** Permitted by private field. */
-	public static $PERMITTED_BY_PRIVATE_FIELD = false;
+	public static $PERMITTED_BY_PRIVATE_FIELD = true;
+
+	/** List of modules to which access is based on the record creation. */
+	public static $permittedModulesByCreatorField = [];
+
+	/** Permission level access based on the record creation */
+	public static $permittedWriteAccessByCreatorField = false;
 
 	/**
 	 * Configuration of the permission mechanism on records list.
@@ -72,35 +78,133 @@ class Security
 	public static $EMAIL_FIELD_RESTRICTED_DOMAINS_ALLOWED = [];
 
 	/** List of modules excluded from restricted domains validation. */
-	public static $EMAIL_FIELD_RESTRICTED_DOMAINS_EXCLUDED = [];
+	public static $EMAIL_FIELD_RESTRICTED_DOMAINS_EXCLUDED = ['OSSEmployees', 'Users'];
 
 	/** Remember user credentials */
 	public static $LOGIN_PAGE_REMEMBER_CREDENTIALS = false;
 
 	/** Interdependent reference fields */
-	public static $FIELDS_REFERENCES_DEPENDENT = false;
+	public static $fieldsReferencesDependent = false;
+
+	/** Lifetime session (in seconds) */
+	public static $maxLifetimeSession = 900;
+
+	/**
+	 * Specifies the lifetime of the cookie in seconds which is sent to the browser. The value 0 means 'until the browser is closed.'
+	 * How much time can someone be logged in to the browser. Defaults to 0.
+	 */
+	public static $maxLifetimeSessionCookie = 0;
+
+	/** Update the current session id with a newly generated one after login and logout */
+	public static $loginSessionRegenerate = true;
+
+	/**
+	 * Same-site cookie attribute allows a web application to advise the browser that cookies should only be sent if the request originates from the website the cookie came from.
+	 * Values: None, Lax, Strict
+	 */
+	public static $cookieSameSite = 'Strict';
+
+	/**
+	 * Force the use of https only for cookie.
+	 * Values: true, false, null
+	 */
+	public static $cookieForceHttpOnly = true;
+
+	/** Maximum session lifetime from the time it was created (in minutes) */
+	public static $apiLifetimeSessionCreate = 1440;
+
+	/** Maximum session lifetime since the last modification (in minutes) */
+	public static $apiLifetimeSessionUpdate = 240;
+
+	/**
+	 * User authentication mode.
+	 *
+	 * @see \Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE
+	 * Available values:
+	 * TOTP_OFF - 2FA TOTP is checking off
+	 * TOTP_OPTIONAL - It is defined by the user
+	 * TOTP_OBLIGATORY - It is obligatory.
+	 */
+	public static $USER_AUTHY_MODE = 'TOTP_OPTIONAL';
+
+	/**
+	 * IP address whitelisting.
+	 * Allow access without 2FA.
+	 */
+	public static $whitelistIp2fa = [];
+
+	/** Cache lifetime for SensioLabs security checker. */
+	public static $CACHE_LIFETIME_SENSIOLABS_SECURITY_CHECKER = 3600;
+
+	/** Force site access to always occur under SSL (https) for selected areas. You will not be able to access selected areas under non-ssl. Note, you must have SSL enabled on your server to utilise this option. */
+	public static $forceHttpsRedirection = false;
+
+	/** Redirect to proper url when wrong url is entered. */
+	public static $forceUrlRedirection = true;
 
 	/**
 	 * HTTP Public-Key-Pins (HPKP) pin-sha256 For HPKP to work properly at least 2 keys are needed.
 	 * https://scotthelme.co.uk/hpkp-http-public-key-pinning/, https://sekurak.pl/mechanizm-http-public-key-pinning/.
 	 */
-	public static $HPKP_KEYS = [];
+	public static $hpkpKeysHeader = [];
 
-	/** Content Security Policy */
-	public static $CSP_ACTIVE = true;
+	/** Enable CSRF protection */
+	public static $csrfActive = true;
+
+	/** Enable verified frame protection, used in CSRF */
+	public static $csrfFrameBreaker = true;
+
+	/** Which window should be verified? It is used to check if the system is loaded in the frame, used in CSRF. */
+	public static $csrfFrameBreakerWindow = 'top';
+
+	/** HTTP Content Security Policy response header allows website administrators to control resources the user agent is allowed to load for a given page */
+	public static $cspHeaderActive = true;
+
+	/** HTTP Content Security Policy time interval for generating a new nonce token */
+	public static $cspHeaderTokenTime = '5 minutes';
+
+	/** Allowed domains for loading images, used in CSP. */
+	public static $allowedImageDomains = [];
+
+	/** Allowed domains for loading frame, used in CSP and validate referer. */
+	public static $allowedFrameDomains = [];
+
+	/** Allowed domains for loading script, used in CSP. */
+	public static $allowedScriptDomains = [];
+
+	/** Allowed domains which can be used as the target of a form submissions from a given context, used in CSP. */
+	public static $allowedFormDomains = ['https://www.paypal.com'];
+
+	/** Generally allowed domains, used in CSP. */
+	public static $generallyAllowedDomains = [];
 
 	/** List of allowed domains for fields with HTML support */
-	public static $PURIFIER_ALLOWED_DOMAINS = [];
+	public static $purifierAllowedDomains = [];
 
-	/** Lifetime session (in seconds) */
-	public static $MAX_LIFETIME_SESSION = 21600;
+	/** Do you want all connections to be made using a proxy? */
+	public static $proxyConnection = false;
 
-	/**
-	 * User authentication mode.
-	 * @see \Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE Available values.
-	 */
-	public static $USER_AUTHY_MODE = 'TOTP_OPTIONAL';
+	/** Proxy protocol: http, https, tcp */
+	public static $proxyProtocol = '';
 
-	/** Cache lifetime for SensioLabs security checker. */
-	public static $CACHE_LIFETIME_SENSIOLABS_SECURITY_CHECKER = 3600;
+	/** Proxy host */
+	public static $proxyHost = '';
+
+	/** Proxy port */
+	public static $proxyPort = 0;
+
+	/** Proxy login */
+	public static $proxyLogin = '';
+
+	/** Proxy password */
+	public static $proxyPassword = '';
+
+	/** @var bool Ask admin about visit purpose */
+	public static $askAdminAboutVisitPurpose = true;
+
+	/** @var bool Ask admin about switch users purpose */
+	public static $askAdminAboutVisitSwitchUsers = true;
+
+	/** @var bool Ask super user about visit purpose, only for the settings part */
+	public static $askSuperUserAboutVisitPurpose = true;
 }

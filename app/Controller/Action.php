@@ -1,18 +1,26 @@
 <?php
+/**
+ * Abstract action controller file.
+ *
+ * @package   Controller
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ */
 
 namespace App\Controller;
 
 /**
  * Abstract action controller class.
- *
- * @package   Controller
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 abstract class Action extends Base
 {
+	/**
+	 * {@inheritdoc}
+	 */
+	public $csrfActive = false;
+
 	/**
 	 * Process action.
 	 *

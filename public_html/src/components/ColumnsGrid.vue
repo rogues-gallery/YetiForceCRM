@@ -3,7 +3,7 @@
  * ColumnsGrid component
  *
  * @description Records columns component
- * @license YetiForce Public License 3.0
+ * @license YetiForce Public License 4.0
  * @author Tomasz Poradzewski <t.poradzewski@yetiforce.com>
  */
 -->
@@ -17,7 +17,10 @@
     }"
   >
     <template v-for="relatedBlock in columnBlocks">
-      <div class="columns-grid__block" :key="relatedBlock">
+      <div
+        :key="relatedBlock"
+        class="columns-grid__block"
+      >
         <slot :relatedBlock="relatedBlock"></slot>
       </div>
     </template>

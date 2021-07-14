@@ -6,6 +6,7 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
+ * Contributor(s): YetiForce Sp. z o.o.
  * *********************************************************************************** */
 
 require_once 'modules/com_vtiger_workflow/WorkflowSchedulerInclude.php';
@@ -55,12 +56,11 @@ class WorkFlowScheduler
 	 *
 	 * @param Workflow $workflow
 	 *
-	 * @return string
+	 * @return int[]
 	 */
-	public function getEligibleWorkflowRecords($workflow)
+	public function getEligibleWorkflowRecords($workflow): array
 	{
 		$query = $this->getWorkflowQuery($workflow);
-
 		return $query->column();
 	}
 
@@ -83,25 +83,27 @@ class WorkFlowScheduler
 
 		$scheduledWorkflows = $vtWorflowManager->getScheduledWorkflows($currentTimestamp);
 		foreach ($scheduledWorkflows as &$workflow) {
-			$tm = new VTTaskManager();
-			$tasks = $tm->getTasksForWorkflow($workflow->id);
-			if ($tasks) {
-				$records = $this->getEligibleWorkflowRecords($workflow);
-				foreach ($records as &$recordId) {
-					$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
-					$data = $recordModel->getData();
-					foreach ($tasks as $task) {
-						if ($task->active) {
-							$trigger = $task->trigger;
-							if (null !== $trigger) {
-								$delay = strtotime($data[$trigger['field']]) + $trigger['days'] * 86400;
+			$workflowRecord = Settings_Workflows_Record_Model::getInstanceFromWorkflowObject($workflow);
+			$taskRecords = $workflowRecord->getTasks();
+			if ($taskRecords) {
+				if ($workflowRecord->getParams('iterationOff')) {
+					foreach ($taskRecords as $taskRecord) {
+						$taskRecord->getTaskObject()->doTask();
+					}
+				} else {
+					foreach ($this->getEligibleWorkflowRecords($workflow) as $recordId) {
+						if (!\App\Record::isExists($recordId)) {
+							continue;
+						}
+						$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+						$data = $recordModel->getData();
+						foreach ($taskRecords as $taskRecord) {
+							if (true === !empty($taskRecord->getTaskObject()->executeImmediately)) {
+								$taskRecord->getTaskObject()->doTask($recordModel);
 							} else {
-								$delay = 0;
-							}
-							if (true === (bool) $task->executeImmediately) {
-								$task->doTask($recordModel);
-							} else {
-								$taskQueue->queueTask($task->id, $recordModel->getId(), $delay);
+								$trigger = $taskRecord->getTaskObject()->trigger;
+								$delay = null !== $trigger ? strtotime($data[$trigger['field']]) + $trigger['days'] * 86400 : 0;
+								$taskQueue->queueTask($taskRecord->getId(), $recordModel->getId(), $delay);
 							}
 						}
 					}
@@ -134,6 +136,8 @@ class WorkFlowScheduler
 			'ends with' => 'ew',
 			'is not' => 'n',
 			'is empty' => 'y',
+			'om' => 'om',
+			'nom' => 'nom',
 			'is not empty' => 'ny',
 			'before' => 'l',
 			'after' => 'g',
@@ -164,14 +168,14 @@ class WorkFlowScheduler
 				$sourceField = '';
 				$operation = $condition['operation'];
 				//Cannot handle this condition for scheduled workflows
-				if ('has changed' === $operation) {
+				if ('has changed' === $operation || 'not has changed' === $operation) {
 					continue;
 				}
 				$value = $condition['value'];
 				if (\in_array($operation, $this->specialDateTimeOperator())) {
 					$value = $this->parseValueForDate($condition);
 				}
-				$groupJoin = $condition['groupjoin'];
+				$groupId = $condition['groupid'] ?? 0;
 				$operator = $conditionMapping[$operation];
 				$fieldName = $condition['fieldname'];
 				$value = html_entity_decode($value);
@@ -188,10 +192,10 @@ class WorkFlowScheduler
 						'relatedField' => $relatedFieldName,
 						'value' => $value,
 						'operator' => $operator,
-						'conditionGroup' => 'and' === $groupJoin,
+						'conditionGroup' => empty($groupId),
 					]);
 				} else {
-					$queryGenerator->addCondition($fieldName, $value, $operator, 'and' === $groupJoin);
+					$queryGenerator->addCondition($fieldName, $value, $operator, empty($groupId));
 				}
 			}
 		}
@@ -272,12 +276,6 @@ class WorkFlowScheduler
 				break;
 			default:
 				break;
-		}
-		if (!\in_array($operation, ['less than days ago', 'in less than', 'less than hours before', 'less than hours later'])) {
-			$value = App\Fields\DateTime::formatToDisplay($value);
-		} else {
-			$dates = explode(',', $value);
-			$value = implode(',', array_map('\App\Fields\Date::formatToDisplay', $dates));
 		}
 		date_default_timezone_set($default_timezone);
 		return $value;

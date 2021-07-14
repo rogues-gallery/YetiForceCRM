@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- /tpl-Settings-LayoutEditor-CreateInventoryFieldsStep2 -->
 	<div class="tpl-Settings-LayoutEditor-CreateInventoryFieldsStep2 modal fade" tabindex="-1" data-js="container">
@@ -24,7 +24,7 @@
 							<div class="col-md-4 col-form-label text-right">
 								{\App\Language::translate('LBL_NAME_FIELD', $QUALIFIED_MODULE)}:
 							</div>
-							<div class="col-md-7 form-control-plaintext">
+							<div class="col-md-7 col-form-label">
 								<b>{\App\Language::translate($FIELD_INSTANCE->getType(), $QUALIFIED_MODULE)}</b>
 							</div>
 						</div>

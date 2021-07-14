@@ -2,8 +2,10 @@
 /**
  * Calendar test class.
  *
+ * @package   Tests
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
  */
 
@@ -44,7 +46,7 @@ class Calendar extends \Tests\Base
 	 */
 	public function testGetPicklistValue()
 	{
-		\App\Db::getInstance()->createCommand()->insert('vtiger_activitytype', ['activitytype' => 'UnitTestCalendar', 'presence' => 1, 'picklist_valueid' => 99999, 'sortorderid' => 99, 'color' => 'A0B584'])->execute();
+		\App\Db::getInstance()->createCommand()->insert('vtiger_activitytype', ['activitytype' => 'UnitTestCalendar', 'presence' => 1,  'sortorderid' => 99, 'color' => 'A0B584'])->execute();
 		\App\Cache::clear();
 		$this->assertGreaterThan(0, (\count(\Settings_Calendar_Module_Model::getPicklistValue())), 'Calendar activity type picklist is empty');
 	}

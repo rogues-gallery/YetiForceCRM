@@ -1,4 +1,5 @@
 <?php
+
  /* +**********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.1
  * ("License"); You may not use this file except in compliance with the License
@@ -25,15 +26,11 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 	}
 
 	/**
-	 * Function gives fields based on the type.
-	 *
-	 * @param string|string[] $type - field type
-	 *
-	 * @return Settings_Picklist_Field_Model[] - list of field models
+	 * {@inheritdoc}
 	 */
-	public function getFieldsByType($type)
+	public function getFieldsByType($type, bool $active = false): array
 	{
-		$fieldModels = parent::getFieldsByType($type);
+		$fieldModels = parent::getFieldsByType($type, $active);
 		$fields = [];
 		foreach ($fieldModels as $fieldName => $fieldModel) {
 			$field = Settings_Picklist_Field_Model::getInstanceFromFieldObject($fieldModel);
@@ -83,8 +80,8 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 			}
 			$row['description'] = $description;
 		}
-		if (in_array('color', $db->getTableSchema($tableName)->getColumnNames())) {
-			$row['color'] = '#E6FAD8';
+		if (\in_array('color', $db->getTableSchema($tableName)->getColumnNames())) {
+			$row['color'] = 'E6FAD8';
 		}
 		$db->createCommand()->insert($tableName, $row)->execute();
 		$picklistId = $db->getLastInsertID($tableName . '_' . $primaryKey . '_seq');
@@ -149,25 +146,26 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 		if ($result) {
 			$dataReader = (new \App\Db\Query())->select(['tablename', 'columnname', 'tabid'])
 				->from('vtiger_field')
-				->where(['and', ['fieldname' => $pickListFieldName], ['presence' => [0, 2]], ['or', ['uitype' => [15, 16, 33]], ['and', ['uitype' => [55]], ['fieldname' => 'salutationtype']]]])
+				->where(['and', ['fieldname' => $pickListFieldName], ['presence' => [0, 2]], ['uitype' => [15, 16, 33]]])
 				->createCommand()->query();
 			while ($row = $dataReader->read()) {
 				$columnName = $row['columnname'];
 				$db->createCommand()->update($row['tablename'], [$columnName => $newValue], [$columnName => $oldValue])->execute();
 				$db->createCommand()->update('vtiger_field', ['defaultvalue' => $newValue], ['defaultvalue' => $oldValue, 'columnname' => $columnName, 'tabid' => $row['tabid']])->execute();
 				$db->createCommand()->update('vtiger_picklist_dependency', ['sourcevalue' => $newValue], ['sourcevalue' => $oldValue, 'sourcefield' => $pickListFieldName, 'tabid' => $row['tabid']])->execute();
+				$moduleName = \App\Module::getModuleName($row['tabid']);
+				\App\Fields\Picklist::clearCache($pickListFieldName, $moduleName);
+				$eventHandler = new App\EventHandler();
+				$eventHandler->setParams([
+					'fieldname' => $pickListFieldName,
+					'oldvalue' => $oldValue,
+					'newvalue' => $newValue,
+					'module' => $moduleName,
+					'id' => $id,
+				]);
+				$eventHandler->trigger('PicklistAfterRename');
 			}
 			$dataReader->close();
-			\App\Fields\Picklist::clearCache($pickListFieldName, $fieldModel->getModuleName());
-			$eventHandler = new App\EventHandler();
-			$eventHandler->setParams([
-				'fieldname' => $pickListFieldName,
-				'oldvalue' => $oldValue,
-				'newvalue' => $newValue,
-				'module' => $fieldModel->getModuleName(),
-				'id' => $id,
-			]);
-			$eventHandler->trigger('PicklistAfterRename');
 			\App\Colors::generate('picklist');
 		}
 		return !empty($result);
@@ -200,7 +198,7 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 	public function remove($pickListFieldName, $valueToDeleteId, $replaceValueId, $moduleName)
 	{
 		$dbCommand = App\Db::getInstance()->createCommand();
-		if (!is_array($valueToDeleteId)) {
+		if (!\is_array($valueToDeleteId)) {
 			$valueToDeleteId = [$valueToDeleteId];
 		}
 		$primaryKey = App\Fields\Picklist::getPickListId($pickListFieldName);
@@ -344,8 +342,10 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 	/**
 	 * Static Function to get the instance of Vtiger Module Model for the given id or name.
 	 *
-	 * @param mixed id or name of the module
-	 * @param mixed $value
+	 * @param int|string $mixed id or name of the module
+	 * @param mixed      $value
+	 *
+	 * @return self
 	 */
 	public static function getInstance($value)
 	{
@@ -362,9 +362,9 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 	 *
 	 * @param vtlib\Module $moduleObj
 	 *
-	 * @return Vtiger_Module_Model instance
+	 * @return self instance
 	 */
-	public static function getInstanceFromModuleObject(vtlib\Module $moduleObj)
+	public static function getInstanceFromModuleObject(vtlib\Module $moduleObj): self
 	{
 		$objectProperties = get_object_vars($moduleObj);
 		$moduleModel = new self();
@@ -372,5 +372,29 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model
 			$moduleModel->{$properName} = $propertyValue;
 		}
 		return $moduleModel;
+	}
+
+	/**
+	 * list of modules in which they appear picklist fields.
+	 *
+	 * @param array $pickListFields
+	 *
+	 * @return array
+	 */
+	public function listModuleInterdependentPickList(array $pickListFields): array
+	{
+		$interdependent = [];
+		$dataReader = (new App\Db\Query())->select(['tabid', 'fieldname'])
+			->from('vtiger_field')
+			->where(['fieldname' => $pickListFields])
+			->createCommand()->query();
+		while ($row = $dataReader->read()) {
+			$moduleName = \App\Module::getModuleName($row['tabid']);
+			$moduleModel = \Vtiger_Module_Model::getInstance($moduleName);
+			if ($moduleModel->isActive() && $moduleModel->getFieldByName($row['fieldname'])->isActiveField()) {
+				$interdependent[$row['fieldname']][] = \App\Language::translate($moduleName, $moduleName);
+			}
+		}
+		return $interdependent;
 	}
 }

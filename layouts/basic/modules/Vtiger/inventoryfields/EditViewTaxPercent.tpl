@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-inventoryfields-EditViewTaxPecent -->
 	{assign var=VALUE value=$FIELD->getValue($ITEM_VALUE)}
@@ -12,7 +12,7 @@
 				{assign var=TAXPARAM_VALUE value=$ITEM_DATA['taxparam']}
 			{/if}
 			<input name="inventory[{$ROW_NO}][taxparam]" type="hidden" value="{\App\Purifier::encodeHtml($TAXPARAM_VALUE)}"
-				   class="taxParam" {if $FIELD->get('displaytype') == 10}readonly="readonly"{/if} />
+				   class="taxParam" {if $FIELD->isReadOnly()}readonly="readonly"{/if} />
 			<span class="input-group-append u-cursor-pointer changeTax {if empty($ITEM_DATA['taxmode'])}d-none{/if}">
 				<div class="input-group-text">
 					<span class="small">

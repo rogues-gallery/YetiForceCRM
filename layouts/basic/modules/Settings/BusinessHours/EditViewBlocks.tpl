@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 <!-- tpl-Settings-BusinessHours-EditViewBlocks -->
 <div class="verticalScroll">
@@ -11,7 +11,7 @@
 			{if !empty($RECORD_ID)}
 				<input type="hidden" name="record" id="recordId" value="{$RECORD_ID}"/>
 			{/if}
-			<div class="widget_header row mb-3">
+			<div class="o-breadcrumb widget_header row mb-3">
 				<div class="col-md-8">
 					{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $QUALIFIED_MODULE)}
 				</div>
@@ -19,7 +19,7 @@
 			<div class="card">
 				<div class="card-header">
 					{if !empty($RECORD_MODEL->getId())}
-						<span class="fas fa-edit mr-2"></span>{\App\Language::translate('LBL_EDIT_BUSINESS_HOURS',$QUALIFIED_MODULE)} - {$RECORD_MODEL->getName()}
+						<span class="yfi yfi-full-editing-view mr-2"></span>{\App\Language::translate('LBL_EDIT_BUSINESS_HOURS',$QUALIFIED_MODULE)} - {$RECORD_MODEL->getName()}
 					{else}
 						<span class="fas fa-plus mr-2"></span>{\App\Language::translate('LBL_ADD_BUSINESS_HOURS',$QUALIFIED_MODULE)}
 					{/if}

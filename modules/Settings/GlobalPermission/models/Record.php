@@ -4,7 +4,7 @@
  * Settings GlobalPermission record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_GlobalPermission_Record_Model extends Settings_Vtiger_Record_Model
 {
@@ -42,7 +42,7 @@ class Settings_GlobalPermission_Record_Model extends Settings_Vtiger_Record_Mode
 
 	public static function save($profileID, $globalactionid, $checked)
 	{
-		if ($globalactionid == 1) {
+		if (1 == $globalactionid) {
 			\App\Privilege::setAllUpdater();
 		}
 		$db = App\Db::getInstance();

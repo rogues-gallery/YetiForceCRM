@@ -3,16 +3,16 @@
  * Main config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 return [
 	'api' => [
 		'enabledServices' => [
 			'default' => [],
-			'description' => 'List of active services. Available: dav, webservices, webservice',
+			'description' => 'List of active services. Available: dav, webservice',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return is_array($arg) && empty(array_diff($arg, ['dav', 'webservices', 'webservice']));
+				return \is_array($arg) && empty(array_diff($arg, ['dav', 'webservice']));
 			}
 		],
 		'enableBrowser' => [
@@ -55,7 +55,7 @@ return [
 			'default' => 'Basic',
 			'description' => 'Webservice config.',
 			'validation' => function () {
-				return func_get_arg(0) === 'Basic';
+				return 'Basic' === func_get_arg(0);
 			}
 		],
 		'PRIVATE_KEY' => [
@@ -76,11 +76,11 @@ return [
 			'default' => '',
 			'description' => 'Url for customer portal (Example: https://portal.yetiforce.com/)',
 		],
-//		'HELPDESK_SUPPORT_NAME' => [
-//			'default' => 'your-support name',
-//			'description' => 'Helpdesk support email id and support name (Example: "support@yetiforce.com" and "yetiforce support")',
-//			'validation' => ''
-//		],
+		//		'HELPDESK_SUPPORT_NAME' => [
+		//			'default' => 'your-support name',
+		//			'description' => 'Helpdesk support email id and support name (Example: "support@yetiforce.com" and "yetiforce support")',
+		//			'validation' => ''
+		//		],
 		'HELPDESK_SUPPORT_EMAIL_REPLY' => [
 			'default' => '',
 			'description' => 'Help desk support email reply',
@@ -115,7 +115,7 @@ return [
 			'description' => 'Flag to allow export functionality: "all" - to allow anyone to use exports, "admin" - to only allow admins to export, "none" -  to block exports completely',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return in_array($arg, ['all', 'admin', 'none']);
+				return \in_array($arg, ['all', 'admin', 'none']);
 			}
 		],
 		'upload_badext' => [
@@ -138,14 +138,14 @@ return [
 			'description' => 'Default module: default value = Home',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return \App\Module::isModuleActive($arg) === true;
+				return true === \App\Module::isModuleActive($arg);
 			}
 		],
 		'default_charset' => [
 			'default' => 'UTF-8',
 			'description' => 'Default charset:  default value = "UTF-8"',
 			'validation' => function () {
-				return func_get_arg(0) === 'UTF-8';
+				return 'UTF-8' === func_get_arg(0);
 			}
 		],
 		'default_language' => [
@@ -154,10 +154,10 @@ return [
 			'validation' => '\App\Validator::languageTag',
 		],
 		'application_unique_key' => [
-			'default' => '',
+			'default' => sha1(time() + random_int(1, 9999999)),
 			'description' => 'Unique Application Key',
 			'validation' => function () {
-				return !class_exists("\Config\Main");
+				return !class_exists('\\Config\\Main');
 			},
 			'sanitization' => function () {
 				return sha1(time() + random_int(1, 9999999));
@@ -182,11 +182,8 @@ return [
 			'default' => '_TIMEZONE_',
 			'description' => 'Set the default timezone as per your preference',
 			'validation' => function () {
-				if (!class_exists('UserTimeZones')) {
-					Vtiger_Loader::includeOnce('~modules/Users/UserTimeZonesArray.php');
-				}
 				$arg = func_get_arg(0);
-				return in_array($arg, UserTimeZones::getTimeZones());
+				return \in_array($arg, timezone_identifiers_list());
 			}
 		],
 		'title_max_length' => [
@@ -211,12 +208,6 @@ return [
 				return (int) func_get_arg(0);
 			}
 		],
-		'breadcrumbs' => [
-			'default' => true,
-			'description' => 'Should menu breadcrumbs be visible? true = show, false = hide',
-			'validation' => '\App\Validator::bool',
-			'sanitization' => '\App\Purifier::bool'
-		],
 		'MINIMUM_CRON_FREQUENCY' => [
 			'default' => 1,
 			'description' => 'Minimum cron frequency [min]',
@@ -228,21 +219,14 @@ return [
 				return (int) func_get_arg(0);
 			}
 		],
-		'session_regenerate_id' => [
-			'default' => true,
-			'description' => 'Update the current session id with a newly generated one after login'
-		],
 		'davStorageDir' => [
 			'default' => 'storage/Files',
 			'description' => 'Update the current session id with a newly generated one after login',
 		],
 		'systemMode' => [
 			'default' => 'prod',
-			'description' => 'System mode. Available: prod, demo, test'
-		],
-		'forceSSL' => [
-			'default' => false,
-			'description' => 'Force site access to always occur under SSL (https) for selected areas. You will not be able to access selected areas under non-ssl. Note, you must have SSL enabled on your server to utilise this option.'
+			'description' => 'System mode. Available: prod, demo, test',
+			'validationValues' => ['prod', 'demo', 'test']
 		],
 		'listMaxEntriesMassEdit' => [
 			'default' => 500,
@@ -257,25 +241,27 @@ return [
 		],
 		'backgroundClosingModal' => [
 			'default' => true,
-			'description' => 'Enable closing of mondal window by clicking on the background',
+			'description' => 'Enable closing of modal window by clicking on the background',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
-		'csrfProtection' => [
-			'default' => true,
-			'description' => 'Enable CSRF protection'
-		],
 		'isActiveSendingMails' => [
 			'default' => true,
-			'description' => 'Is sending emails active.'
+			'description' => 'Is sending emails active?'
+		],
+		'isActiveRecordTemplate' => [
+			'default' => false,
+			'description' => 'Activates / deactivates batch adding of records',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'unblockedTimeoutCronTasks' => [
 			'default' => true,
-			'description' => 'Should the task in cron be unblocked if the script execution time was exceeded'
+			'description' => 'Should the task in cron be unblocked if the script execution time was exceeded?'
 		],
 		'maxExecutionCronTime' => [
 			'default' => 3600,
-			'description' => 'The maximum time of executing a cron. Recommended same as the max_exacution_time parameter value.'
+			'description' => 'The maximum time of executing a cron. Recommended the same as the max_exacution_time parameter value.'
 		],
 		'langInLoginView' => [
 			'default' => false,
@@ -285,7 +271,7 @@ return [
 		],
 		'layoutInLoginView' => [
 			'default' => false,
-			'description' => "System's lyout selection in the login window (true/false)",
+			'description' => "System's layout selection in the login window (true/false)",
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
@@ -296,51 +282,141 @@ return [
 				return isset(\App\Layout::getAllLayouts()[func_get_arg(0)]);
 			}
 		],
-		'forceRedirect' => [
-			'default' => true,
-			'description' => 'Redirect to proper url when wrong url is entered.'
-		],
 		'phoneFieldAdvancedVerification' => [
 			'default' => true,
-			'description' => 'Enable advanced phone number validation. Enabling  it will block saving invalid phone number.'
+			'description' => 'Enable advanced phone number validation. Enabling it will block saving invalid phone number.'
+		],
+		'phoneFieldAdvancedHrefFormat' => [
+			'default' => new \Nette\PhpGenerator\PhpLiteral('\libphonenumber\PhoneNumberFormat::RFC3966'),
+			'description' => "Phone number display format. Values:\nfalse - formatting is disabled \n\\libphonenumber\\PhoneNumberFormat::RFC3966 - +48-44-668-18-00\n\\libphonenumber\\PhoneNumberFormat::E164 - +48446681800 \n\\libphonenumber\\PhoneNumberFormat::INTERNATIONAL - 044 668 18 00\n\\libphonenumber\\PhoneNumberFormat::NATIONAL - +48 44 668 18 00",
+			'validation' => function () {
+				return \in_array(func_get_arg(0), [
+					false,
+					\libphonenumber\PhoneNumberFormat::RFC3966,
+					\libphonenumber\PhoneNumberFormat::E164,
+					\libphonenumber\PhoneNumberFormat::INTERNATIONAL,
+					\libphonenumber\PhoneNumberFormat::NATIONAL
+				]);
+			}
+		],
+		'headerAlertMessage' => [
+			'default' => '',
+			'description' => 'Header alert message'
+		],
+		'headerAlertType' => [
+			'default' => '',
+			'description' => 'Header alert type, ex. alert-primary, alert-danger, alert-warning, alert-info'
+		],
+		'headerAlertIcon' => [
+			'default' => '',
+			'description' => 'Header alert icon, ex.  fas fa-exclamation-triangle, fas fa-exclamation-circle, fas fa-exclamation, far fa-question-circle, fas fa-info-circle'
+		],
+		'loginPageAlertMessage' => [
+			'default' => '',
+			'description' => 'Login page alert message'
+		],
+		'loginPageAlertType' => [
+			'default' => '',
+			'description' => 'Login page alert type, ex. alert-primary, alert-danger, alert-warning, alert-info'
+		],
+		'loginPageAlertIcon' => [
+			'default' => '',
+			'description' => 'Login page alert icon, ex.  fas fa-exclamation-triangle, fas fa-exclamation-circle, fas fa-exclamation, far fa-question-circle, fas fa-info-circle'
+		],
+		'showRegistrationAlert' => [
+			'default' => true,
+			'description' => 'Show the alert when the system is incorrectly registered',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 	],
 	'debug' => [
 		'LOG_TO_FILE' => [
 			'default' => false,
-			'description' => 'Enable saving logs to file. Values: false/true'
-		],
-		'LOG_TO_CONSOLE' => [
-			'default' => false,
-			'description' => 'Enable displaying logs in debug console. Values: false/true'
+			'description' => 'Enable saving logs to file. Values: false/true',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'LOG_TO_PROFILE' => [
 			'default' => false,
-			'description' => 'Enable saving logs profiling.  Values: false/true'
+			'description' => 'Enable saving logs profiling. Values: false/true',
+		],
+		'LOG_PROFILE_CATEGORIES' => [
+			'default' => [],
+			'description' => 'Categories to be registered in profiling, an empty value means all categories. ex. "yii\db\Command::query", "Integrations/MagentoApi"'
 		],
 		'LOG_LEVELS' => [
 			'default' => false,
 			'description' => 'Level of saved/displayed logs. Values: false = All / 3 = error and warning / ["error", "warning", "info", "trace", "profile"]',
+			'validation' => function () {
+				$arg = func_get_arg(0);
+				return false === $arg || (\is_array($arg) && array_diff(['error', 'warning', 'info', 'trace', 'profile'], $arg));
+			},
 		],
 		'LOG_TRACE_LEVEL' => [
 			'default' => 0,
-			'description' => 'Level of saved/displayed tracerts. // Values: int'
+			'description' => 'Level of saved/displayed tracerts. // Values: int',
+			'validation' => '\App\Validator::naturalNumber',
+		],
+		'SQL_DIE_ON_ERROR' => [
+			'default' => false,
+			'description' => 'Stop the running process of the system if there is an error in sql query'
+		],
+		'EXCEPTION_ERROR_TO_SHOW' => [
+			'default' => false,
+			'description' => 'Display errors',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'DISPLAY_EXCEPTION_BACKTRACE' => [
+			'default' => false,
+			'description' => 'Displays information about the tracking code when an error occurs. Available only with the active SQL_DIE_ON_ERROR = true',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'DISPLAY_EXCEPTION_LOGS' => [
+			'default' => false,
+			'description' => 'Display logs when error exception occurs',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'EXCEPTION_ERROR_HANDLER' => [
+			'default' => false,
+			'description' => 'Turn on/off the error handler',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'EXCEPTION_ERROR_TO_FILE' => [
+			'default' => false,
+			'description' => 'Save logs to file (cache/logs/errors.log)',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'DISPLAY_DEBUG_CONSOLE' => [
 			'default' => false,
 			'description' => 'Display main debug console'
 		],
+		'DISPLAY_LOGS_IN_CONSOLE' => [
+			'default' => false,
+			'description' => 'Enable displaying logs in debug console. Values: false/true'
+		],
+		'DISPLAY_CONFIG_IN_CONSOLE' => [
+			'default' => false,
+			'description' => 'Enable displaying logs in debug console. Values: false/true'
+		],
 		'DEBUG_CONSOLE_ALLOWED_IPS' => [
 			'default' => false,
 			'description' => 'List of IP addresses allowed to display debug console. Values: false = All IPS / "192.168.1.10" / ["192.168.1.10","192.168.1.11"]',
 		],
-		'SQL_DIE_ON_ERROR' => [
-			'default' => false,
-			'description' => 'Stop the running process of the system if there is and error in sql query'
+		'DEBUG_CONSOLE_ALLOWED_USERS' => [
+			'default' => [],
+			'description' => 'List of user IDs allowed to display debug console. ',
 		],
 		'DEBUG_CRON' => [
 			'default' => false,
-			'description' => 'Debug cron => cache/logs/cron/'
+			'description' => 'Debug cron => cache/logs/cron/',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'DEBUG_VIEWER' => [
 			'default' => false,
@@ -353,67 +429,84 @@ return [
 		'SMARTY_ERROR_REPORTING' => [
 			'default' => new \Nette\PhpGenerator\PhpLiteral('E_ALL & ~E_NOTICE'),
 			'description' => 'Do not show Smarty Notice in phpError.log',
-		],
-		'JS_DEBUG' => [
-			'default' => true,
-			'description' => 'Turn on/off debug errors javascript'
-		],
-		'DISPLAY_EXCEPTION_BACKTRACE' => [
-			'default' => false,
-			'description' => 'Displays information about the tracking code when an error occurs. Available only with the active SQL_DIE_ON_ERROR = true'
-		],
-		'DISPLAY_EXCEPTION_LOGS' => [
-			'default' => false,
-			'description' => 'Display logs when error exception occurs'
-		],
-		'EXCEPTION_ERROR_HANDLER' => [
-			'default' => false,
-			'description' => 'Turn on/off the error handler'
-		],
-		'EXCEPTION_ERROR_TO_FILE' => [
-			'default' => false,
-			'description' => 'Save logs to file (cache/logs/errors.log)'
-		],
-		'EXCEPTION_ERROR_TO_SHOW' => [
-			'default' => false,
-			'description' => 'Display errors'
+			'validation' => function () {
+				$arg = (string) func_get_arg(0);
+				return \in_array($arg, ['E_ALL', 'E_ALL & ~E_NOTICE']);
+			},
 		],
 		'EXCEPTION_ERROR_LEVEL' => [
 			'default' => new \Nette\PhpGenerator\PhpLiteral('E_ALL & ~E_NOTICE'),
 			'description' => "Set the error reporting level. The parameter is either an integer representing a bit field, or named constants.\nhttps://secure.php.net/manual/en/errorfunc.configuration.php#ini.error-reporting\nAll errors - E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED / Critical errors - E_ERROR | E_WARNING | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR",
+			'validation' => function () {
+				$arg = (string) func_get_arg(0);
+				return \in_array($arg, ['E_ALL', 'E_ALL & ~E_NOTICE']);
+			},
+		],
+		'JS_DEBUG' => [
+			'default' => true,
+			'description' => 'Turn on/off error debugging in javascript',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'apiShowExceptionMessages' => [
+			'default' => false,
+			'description' => '[WebServices/API] Show exception messages in response body',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'apiShowExceptionReasonPhrase' => [
+			'default' => false,
+			'description' => '[WebServices/API] Show exception reason phrase in response header',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'apiShowExceptionBacktrace' => [
+			'default' => false,
+			'description' => '[WebServices/API] Show exception backtrace in response body',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'apiLogException' => [
+			'default' => false,
+			'description' => '[WebServices/API] Log to file only exception errors in the logs',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'apiLogAllRequests' => [
+			'default' => false,
+			'description' => '[WebServices/API] Log to file all communications data (request + response)',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'DAV_DEBUG_EXCEPTIONS' => [
 			'default' => false,
-			'description' => 'API - Sabre dav - This is a flag that allow or not showing file, line and code of the exception in the returned XML'
+			'description' => 'API - Sabre dav - This is a flag that allows (or not) showing file, line, and code of the exception in the returned XML',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'DAV_DEBUG_PLUGIN' => [
 			'default' => false,
-			'description' => 'Activate the plugin recording log in DAV'
-		],
-		'WEBSERVICE_SHOW_ERROR' => [
-			'default' => false,
-			'description' => 'Show errors messages in web service'
-		],
-		'WEBSERVICE_DEBUG' => [
-			'default' => false,
-			'description' => 'Web service logs'
+			'description' => 'Activate the plugin recording log in DAV',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'MAILER_DEBUG' => [
 			'default' => false,
-			'description' => 'Mailer debug'
+			'description' => 'Mailer debug',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'ROUNDCUBE_DEBUG_LEVEL' => [
 			'default' => 1,
 			'description' => 'System error reporting, sum of: 1 = log; 4 = show, 8 = trace'
 		],
-
 		'ROUNDCUBE_DEVEL_MODE' => [
 			'default' => false,
 			'description' => 'Devel_mode this will print real PHP memory usage into logs/console and do not compress JS libraries'
 		],
 		'ROUNDCUBE_PER_USER_LOGGING' => [
 			'default' => false,
-			'description' => "Activate this option if logs should be written to per-user directories.\nData will only be logged if a directry cache/logs/<username>/ exists and is writable."
+			'description' => "Activate this option if logs should be written to per-user directories.\nData will only be logged if a directory cache/logs/<username>/ exists and is writable."
 		],
 		'ROUNDCUBE_SMTP_LOG' => [
 			'default' => false,
@@ -447,31 +540,65 @@ return [
 	'developer' => [
 		'CHANGE_GENERATEDTYPE' => [
 			'default' => false,
-			'description' => 'Turn the possibility to change generatedtype'
+			'description' => 'Turn the possibility to change generatedtype',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'MINIMIZE_JS' => [
 			'default' => true,
-			'description' => 'Enable minimize JS files'
+			'description' => 'Enable minimize JS files',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'MINIMIZE_CSS' => [
 			'default' => true,
-			'description' => ' Enable minimize CSS files'
+			'description' => ' Enable minimize CSS files',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'CHANGE_VISIBILITY' => [
 			'default' => false,
-			'description' => 'Change of fields visibility'
+			'description' => 'Change of fields visibility',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'CHANGE_RELATIONS' => [
 			'default' => false,
-			'description' => 'Adding/Deleting relations between modules.'
+			'description' => 'Adding/Deleting relations between modules.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'MISSING_LIBRARY_DEV_MODE' => [
 			'default' => false,
-			'description' => 'Developer libraries update mode'
+			'description' => 'Developer libraries update mode',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 		'LANGUAGES_UPDATE_DEV_MODE' => [
 			'default' => false,
-			'description' => 'Developer libraries update mode'
+			'description' => 'Developer libraries update mode',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'updaterDevMode' => [
+			'default' => false,
+			'description' => 'Developer updater mode',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		]
+	],
+	'layout' => [
+		'breadcrumbs' => [
+			'default' => true,
+			'description' => 'Should menu breadcrumbs be visible? true = show, false = hide',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'breadcrumbsHref' => [
+			'default' => true,
+			'description' => 'Should the breadcrumb menu have href enabled? true = enabled, false = off',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		]
 	],
 	'performance' => [
@@ -480,7 +607,7 @@ return [
 			'description' => 'Data caching is about storing some PHP variables in cache and retrieving it later from cache. Drivers: Base, Apcu',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return $arg === 'Basic' || $arg === 'Apcu';
+				return 'Basic' === $arg || 'Apcu' === $arg;
 			}
 		],
 		'ENABLE_CACHING_USERS' => [
@@ -491,25 +618,19 @@ return [
 		],
 		'ENABLE_CACHING_DB_CONNECTION' => [
 			'default' => false,
-			'description' => ' Enable caching database instance, accelerate time database connection',
-			'validation' => '\App\Validator::bool',
-			'sanitization' => '\App\Purifier::bool'
-		],
-		'SQL_LOG_INCLUDE_CALLER' => [
-			'default' => false,
-			'description' => "Should the caller information be captured in SQL Logging?\nIt adds little overhead for performance but will be useful to debug.\nAll data can be found in the table 'l_yf_sqltime'.",
+			'description' => 'Enable caching database instance, accelerate time database connection',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
 		'DB_DEFAULT_CHARSET_UTF8' => [
 			'default' => true,
-			'description' => 'If database default charset is UTF-8, set this to true This avoids executing the SET NAMES SQL for each query!',
+			'description' => 'If database default charset is UTF-8, set this to true. This avoids executing the SET NAMES SQL for each query!',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
 		'LISTVIEW_COMPUTE_PAGE_COUNT' => [
 			'default' => false,
-			'description' => ' Compute list view record count while loading listview everytime. Recommended value false',
+			'description' => 'Compute list view record count while loading listview each time. Recommended value false',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
@@ -578,37 +699,32 @@ return [
 		],
 		'CRON_MAX_NUMBERS_RECORD_PRIVILEGES_UPDATER' => [
 			'default' => 1000000,
-			'description' => 'In how many records should the global search permissions be updated in cron',
+			'description' => 'The maximum number of global search permissions that cron can update during a single execution',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CRON_MAX_NUMBERS_RECORD_ADDRESS_BOOK_UPDATER' => [
 			'default' => 10000,
-			'description' => 'In how many records should the address book be updated in cron',
+			'description' => 'The maximum number of records in address book to be updated in cron',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CRON_MAX_NUMBERS_RECORD_LABELS_UPDATER' => [
-			'default' => 1000,
-			'description' => 'In how many records should the label be updated in cron',
+			'default' => 10000,
+			'description' => 'The maximum number of record labels that cron can update during a single execution',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CRON_MAX_NUMBERS_SENDING_MAILS' => [
 			'default' => 1000,
-			'description' => 'In how many mails should the send in cron (Mailer).',
+			'description' => 'The maximum number of emails that cron can send during a single execution. Pay attention to the server limits.',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CRON_MAX_NUMBERS_SENDING_SMS' => [
 			'default' => 10,
-			'description' => 'In how many sms should the send in cron.',
+			'description' => 'The maximum number of sms that cron can send during a single execution',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CRON_MAX_ATACHMENTS_DELETE' => [
 			'default' => 1000,
-			'description' => 'In how many atachments should the delete in cron.',
-			'validation' => '\App\Validator::naturalNumber'
-		],
-		'CRON_BATCH_METHODS_LIMIT' => [
-			'default' => 15,
-			'description' => 'Time to execute batch methods [min].',
+			'description' => 'The maximum number of attachments that cron can delete during a single execution',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'LOAD_CUSTOM_FILES' => [
@@ -648,7 +764,7 @@ return [
 		],
 		'BROWSING_HISTORY_DELETE_AFTER' => [
 			'default' => 7,
-			'description' => 'Days after browsing history has deleted',
+			'description' => 'Number of days after which browsing history will be deleted',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'SESSION_DRIVER' => [
@@ -659,11 +775,6 @@ return [
 		'CHART_MULTI_FILTER_LIMIT' => [
 			'default' => 5,
 			'description' => 'Charts multi filter limit',
-			'validation' => '\App\Validator::naturalNumber'
-		],
-		'CHART_MULTI_FILTER_STR_LEN' => [
-			'default' => 50,
-			'description' => 'Charts multi filter maximum db value length',
 			'validation' => '\App\Validator::naturalNumber'
 		],
 		'CHART_ADDITIONAL_FILTERS_LIMIT' => [
@@ -694,6 +805,14 @@ return [
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
+		'MODULES_SPLITTED_EDIT_VIEW_LAYOUT' => [
+			'default' => [],
+			'description' => 'List of modules with splitted edit view layout',
+			'validation' => function () {
+				$arg = func_get_arg(0);
+				return \is_array($arg) && array_diff($arg, App\Module::getAllModuleNames());
+			}
+		],
 		'RECORD_POPOVER_DELAY' => [
 			'default' => 500,
 			'description' => "Popover record's trigger delay in ms",
@@ -701,14 +820,39 @@ return [
 		],
 		'PICKLIST_DEPENDENCY_DEFAULT_EMPTY' => [
 			'default' => true,
-			'description' => 'Empty value when is not selected item in picklist dependency',
+			'description' => 'Empty value when there is selected item in picklist dependency',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
+		],
+		'picklistLimit' => [
+			'default' => 50,
+			'description' => 'Number of items displayed in picklists.',
+			'validation' => '\App\Validator::naturalNumber',
 		],
 		'recursiveTranslate' => [
 			'default' => false,
 			'description' => 'If there is no translation in the chosen language, then get from the default language.'
-		]
+		],
+		'quickEditLayout' => [
+			'default' => 'blocks',
+			'description' => 'Parameter defining how fields are displayed in quick edit. Available values: standard,blocks,vertical',
+			'validationValues' => ['blocks', 'standard', 'vertical']
+		],
+		'quickCreateLayout' => [
+			'default' => 'blocks',
+			'description' => 'Parameter defining how fields are displayed in quick create. Available values: blocks,standard',
+			'validationValues' => ['blocks', 'standard']
+		],
+		'REPORT_RECORD_NUMBERS' => [
+			'default' => 10,
+			'description' => 'Number of records that can be shown in report mail',
+			'validation' => '\App\Validator::naturalNumber'
+		],
+		'LOGIN_HISTORY_VIEW_LIMIT' => [
+			'default' => 30,
+			'description' => 'Number of records that can be shown in history login modal',
+			'validation' => '\App\Validator::naturalNumber'
+		],
 	],
 	'relation' => [
 		'COMMENT_MAX_LENGTH' => [
@@ -717,16 +861,26 @@ return [
 		],
 		'SHOW_RELATED_MODULE_NAME' => [
 			'default' => true,
-			'description' => 'Show names related modules'
+			'description' => 'Show related modules names'
 		],
 		'SHOW_RELATED_ICON' => [
 			'default' => true,
-			'description' => 'Show icon related modules'
+			'description' => 'Show related modules icon'
 		],
 		'SHOW_RECORDS_COUNT' => [
 			'default' => false,
-			'description' => 'Show record count in tabs related modules'
-		]
+			'description' => 'Show record count in tabs of related modules',
+			'validation' => '\App\Validator::naturalNumber',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'addSearchParamsToCreateView' => [
+			'default' => true,
+			'description' => 'Fill in the record creation form with the data used in filtering (search_params)'
+		],
+		'separateChangeRelationButton' => [
+			'default' => false,
+			'description' => 'Separate change relation button in related module'
+		],
 	],
 	'search' => [
 		'GLOBAL_SEARCH_SELECT_MODULE' => [
@@ -745,7 +899,7 @@ return [
 			'description' => 'Global search - Should the results be sorted in MySQL or PHP while displaying (None = 0, PHP = 1, Mysql = 2). The parameter impacts system efficiency.',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return is_int($arg) && in_array($arg, [0, 1, 2]);
+				return \is_int($arg) && \in_array($arg, [0, 1, 2]);
 			}
 		],
 		'GLOBAL_SEARCH_CURRENT_MODULE_TO_TOP' => [
@@ -759,7 +913,7 @@ return [
 			'description' => 'Global search - Search for records while entering text  (1/0).',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return is_int($arg) && in_array($arg, [0, 1]);
+				return \is_int($arg) && \in_array($arg, [0, 1]);
 			}
 		],
 		'GLOBAL_SEARCH_AUTOCOMPLETE_LIMIT' => [
@@ -778,14 +932,6 @@ return [
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
-		'GLOBAL_SEARCH_DEFAULT_OPERATOR' => [
-			'default' => 'FulltextBegin',
-			'description' => 'Global search - Default search operator. (FulltextBegin,FulltextWord,Contain,Begin,End)',
-			'validation' => function () {
-				$arg = func_get_arg(0);
-				return in_array($arg, ['FulltextBegin', 'FulltextWord', 'Contain', 'Begin', 'End']);
-			}
-		],
 		'LIST_ENTITY_STATE_COLOR' => [
 			'default' => [
 				'Archived' => '#0032a2',
@@ -799,18 +945,14 @@ return [
 		'encryptionPass' => [
 			'default' => 'yeti',
 			'description' => 'Key to encrypt passwords, changing the key results in the loss of all encrypted data.',
-			'validation' => function () {
-				$arg = func_get_arg(0);
-				return is_array($arg) && !empty($arg['pass']) && !empty($arg['method']) &&
-					in_array($arg['method'], \App\Encryption::getMethods()) && strlen($arg['pass']) === App\Encryption::getLengthVector($arg['method']);
-			}
+			'validation' => '\App\Validator::text'
 		],
 		'encryptionMethod' => [
 			'default' => 'AES-256-CBC',
 			'description' => 'Encryption method.',
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return empty($arg) || ($arg && in_array($arg, \App\Encryption::getMethods()));
+				return empty($arg) || ($arg && \in_array($arg, \App\Encryption::getMethods()));
 			}
 		],
 	],
@@ -868,8 +1010,22 @@ return [
 			'sanitization' => '\App\Purifier::bool'
 		],
 		'PERMITTED_BY_PRIVATE_FIELD' => [
-			'default' => false,
+			'default' => true,
 			'description' => 'Permitted by private field.',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'permittedModulesByCreatorField' => [
+			'default' => [],
+			'description' => 'List of modules to which access is based on the record creation.',
+			'validation' => function () {
+				$arg = func_get_arg(0);
+				return \is_array($arg) && array_diff($arg, App\Module::getAllModuleNames());
+			}
+		],
+		'permittedWriteAccessByCreatorField' => [
+			'default' => false,
+			'description' => 'Permission level access based on the record creation',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
@@ -903,42 +1059,189 @@ return [
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
-		'FIELDS_REFERENCES_DEPENDENT' => [
+		'fieldsReferencesDependent' => [
 			'default' => false,
 			'description' => 'Interdependent reference fields',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
-		'HPKP_KEYS' => [
-			'default' => [],
-			'description' => "HTTP Public-Key-Pins (HPKP) pin-sha256 For HPKP to work properly at least 2 keys are needed.\nhttps://scotthelme.co.uk/hpkp-http-public-key-pinning/, https://sekurak.pl/mechanizm-http-public-key-pinning/.",
+		'maxLifetimeSession' => [
+			'default' => 900,
+			'description' => 'Lifetime session (in seconds)',
+			'validation' => '\App\Validator::integer'
 		],
-		'CSP_ACTIVE' => [
+		'maxLifetimeSessionCookie' => [
+			'default' => 0,
+			'description' => "Specifies the lifetime of the cookie in seconds which is sent to the browser. The value 0 means 'until the browser is closed.'\nHow much time can someone be logged in to the browser. Defaults to 0.",
+			'validation' => '\App\Validator::integer'
+		],
+		'loginSessionRegenerate' => [
 			'default' => true,
-			'description' => 'Content Security Policy',
+			'description' => 'Update the current session id with a newly generated one after login and logout',
 			'validation' => '\App\Validator::bool',
 			'sanitization' => '\App\Purifier::bool'
 		],
-		'PURIFIER_ALLOWED_DOMAINS' => [
-			'default' => [],
-			'description' => 'List of allowed domains for fields with HTML support',
+		'cookieSameSite' => [
+			'default' => 'Strict',
+			'description' => "Same-site cookie attribute allows a web application to advise the browser that cookies should only be sent if the request originates from the website the cookie came from.\nValues: None, Lax, Strict",
+			'validationValues' => ['None', 'Lax', 'Strict']
 		],
-		'MAX_LIFETIME_SESSION' => [
-			'default' => 21600,
-			'description' => 'Lifetime session (in seconds)',
+		'cookieForceHttpOnly' => [
+			'default' => true,
+			'description' => "Force the use of https only for cookie.\nValues: true, false, null",
+			'validation' => function () {
+				$arg = func_get_arg(0);
+				return null === $arg ? $arg : \is_bool($arg);
+			}
+		],
+		'apiLifetimeSessionCreate' => [
+			'default' => 1440,
+			'description' => 'Maximum session lifetime from the time it was created (in minutes)',
+			'validation' => '\App\Validator::integer'
+		],
+		'apiLifetimeSessionUpdate' => [
+			'default' => 240,
+			'description' => 'Maximum session lifetime since the last modification (in minutes)',
+			'validation' => '\App\Validator::integer'
 		],
 		'USER_AUTHY_MODE' => [
 			'default' => 'TOTP_OPTIONAL',
-			'description' => "User authentication mode.\n@see \Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE Available values.",
+			'description' => "User authentication mode.\n\n@see \\Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE\nAvailable values:\nTOTP_OFF - 2FA TOTP is checking off\nTOTP_OPTIONAL - It is defined by the user\nTOTP_OBLIGATORY - It is obligatory.",
 			'validation' => function () {
 				$arg = func_get_arg(0);
-				return in_array($arg, \Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE);
+				return \in_array($arg, \Users_Totp_Authmethod::ALLOWED_USER_AUTHY_MODE);
 			}
+		],
+		'whitelistIp2fa' => [
+			'default' => [],
+			'description' => "IP address whitelisting.\nAllow access without 2FA.",
+			'validation' => '\App\Validator::ip'
 		],
 		'CACHE_LIFETIME_SENSIOLABS_SECURITY_CHECKER' => [
 			'default' => 3600,
 			'description' => 'Cache lifetime for SensioLabs security checker.',
 			'validation' => '\App\Validator::naturalNumber',
+		],
+		'forceHttpsRedirection' => [
+			'default' => false,
+			'description' => 'Force site access to always occur under SSL (https) for selected areas. You will not be able to access selected areas under non-ssl. Note, you must have SSL enabled on your server to utilise this option.'
+		],
+		'forceUrlRedirection' => [
+			'default' => true,
+			'description' => 'Redirect to proper url when wrong url is entered.'
+		],
+		'hpkpKeysHeader' => [
+			'default' => [],
+			'description' => "HTTP Public-Key-Pins (HPKP) pin-sha256 For HPKP to work properly at least 2 keys are needed.\nhttps://scotthelme.co.uk/hpkp-http-public-key-pinning/, https://sekurak.pl/mechanizm-http-public-key-pinning/.",
+		],
+		'csrfActive' => [
+			'default' => true,
+			'description' => 'Enable CSRF protection',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'csrfFrameBreaker' => [
+			'default' => true,
+			'description' => 'Enable verified frame protection, used in CSRF',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'csrfFrameBreakerWindow' => [
+			'default' => 'top',
+			'description' => 'Which window should be verified? It is used to check if the system is loaded in the frame, used in CSRF.',
+			'validationValues' => ['top', 'parent']
+		],
+		'cspHeaderActive' => [
+			'default' => true,
+			'description' => 'HTTP Content Security Policy response header allows website administrators to control resources the user agent is allowed to load for a given page',
+			'validation' => '\App\Validator::alnumSpace'
+		],
+		'cspHeaderTokenTime' => [
+			'default' => '5 minutes',
+			'description' => 'HTTP Content Security Policy time interval for generating a new nonce token',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'allowedImageDomains' => [
+			'default' => [],
+			'description' => 'Allowed domains for loading images, used in CSP.',
+			'loopValidate' => true,
+			'validation' => '\App\Validator::text',
+		],
+		'allowedFrameDomains' => [
+			'default' => [],
+			'description' => 'Allowed domains for loading frame, used in CSP and validate referer.',
+			'loopValidate' => true,
+			'validation' => '\App\Validator::url',
+		],
+		'allowedScriptDomains' => [
+			'default' => [],
+			'description' => 'Allowed domains for loading script, used in CSP.',
+			'loopValidate' => true,
+			'validation' => '\App\Validator::url',
+		],
+		'allowedFormDomains' => [
+			'default' => ['https://www.paypal.com'],
+			'description' => 'Allowed domains which can be used as the target of a form submissions from a given context, used in CSP.',
+		],
+		'generallyAllowedDomains' => [
+			'default' => [],
+			'description' => 'Generally allowed domains, used in CSP.',
+		],
+		'purifierAllowedDomains' => [
+			'default' => [],
+			'description' => 'List of allowed domains for fields with HTML support',
+		],
+		'proxyConnection' => [
+			'default' => false,
+			'description' => 'Do you want all connections to be made using a proxy?',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'proxyProtocol' => [
+			'default' => '',
+			'description' => 'Proxy protocol: http, https, tcp',
+			'validationValues' => ['http', 'https', 'tcp', '']
+		],
+		'proxyHost' => [
+			'default' => '',
+			'description' => 'Proxy host',
+			'validation' => '\App\Validator::url',
+		],
+		'proxyPort' => [
+			'default' => 0,
+			'description' => 'Proxy port',
+			'validation' => '\App\Validator::port',
+		],
+		'proxyLogin' => [
+			'default' => '',
+			'description' => 'Proxy login',
+			'validation' => '\App\Validator::text',
+			'sanitization' => '\App\Purifier::purify'
+		],
+		'proxyPassword' => [
+			'default' => '',
+			'description' => 'Proxy password',
+			'validation' => '\App\Validator::text',
+			'sanitization' => '\App\Purifier::purify'
+		],
+		'askAdminAboutVisitPurpose' => [
+			'default' => true,
+			'description' => '@var bool Ask admin about visit purpose',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'askAdminAboutVisitSwitchUsers' => [
+			'default' => true,
+			'description' => '@var bool Ask admin about switch users purpose',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
+		'askSuperUserAboutVisitPurpose' => [
+			'default' => true,
+			'description' => '@var bool Ask super user about visit purpose, only for the settings part',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
 		],
 	],
 	'sounds' => [
@@ -953,7 +1256,7 @@ return [
 			'description' => 'Sets the type of sound of reminders',
 		],
 		'CHAT' => [
-			'default' => 'sound_1.mp3',
+			'default' => 'sound_2.mp3',
 			'description' => 'Sets the type of sound of chat',
 		],
 		'MAILS' => [
@@ -976,7 +1279,7 @@ return [
 		'db_username' => [
 			'default' => '_DBC_USER_',
 			'description' => 'Gets the database user name',
-			'validation' => '\App\Validator::sql',
+			'validation' => '\App\Validator::dbUserName',
 			'sanitization' => '\App\Purifier::purify'
 		],
 		'db_password' => [
@@ -999,8 +1302,8 @@ return [
 		],
 		'db_hostname' => [
 			'type' => 'function',
-			'default' => 'return self::$db_server . ":" . self::$db_port;',
-			'description' => 'Gets host name'
+			'default' => 'return self::$db_server . \':\' . self::$db_port;',
+			'description' => 'Gets host name.'
 		],
 		'base' => [
 			'type' => 'function',
@@ -1014,7 +1317,7 @@ return [
 	'tablePrefix' => 'yf_',
 	'charset' => 'utf8',
 ];",
-			'description' => 'Basic database configuration'
+			'description' => 'Basic database configuration.'
 		],
 	]
 ];

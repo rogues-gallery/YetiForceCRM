@@ -62,11 +62,9 @@ class Settings_Picklist_IndexAjax_View extends Settings_Vtiger_IndexAjax_View
 		$valueId = $request->getInteger('fieldValueId');
 		$qualifiedName = $request->getModule(false);
 		$viewer = $this->getViewer($request);
-		$selectedFieldNonEditablePickListValues = App\Fields\Picklist::getNonEditableValues($fieldModel->getName());
 		$picklistValueRow = App\Fields\Picklist::getValues($fieldModel->getName())[$valueId];
 		$picklistValueRow['picklist_valueid'] = $picklistValueRow['picklist_valueid'] ?? '';
 		$picklistValueRow['close_state'] = isset(\App\RecordStatus::getLockStatus($fieldModel->getModule()->getName(), false)[$picklistValueRow['picklist_valueid']]);
-		$viewer->assign('EDITABLE', !isset($selectedFieldNonEditablePickListValues[$valueId]));
 		$viewer->assign('PICKLIST_VALUE', $picklistValueRow);
 		$viewer->assign('SOURCE_MODULE', $module);
 		$viewer->assign('SOURCE_MODULE_NAME', $module);
@@ -123,6 +121,7 @@ class Settings_Picklist_IndexAjax_View extends Settings_Vtiger_IndexAjax_View
 		$qualifiedName = $request->getModule(false);
 		$viewer = $this->getViewer($request);
 		$viewer->assign('PICKLIST_FIELDS', $pickListFields);
+		$viewer->assign('PICKLIST_INTERDEPENDENT', $moduleModel->listModuleInterdependentPickList(array_keys($pickListFields)));
 		$viewer->assign('SELECTED_MODULE_NAME', $sourceModule);
 		$viewer->assign('QUALIFIED_MODULE', $qualifiedName);
 		$viewer->view('ModulePickListDetail.tpl', $qualifiedName);

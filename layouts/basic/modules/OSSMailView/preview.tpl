@@ -1,8 +1,8 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-OSSMailView-preview -->
 	{if !$NOLOADLIBS}
-		{include file="modules/Vtiger/Header.tpl"}
+		{include file=\App\Layout::getTemplatePath('PageHeader.tpl')}
 	{/if}
 {if $ISMODAL}
 	<div class="modelContainer modal fade" tabindex="-1">
@@ -17,19 +17,19 @@
 								{assign var=CONFIG value=OSSMail_Module_Model::getComposeParameters()}
 								{assign var=COMPOSE_URL value=OSSMail_Module_Model::getComposeUrl($SMODULENAME, $SRECORD, 'Detail')}
 								{assign var=POPUP value=$CONFIG['popup']}
-								<button type="button" class="btn btn-sm btn-light sendMailBtn mr-1"
+								<button type="button" class="btn btn-sm btn-outline-success sendMailBtn mr-1"
 										data-url="{$COMPOSE_URL}&mid={$RECORD_MODEL->getId()}&type=reply"
 										data-popup="{$POPUP}">
 									<span class="fas fa-reply mr-1"></span>
 									<strong>{\App\Language::translate('LBL_REPLY','OSSMailView')}</strong>
 								</button>
-								<button type="button" class="btn btn-sm btn-light sendMailBtn mr-1"
+								<button type="button" class="btn btn-sm btn-outline-secondary sendMailBtn mr-1"
 										data-url="{$COMPOSE_URL}&mid={$RECORD_MODEL->getId()}&type=replyAll"
 										data-popup="{$POPUP}">
 									<span class="fas fa-reply-all mr-1"></span>
 									<strong>{\App\Language::translate('LBL_REPLYALLL','OSSMailView')}</strong>
 								</button>
-								<button type="button" class="btn btn-sm btn-light sendMailBtn mr-1"
+								<button type="button" class="btn btn-sm btn-outline-primary sendMailBtn mr-1"
 										data-url="{$COMPOSE_URL}&mid={$RECORD_MODEL->getId()}&type=forward"
 										data-popup="{$POPUP}">
 									<span class="fas fa-share mr-1"></span>
@@ -71,98 +71,58 @@
 						</button>
 					{/if}
 				</div>
-				<hr>
-				<form class="form-horizontal emailPreview">
-					<div class="row no-gutters padding-bottom1per">
-								<span class="col-2">
-									<span class="float-right muted">{\App\Language::translate('From',$MODULENAME)}</span>
-								</span>
-						<span class="col-10 pl-2 pl-md-4">
-									<span id="emailPreview_From" class="">{$FROM}</span>
-								</span>
-					</div>
-					<div class="row no-gutters padding-bottom1per">
-								<span class="col-2">
-									<span class="float-right muted">{\App\Language::translate('To',$MODULENAME)}</span>
-								</span>
-						<span class="col-10 pl-2 pl-md-4">
-									<span id="emailPreview_To"
-										  class="">{assign var=TO_EMAILS value=","|implode:$TO}{$TO_EMAILS}</span>
-								</span>
-					</div>
-					{if !empty($CC)}
-						<div class="row no-gutters padding-bottom1per">
-									<span class="col-2">
-										<span class="float-right muted">{\App\Language::translate('CC',$MODULENAME)}</span>
-									</span>
-							<span class="col-10 pl-2 pl-md-4">
-										<span id="emailPreview_Cc" class="">
-											{$CC}
-										</span>
-									</span>
+				<hr class="my-0">
+				<form class="form-horizontal emailPreview px-3">
+					<div class="d-flex col-md-12 px-0 align-items-center mb-1">
+						<div class="firstLetter {$FIRSTLETTERBG} d-sm-block d-none mr-2">
+							{$FIRSTLETTER}
 						</div>
-					{/if}
-					{if !empty($BCC)}
-						<div class="row no-gutters padding-bottom1per">
-									<span class="col-2">
-										<span class="float-right muted">{\App\Language::translate('BCC',$MODULENAME)}</span>
-									</span>
-							<span class="col-10 pl-2 pl-md-4">
-										<span id="emailPreview_Bcc" class="">
-											{$BCC}
-										</span>
-									</span>
+						<div class="col-md-6 px-0">
+							<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+								<span class="muted">{\App\Language::translate('From',$MODULENAME)}</span>: <span id="emailPreview_From" class="">{$RECORD_MODEL->getDisplayValue('from_email')}</span>
+							</p>
+							<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+								<span class="muted">{\App\Language::translate('To',$MODULENAME)}</span>: <span id="emailPreview_To" class="">{assign var=TO_EMAILS value=","|implode:$TO}{$TO_EMAILS}</span>
+							</p>
+							{if !empty($CC)}
+								<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+									<span class="muted">{\App\Language::translate('CC',$MODULENAME)}</span>: <span id="emailPreview_Cc" class="">{$CC}</span>
+								</p>
+							{/if}
+							{if !empty($BCC)}
+								<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+									<span class="muted">{\App\Language::translate('BCC',$MODULENAME)}</span>: <span id="emailPreview_Bcc" class="">{$BCC}</span>
+								</p>
+							{/if}
+							<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+								<span class="muted">{\App\Language::translate('Subject',$MODULENAME)}</span>: <span id="emailPreview_Subject" class="">{$RECORD_MODEL->getDisplayValue('subject')}</span>
+							</p>
 						</div>
-					{/if}
-					<div class="row no-gutters padding-bottom1per">
-								<span class="col-2">
-									<span class="float-right muted">{\App\Language::translate('Subject',$MODULENAME)}</span>
-								</span>
-						<span class="col-10 pl-2 pl-md-4">
-									<span id="emailPreview_Subject" class="">
-										{$SUBJECT}
-									</span>
-								</span>
+						<div class="col-md-6 px-0">
+							<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+								<span class="muted">{\App\Language::translate('LBL_SENT_DATE',$MODULENAME)}</span>: {$SENT}
+							</p>
+							<p class="mb-0 u-fs-15px u-lh-12 u-text-ellipsis">
+								<span class="muted">{\App\Language::translate('LBL_OWNER')}</span>: {\App\Fields\Owner::getLabel($OWNER)}
+							</p>
+						</div>
 					</div>
 					{if !empty($ATTACHMENTS)}
-						<div class="row no-gutters padding-bottom1per">
-									<span class="col-2">
-										<span class="float-right muted">{\App\Language::translate('Attachments_Exist',$MODULENAME)}</span>
-									</span>
-							<span class="col-10 pl-2 pl-md-4">
-										<span id="emailPreview_attachment" class="">
-											{foreach item=ATTACHMENT from=$ATTACHMENTS}
-												<a class="btn btn-sm btn-primary"
-												   href="file.php?module=OSSMailView&action=DownloadFile&record={$RECORD}&attachment={$ATTACHMENT['id']}">
-													<span class="fas fa-paperclip mr-1"></span>
-													{$ATTACHMENT['file']}
-												</a>
-											{/foreach}
-										</span>
-									</span>
+						<div class="w-100">
+							<span class="muted mr-2">{\App\Language::translate('Attachments_Exist',$MODULENAME)}:</span>
+							<span id="emailPreview_attachment" class="">
+								{foreach item=ATTACHMENT from=$ATTACHMENTS}
+									<a class="btn btn-sm btn-primary mr-1 mb-1" href="file.php?module=OSSMailView&action=DownloadFile&record={$RECORD}&attachment={$ATTACHMENT['id']}">
+										<span class="fas fa-paperclip mr-1"></span>
+										{$ATTACHMENT['file']}
+									</a>
+								{/foreach}
+							</span>
 						</div>
 					{/if}
-					<div class="row no-gutters padding-bottom1per content">
-								<span class="col-2">
-									<span class="float-right muted">{\App\Language::translate('Content',$MODULENAME)}</span>
-								</span>
-						<span class="col-md-10 row no-gutters">
-									<iframe id="emailPreview_Content" class="col-12 {if $ISMODAL}u-h-70vh{/if}"
-											src="{$URL}"
-											frameborder="0"></iframe>
-								</span>
-					</div>
 					<hr/>
-
-					<div class="textAlignCenter">
-								<span class="muted">
-									<small><em>{\App\Language::translate('Sent',$MODULENAME)}</em></small>
-									<span><small><em>&nbsp;{$SENT}</em></small></span>
-								</span>
-					</div>
-					<div class="textAlignCenter">
-					<span><strong> {\App\Language::translate('LBL_OWNER')}
-							: {\App\Fields\Owner::getLabel($OWNER)}</strong></span>
+					<div class="no-gutters pb-1 content">
+						{$CONTENT}
 					</div>
 				</form>
 			</div>
@@ -171,7 +131,7 @@
 	</div>
 {/if}
 	{if !$NOLOADLIBS}
-		{include file=\App\Layout::getTemplatePath('JSResources.tpl')}
+		{include file=\App\Layout::getTemplatePath('PageFooter.tpl')}
 	{/if}
 	{if !$ISMODAL}
 		<script>

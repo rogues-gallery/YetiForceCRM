@@ -6,8 +6,9 @@
  * @package Action
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 {
@@ -89,6 +90,7 @@ class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 			$row['parent'] = App\Fields\Tree::getParentIdx($row);
 			unset($row['templateid'], $row['depth'], $row['state'], $row['name']);
 			$row['parentTree'] = explode('::', $row['parentTree']);
+			$row['label'] = \App\Language::translate($row['label'], $request->getModule());
 			$categories[$row['tree']] = $row;
 		}
 		$response = new Vtiger_Response();
@@ -131,18 +133,19 @@ class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 		$recordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('record'), $request->getModule());
 		if ('PLL_PRESENTATION' === $recordModel->get('knowledgebase_view')) {
 			$content = [];
+			$fieldModel = $recordModel->getField('content');
 			foreach (explode('<div style="page-break-after:always;"><span style="display:none;">', $recordModel->get('content')) as $key => $value) {
 				if (0 === $key) {
-					$content[] = $value;
+					$content[] = $fieldModel->getDisplayValue($value, $recordModel->getId(), $recordModel, true);
 				} else {
-					$content[] = substr($value, 16);
+					$content[] = $fieldModel->getDisplayValue(substr($value, 16), $recordModel->getId(), $recordModel, true);
 				}
 			}
 		} else {
-			$content = $recordModel->get('content');
+			$content = $recordModel->getDisplayValue('content', false, true);
 		}
 		$relatedModules = $relatedRecords = [];
-		foreach ($recordModel->getModule()->getRelations() as $key => $value) {
+		foreach ($recordModel->getModule()->getRelations() as $value) {
 			$relatedModuleName = $value->get('relatedModuleName');
 			$relatedModules[$relatedModuleName] = App\Language::translate($relatedModuleName, $relatedModuleName);
 			if ('ModComments' !== $relatedModuleName && $request->getModule() !== $relatedModuleName) {
@@ -152,7 +155,7 @@ class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 		$response = new Vtiger_Response();
 		$response->setResult([
 			'content' => $content,
-			'introduction' => $recordModel->getDisplayValue('introduction'),
+			'introduction' => $recordModel->getDisplayValue('introduction', false, true),
 			'subject' => $recordModel->get('subject'),
 			'view' => $recordModel->get('knowledgebase_view'),
 			'assigned_user_id' => $recordModel->getDisplayValue('assigned_user_id', false, true),
@@ -184,12 +187,11 @@ class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 	 */
 	public function getRelated(Vtiger_Record_Model $recordModel): array
 	{
-		$pagingModel = new Vtiger_Paging_Model();
 		$relationListView = Vtiger_RelationListView_Model::getInstance($recordModel, $recordModel->getModuleName());
 		$relationListView->setFields(['id', 'subject', 'introduction', 'assigned_user_id', 'category', 'modifiedtime']);
 		$relationListView->getQueryGenerator()->addNativeCondition($this->queryCondition);
 		$related = [];
-		foreach ($relationListView->getEntries($pagingModel) as $key => $relatedRecordModel) {
+		foreach ($relationListView->getAllEntries() as $key => $relatedRecordModel) {
 			$related[$key] = [
 				'assigned_user_id' => $relatedRecordModel->getDisplayValue('assigned_user_id'),
 				'subject' => $relatedRecordModel->get('subject'),
@@ -249,12 +251,11 @@ class KnowledgeBase_KnowledgeBaseAjax_Action extends \App\Controller\Action
 		if (!\App\Privilege::isPermitted($moduleName)) {
 			return [];
 		}
-		$pagingModel = new Vtiger_Paging_Model();
 		$relationListView = Vtiger_RelationListView_Model::getInstance($recordModel, $moduleName);
 		$fields = $relationListView->getRelatedModuleModel()->getNameFields();
 		$relationListView->setFields(array_merge(['id'], $fields));
 		$related = [];
-		foreach ($relationListView->getEntries($pagingModel) as $key => $relatedRecordModel) {
+		foreach ($relationListView->getAllEntries() as $key => $relatedRecordModel) {
 			$name = [];
 			foreach ($fields as $fieldName) {
 				$name[] = $relatedRecordModel->getDisplayName($fieldName);

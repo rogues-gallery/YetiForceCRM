@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 $sitebar-border: 1px solid #ccc;
 $modal-body-paddings: 2rem;
 $h-modal-header: calculate-rem(55px);
@@ -22,38 +22,9 @@ $h-calendar-form-actions: calculate-rem(49px);
 	@extend .pt-2;
 }
 
-@media (min-width: map_get($grid-breakpoints, lg)) {
-	.basePanel[class*="_Calendar"] {
-		.mainBody {
-			overflow: hidden;
-		}
-	}
-}
-
 .o-label-container {
-	@extend .col-12;
-	@extend .col-sm-6;
-	@extend .col-lg-12;
-	@extend .mb-lg-2;
-	@extend .mb-2;
-	@extend .px-0;
-	@extend .d-flex;
-	@extend .justify-content-lg-center;
-	@extend .justify-content-center;
-	@extend .justify-content-xl-start;
-	@extend .justify-content-sm-start;
-}
-
-.o-btn-container {
-	@extend .col-12;
-	@extend .col-sm-6;
-	@extend .col-lg-12;
-	@extend .px-0;
-	@extend .d-flex;
-	@extend .justify-content-center;
-	@extend .justify-content-sm-end;
-	@extend .justify-content-lg-center;
-	@extend .justify-content-xl-end;
+	@extend .mr-auto;
+	@extend .my-auto;
 }
 
 .hideToggleSiteBarRightButton {
@@ -61,21 +32,23 @@ $h-calendar-form-actions: calculate-rem(49px);
 }
 
 //standard calendar toggle button
-.basePanel:not(.Calendar_CalendarExtended) {
-	.toggleSiteBarRightButton {
-		background: $light;
-		font-weight: bold;
-		padding: 15px 0 !important;
-		position: fixed;
-		top: 50%;
-		right: 25%;
-		cursor: pointer;
-		width: 17px;
-		z-index: 100;
-		border: $sitebar-border;
-		border-right: 0;
-		display: inline-block;
-		border-radius: 0;
+.container-fluid:not([class*="-calendarextended-container"]) {
+	.basePanel {
+		.c-standard-toggle-button {
+			background: $light;
+			font-weight: bold;
+			padding: 15px 0 !important;
+			position: fixed;
+			top: 50%;
+			right: 25%;
+			cursor: pointer;
+			width: 17px;
+			z-index: 100;
+			border: $sitebar-border;
+			border-right: 0;
+			display: inline-block;
+			border-radius: 0;
+		}
 	}
 }
 
@@ -116,6 +89,11 @@ $h-calendar-form-actions: calculate-rem(49px);
 		bottom: $h-footer;
 	}
 }
+@include media-breakpoint-down(md) {
+	.siteBarRight {
+		width: auto !important;
+	}
+}
 
 .hideSiteBar {
 	right: -25%;
@@ -151,8 +129,8 @@ $h-calendar-form-actions: calculate-rem(49px);
 }
 
 //Calendar Extended
-.tpl-Calendar-Extended-CalendarViewPreProcess,
-.tpl-Calendar-Extended-QuickCreate {
+.c-calendar-view,
+.c-calendar-quickcreate {
 	$header-btn-font-size: 14px;
 	$count-badge-color: material-color("red", "200");
 
@@ -708,7 +686,7 @@ $h-calendar-form-actions: calculate-rem(49px);
 			z-index: 5;
 			padding: calculate-rem(6px) 0 calculate-rem(5px);
 
-			@at-root .tpl-Calendar-Extended-QuickCreate #{&} {
+			@at-root .c-calendar-quickcreate #{&} {
 				padding: calculate-rem(10px) 0 0;
 			}
 
@@ -746,7 +724,7 @@ $h-calendar-form-actions: calculate-rem(49px);
 			&__form__wrapper {
 				position: relative;
 
-				@at-root .tpl-Calendar-Extended-QuickCreate #{&} {
+				@at-root .c-calendar-quickcreate #{&} {
 					height: calc(
 						100vh - #{$h-footer} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
 					);
@@ -779,7 +757,7 @@ $h-calendar-form-actions: calculate-rem(49px);
 				//border-radius: $tab-left-border-radius 0 0 $tab-left-border-radius;
 				font-size: calculate-rem(13px);
 
-				@at-root .c-menu--open #{&} {
+				@at-root .c-menu--open & {
 					right: calc(25% - 51px);
 				}
 
@@ -827,6 +805,17 @@ $h-calendar-form-actions: calculate-rem(49px);
 				}
 			}
 		}
+		.user-info--active .c-calendar-quickcreate .o-calendar__form__wrapper {
+			height: calc(
+				100vh - #{$h-footer-user-info} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
+			);
+		}
+
+		.limited-footer--active .c-calendar-quickcreate .o-calendar__form__wrapper {
+			height: calc(
+				100vh - #{$h-footer-limited} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
+			);
+		}
 
 		.o-calendar__form__actions[min-height~="70px"] {
 			padding-bottom: 0;
@@ -840,6 +829,16 @@ $h-calendar-form-actions: calculate-rem(49px);
 			right: 0;
 		}
 	}
+
+	@media only screen and (max-width: 480px) {
+		.fieldRow .col-12 {
+			padding-right: 8px;
+			padding-left: 0;
+			label {
+				margin-bottom: 0;
+			}
+		}
+	}
 }
 
 .user-info--active .o-calendar {
@@ -849,23 +848,11 @@ $h-calendar-form-actions: calculate-rem(49px);
 	}
 }
 
-.user-info--active .tpl-Calendar-Extended-QuickCreate .o-calendar__form__wrapper {
-	height: calc(
-		100vh - #{$h-footer-user-info} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
-	);
-}
-
 .limited-footer--active .o-calendar {
 	&__tab--filters,
 	&__form {
 		height: calc(100vh - #{$h-footer-limited} - #{$h-header});
 	}
-}
-
-.limited-footer--active .tpl-Calendar-Extended-QuickCreate .o-calendar__form__wrapper {
-	height: calc(
-		100vh - #{$h-footer-limited} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
-	);
 }
 
 .limited-footer--active .o-calendar {
@@ -875,13 +862,7 @@ $h-calendar-form-actions: calculate-rem(49px);
 	}
 }
 
-.limited-footer--active .tpl-Calendar-Extended-QuickCreate .o-calendar__form__wrapper {
-	height: calc(
-		100vh - #{$h-footer} - #{$h-header} - #{$h-calendar-form-actions} - #{$h-modal-header} - #{$modal-body-paddings}
-	);
-}
-
-.tpl-Calendar-Extended-QuickCreate {
+.c-calendar-quickcreate {
 	.o-calendar__form {
 		height: auto !important;
 	}
@@ -898,11 +879,4 @@ $h-calendar-form-actions: calculate-rem(49px);
 
 .fc-day-top.fc-mon {
 	position: relative;
-}
-
-.fc-row .fc-content-skeleton {
-	z-index: unset !important;
-}
-.fc-row .fc-bgevent-skeleton {
-	z-index: 1 !important;
 }

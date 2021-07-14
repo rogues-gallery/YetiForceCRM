@@ -4,7 +4,7 @@
  * OSSMail check mails action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSMail_CheckMails_Action extends \App\Controller\Action
 {
@@ -15,7 +15,7 @@ class OSSMail_CheckMails_Action extends \App\Controller\Action
 	 *
 	 * @throws \App\Exceptions\NoPermitted
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		if (!$currentUserPriviligesModel->hasModulePermission($request->getModule()) || array_diff($request->getArray('users', 'Integer'), array_keys(OSSMail_Autologin_Model::getAutologinUsers()))) {
@@ -28,11 +28,11 @@ class OSSMail_CheckMails_Action extends \App\Controller\Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
-		$users = $request->getArray('users', 'Integer');
+		$users = array_unique($request->getArray('users', 'Integer'));
 		$output = [];
-		if (count($users) > 0) {
+		if (\count($users) > 0) {
 			OSSMail_Record_Model::updateMailBoxmsgInfo($users);
 			$output = OSSMail_Record_Model::getMailBoxmsgInfo($users);
 		}

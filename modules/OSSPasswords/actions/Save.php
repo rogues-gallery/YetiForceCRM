@@ -4,36 +4,20 @@
  * OSSPasswords save action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSPasswords_Save_Action extends Vtiger_Save_Action
 {
-	public function process(\App\Request $request)
+	/** {@inheritdoc} */
+	public function saveRecord(App\Request $request)
 	{
-		$recordModel = $this->saveRecord($request);
-		if ($request->getBoolean('relationOperation')) {
-			$parentModuleName = $request->getByType('sourceModule', 2);
-			$parentRecordId = $request->getInteger('sourceRecord');
-			$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentRecordId, $parentModuleName);
-			$loadUrl = $parentRecordModel->getDetailViewUrl();
-		} elseif ($request->getBoolean('returnToList')) {
-			$loadUrl = $recordModel->getModule()->getListViewUrl();
-		} else {
-			$loadUrl = $recordModel->getDetailViewUrl();
+		$this->getRecordModelFromRequest($request);
+		$eventHandler = $this->record->getEventHandler();
+		foreach ($eventHandler->getHandlers(\App\EventHandler::EDIT_VIEW_PRE_SAVE) as $handler) {
+			if (!(($response = $eventHandler->triggerHandler($handler))['result'] ?? null)) {
+				throw new \App\Exceptions\NoPermittedToRecord($response['message'], 406);
+			}
 		}
-		header("location: $loadUrl");
-	}
-
-	/**
-	 * Function to save record.
-	 *
-	 * @param \App\Request $request - values of the record
-	 *
-	 * @return Vtiger_Record_Model - record Model of saved record
-	 */
-	public function saveRecord(\App\Request $request)
-	{
-		$recordModel = $this->getRecordModelFromRequest($request);
 		// check if encryption is enabled
 		$config = false;
 		if (file_exists('modules/OSSPasswords/config.ini.php')) {
@@ -41,47 +25,42 @@ class OSSPasswords_Save_Action extends Vtiger_Save_Action
 		}
 
 		//check if password was edited with hidden password
-		$properPassword = $recordModel->get('password');
+		$properPassword = $this->record->get('password');
 		// edit mode
-		if (!$recordModel->isNew()) {
-			if ($properPassword == '**********') { // hidden password sent in edit mode, get the correct one
+		if (!$this->record->isNew()) {
+			if ('**********' == $properPassword) { // hidden password sent in edit mode, get the correct one
 				if ($config) { // when encryption is on
-					$properPassword = (new \App\Db\Query())->select(['pass' => new \yii\db\Expression('AES_DECRYPT(`password`, :configKey)', [':configKey' => $config['key']])])->from('vtiger_osspasswords')->where(['osspasswordsid' => $recordModel->getId()])->scalar();
+					$properPassword = (new \App\Db\Query())->select(['pass' => new \yii\db\Expression('AES_DECRYPT(`password`, :configKey)', [':configKey' => $config['key']])])->from('vtiger_osspasswords')->where(['osspasswordsid' => $this->record->getId()])->scalar();
 				} else {  // encryption mode is off
-					$properPassword = (new \App\Db\Query())->select(['pass' => 'password'])->from('vtiger_osspasswords')->where(['osspasswordsid' => $recordModel->getId()]);
+					$properPassword = (new \App\Db\Query())->select(['pass' => 'password'])->from('vtiger_osspasswords')->where(['osspasswordsid' => $this->record->getId()]);
 				}
 			}
-			$recordModel->set('password', $properPassword);
-			$recordModel->save();
+			$this->record->set('password', $properPassword);
+			$this->record->save();
 
 			// after save we check if encryption is active
 			if ($config) {
 				\App\Db::getInstance()->createCommand()
 					->update('vtiger_osspasswords', [
 						'password' => new \yii\db\Expression('AES_ENCRYPT(:properPass,:configKey)', [':properPass' => $properPassword, ':configKey' => $config['key']])
-					], ['osspasswordsid' => $recordModel->getId()])
+					], ['osspasswordsid' => $this->record->getId()])
 					->execute();
 			}
 		} else {
-			$recordModel->save();
+			$this->record->save();
 			if ($config) { // when encryption is on
 				\App\Db::getInstance()->createCommand()
 					->update('vtiger_osspasswords', [
 						'password' => new \yii\db\Expression('AES_ENCRYPT(`password`,:configKey)', [':configKey' => $config['key']])
-					], ['osspasswordsid' => $recordModel->getId()])
+					], ['osspasswordsid' => $this->record->getId()])
 					->execute();
 			}
 		}
 		if ($request->getBoolean('relationOperation')) {
-			$parentModuleName = $request->getByType('sourceModule', 2);
-			$parentModuleModel = Vtiger_Module_Model::getInstance($parentModuleName);
-			$parentRecordId = $request->getInteger('sourceRecord');
-			$relatedModule = $recordModel->getModule();
-			$relatedRecordId = $recordModel->getId();
-
-			$relationModel = Vtiger_Relation_Model::getInstance($parentModuleModel, $relatedModule);
-			$relationModel->addRelation($parentRecordId, $relatedRecordId);
+			$relationId = $request->isEmpty('relationId') ? false : $request->getInteger('relationId');
+			if ($relationModel = Vtiger_Relation_Model::getInstance(Vtiger_Module_Model::getInstance($request->getByType('sourceModule', 2)), $this->record->getModule(), $relationId)) {
+				$relationModel->addRelation($request->getInteger('sourceRecord'), $this->record->getId());
+			}
 		}
-		return $recordModel;
 	}
 }

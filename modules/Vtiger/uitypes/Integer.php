@@ -10,25 +10,37 @@
 
 class Vtiger_Integer_UIType extends Vtiger_Base_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
 		return App\Fields\Integer::formatToDb($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
+	/** {@inheritdoc} */
+	public function getDbConditionBuilderValue($value, string $operator)
 	{
-		return App\Fields\Integer::formatToDisplay($value);
+		$this->validate($value, true);
+		preg_match_all('/\D+/', $value, $matches);
+		if ($matches && $operators = \array_intersect(array_map('App\\Purifier::decodeHtml', $matches[0]), App\Conditions\QueryFields\IntegerField::$extendedOperators)) {
+			$value = \App\Purifier::decodeHtml($value);
+			$valueConvert = '';
+			foreach ($operators as $operator) {
+				$ev = explode($operator, $value);
+				$valueConvert .= $operator . (int) $ev[1];
+				$value = str_replace($valueConvert, '', $value);
+			}
+			return $valueConvert;
+		}
+		return $this->getDBValue($value);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
+	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
+	{
+		return null === $value || '' === $value ? '' : App\Fields\Integer::formatToDisplay($value);
+	}
+
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
 		return App\Fields\Integer::formatToDisplay($value);
@@ -72,39 +84,15 @@ class Vtiger_Integer_UIType extends Vtiger_Base_UIType
 		return 'Edit/Field/Number.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getAllowedColumnTypes()
 	{
 		return ['bigint', 'integer', 'smallint', 'tinyint'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getQueryOperators()
 	{
 		return ['e', 'n', 'l', 'g', 'm', 'h', 'y', 'ny'];
-	}
-
-	/**
-	 * Generate valid sample value.
-	 *
-	 * @throws \Exception
-	 *
-	 * @return int
-	 */
-	public function getSampleValue()
-	{
-		$min = 0;
-		$max = $this->getFieldModel()->get('maximumlength');
-		if (strpos($max, ',')) {
-			$max = (int) explode(',', $max)[1];
-		}
-		if ($max > 9999 || $max < 0) {
-			$max = 9999;
-		}
-		return \App\Fields\Integer::formatToDb(random_int($min, (int) $max));
 	}
 }

@@ -4,7 +4,7 @@
  * Settings TreesManager save action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_TreesManager_Save_Action extends Settings_Vtiger_Basic_Action
 {
@@ -13,7 +13,7 @@ class Settings_TreesManager_Save_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$qualifiedModuleName = $request->getModule(false);
 		$name = $request->getByType('name', 'Text');

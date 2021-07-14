@@ -1,10 +1,9 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{* Summary View Products Widget*}
 	<div class="tpl-DetailViewProductsServicesContents">
-		{assign var=PRODUCTS value=\App\Module::getModuleId('Products')}
-		{if isset($RELATIONS[$PRODUCTS])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['Products'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_products hideActionImages"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=Products&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_PRODUCTS">
@@ -16,9 +15,14 @@
 							</div>
 							<div class="col-1 col-md-3 summaryWidgetIcon">
 								<div class="float-right">
-									<button class="btn btn-light showModal" type="button"
+									{if !$RELATIONS['Products']->isTreeRelation()}
+										{assign var=VIEW value='RecordsList'}
+									{else}
+										{assign var=VIEW value='TreeCategoryModal'}
+									{/if}
+									<button class="btn btn-light {if !$RELATIONS['Products']->isTreeRelation()}js-widget-products-services{else}showModal{/if}" type="button"
 											data-modalid="ProductsModal"
-											data-url="index.php?module=Products&view=TreeCategoryModal&src_module={$MODULE_NAME}&src_record={$RECORDID}">
+											data-url="index.php?module=Products&view={$VIEW}&src_module={$MODULE_NAME}&src_record={$RECORDID}&multi_select=true">
 											<span class="fas fa-search-plus"
 												  title="{\App\Language::translate('LBL_SELECT',$MODULE_NAME)}"></span>
 									</button>
@@ -40,7 +44,7 @@
 					</div>
 					<div class="c-detail-widget__content js-detail-widget-content" data-js="container|value"></div>
 				</div>
-				{if $RELATIONS[$PRODUCTS]->isTreeRelation()}
+				{if $RELATIONS['Products']->isTreeRelation()}
 					<div class="widgetContainer_productsCategory"
 						 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=Products&mode=showRelatedTree"
 						 data-name="LBL_RELATED_PRODUCTS">
@@ -66,9 +70,8 @@
 			</div>
 		{/if}
 		{* Summary View OutsourcedProducts Widget*}
-		{assign var=OUTSOURCEDPRODUCTS value=\App\Module::getModuleId('OutsourcedProducts')}
-		{if isset($RELATIONS[$OUTSOURCEDPRODUCTS])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['OutsourcedProducts'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_assets"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=OutsourcedProducts&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_OP">
@@ -80,9 +83,14 @@
 							</div>
 							<div class="col-1 col-md-3 summaryWidgetIcon">
 								<div class="float-right">
-									<button class="btn btn-light showModal" type="button"
+									{if !$RELATIONS['OutsourcedProducts']->isTreeRelation()}
+										{assign var=VIEW value='RecordsList'}
+									{else}
+										{assign var=VIEW value='TreeCategoryModal'}
+									{/if}
+									<button class="btn btn-light {if !$RELATIONS['OutsourcedProducts']->isTreeRelation()}js-widget-products-services{else}showModal{/if}" type="button"
 											data-modalid="OutsourcedProductsModal" data-module="OutsourcedProducts"
-											data-url="index.php?module=OutsourcedProducts&view=TreeCategoryModal&src_module={$MODULE_NAME}&src_record={$RECORDID}">
+											data-url="index.php?module=OutsourcedProducts&view={$VIEW}&src_module={$MODULE_NAME}&src_record={$RECORDID}&multi_select=true">
 											<span class="fas fa-search-plus"
 												  title="{\App\Language::translate('LBL_SELECT',$MODULE_NAME)}"></span>
 									</button>
@@ -104,7 +112,7 @@
 					</div>
 					<div class="c-detail-widget__content js-detail-widget-content" data-js="container|value"></div>
 				</div>
-				{if $RELATIONS[$OUTSOURCEDPRODUCTS]->isTreeRelation()}
+				{if $RELATIONS['OutsourcedProducts']->isTreeRelation()}
 					<div class="widgetContainer_productsCategory"
 						 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=OutsourcedProducts&mode=showRelatedTree"
 						 data-name="LBL_RELATED_OP">
@@ -130,9 +138,8 @@
 			</div>
 		{/if}
 		{* Summary View Assets Widget*}
-		{assign var=ASSETS value=\App\Module::getModuleId('Assets')}
-		{if isset($RELATIONS[$ASSETS])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['Assets'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_assets2"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=Assets&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_ASSETS">
@@ -162,9 +169,8 @@
 			</div>
 		{/if}
 		{* Summary View Services Widget Ends Here*}
-		{assign var=SERVICES value=\App\Module::getModuleId('Services')}
-		{if isset($RELATIONS[$SERVICES])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['Services'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_service hideActionImages"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=Services&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_SERVICES">
@@ -176,8 +182,13 @@
 							</div>
 							<div class="col-1 col-md-3 summaryWidgetIcon">
 								<span class="float-right">
-									<button class="btn btn-light showModal" type="button" data-modalid="ServicesModal"
-											data-url="index.php?module=Services&view=TreeCategoryModal&src_module={$MODULE_NAME}&src_record={$RECORDID}">
+									{if !$RELATIONS['Services']->isTreeRelation()}
+										{assign var=VIEW value='RecordsList'}
+									{else}
+										{assign var=VIEW value='TreeCategoryModal'}
+									{/if}
+									<button class="btn btn-light {if !$RELATIONS['Services']->isTreeRelation()}js-widget-products-services{else}showModal{/if}" type="button" data-modalid="ServicesModal"
+											data-url="index.php?module=Services&view={$VIEW}&src_module={$MODULE_NAME}&src_record={$RECORDID}&multi_select=true">
 										<span class="fas fa-search-plus"
 											  title="{\App\Language::translate('LBL_SELECT',$MODULE_NAME)}"></span>
 									</button>
@@ -199,7 +210,7 @@
 					</div>
 					<div class="c-detail-widget__content js-detail-widget-content" data-js="container|value"></div>
 				</div>
-				{if $RELATIONS[$SERVICES]->isTreeRelation()}
+				{if $RELATIONS['Services']->isTreeRelation()}
 					<div class="widgetContainer_productsCategory"
 						 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=Services&mode=showRelatedTree"
 						 data-name="LBL_RELATED_SERVICES">
@@ -225,9 +236,8 @@
 			</div>
 		{/if}
 		{* Summary View OSSOutsourcedServices Widget Start Here*}
-		{assign var=OSSOUTSOURCEDSERVICES value=\App\Module::getModuleId('OSSOutsourcedServices')}
-		{if isset($RELATIONS[$OSSOUTSOURCEDSERVICES])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['OSSOutsourcedServices'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_service"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=OSSOutsourcedServices&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_OSSOS">
@@ -239,10 +249,15 @@
 							</div>
 							<div class="col-1 col-md-3 summaryWidgetIcon">
 								<div class="float-right">
-									<button class="btn btn-light showModal" type="button"
+									{if !$RELATIONS['OSSOutsourcedServices']->isTreeRelation()}
+										{assign var=VIEW value='RecordsList'}
+									{else}
+										{assign var=VIEW value='TreeCategoryModal'}
+									{/if}
+									<button class="btn btn-light {if !$RELATIONS['OSSOutsourcedServices']->isTreeRelation()}js-widget-products-services{else}showModal{/if}" type="button"
 											data-modalid="OSSOutsourcedServicesModal"
 											data-module="OSSOutsourcedServices"
-											data-url="index.php?module=OSSOutsourcedServices&view=TreeCategoryModal&src_module={$MODULE_NAME}&src_record={$RECORDID}">
+											data-url="index.php?module=OSSOutsourcedServices&view={$VIEW}&src_module={$MODULE_NAME}&src_record={$RECORDID}&multi_select=true">
 											<span class="fas fa-search-plus"
 												  title="{\App\Language::translate('LBL_SELECT',$MODULE_NAME)}"></span>
 									</button>
@@ -264,7 +279,7 @@
 					</div>
 					<div class="c-detail-widget__content js-detail-widget-content" data-js="container|value"></div>
 				</div>
-				{if $RELATIONS[$OSSOUTSOURCEDSERVICES]->isTreeRelation()}
+				{if $RELATIONS['OSSOutsourcedServices']->isTreeRelation()}
 					<div class="widgetContainer_productsCategory"
 						 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=OSSOutsourcedServices&mode=showRelatedTree"
 						 data-name="LBL_RELATED_OSSOS">
@@ -289,9 +304,8 @@
 				{/if}
 			</div>
 		{/if}
-		{assign var=OSSSOLDSERVICES value=\App\Module::getModuleId('OSSSoldServices')}
-		{if isset($RELATIONS[$OSSSOLDSERVICES])}
-			<div class="c-detail-widget js-detail-widget u-mb-13px" data-js="container">
+		{if isset($RELATIONS['OSSSoldServices'])}
+			<div class="c-detail-widget js-detail-widget" data-js="container">
 				<div class="widgetContainer_service"
 					 data-url="module={$MODULE_NAME}&view=Detail&record={$RECORDID}&relatedModule=OSSSoldServices&mode=showRelatedRecords&page=1&limit={$LIMIT}"
 					 data-name="LBL_RELATED_OSSSS">

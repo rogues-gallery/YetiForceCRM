@@ -2,9 +2,12 @@
 /**
  * Tools for currency class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
 namespace App\Fields;
@@ -55,23 +58,14 @@ class Currency
 	/**
 	 * Get currency by module name.
 	 *
-	 * @param bool|string $type
-	 * @param mixed       $record
-	 * @param mixed       $moduleName
+	 * @param int    $record
+	 * @param string $moduleName
 	 *
-	 * @return array
+	 * @return int
 	 */
-	public static function getCurrencyByModule($record, $moduleName)
+	public static function getCurrencyByModule(int $record, string $moduleName)
 	{
-		$cacheKey = "$record|$moduleName";
-		if (\App\Cache::has('Currency|getCurrencyByModule', $cacheKey)) {
-			return \App\Cache::get('Currency|getCurrencyByModule', $cacheKey);
-		}
-		$instance = \CRMEntity::getInstance($moduleName);
-		$currencyId = (new \App\Db\Query())->select(['currency_id'])->from($instance->table_name)->where([$instance->table_index => $record])->scalar();
-		\App\Cache::save('Currency|getCurrencyByModule', $cacheKey, $currencyId);
-
-		return $currencyId;
+		return \Vtiger_Record_Model::getInstanceById($record, $moduleName)->get('currency_id');
 	}
 
 	/**
@@ -116,7 +110,7 @@ class Currency
 		if (\App\Cache::has('CurrencyGetAll', 'All')) {
 			$currencies = \App\Cache::get('CurrencyGetAll', 'All');
 		} else {
-			$currencies = (new \App\Db\Query())->from('vtiger_currency_info')->indexBy('id')->all();
+			$currencies = (new \App\Db\Query())->from('vtiger_currency_info')->where(['deleted' => 0])->indexBy('id')->all();
 			\App\Cache::save('CurrencyGetAll', 'All', $currencies);
 		}
 		if ($onlyActive) {
@@ -125,6 +119,22 @@ class Currency
 					unset($currencies[$id]);
 				}
 			}
+		}
+		return $currencies;
+	}
+
+	/**
+	 * Get supported currencies.
+	 *
+	 * @return array
+	 */
+	public static function getSupported(): array
+	{
+		if (\App\Cache::has('CurrencySupported', 'All')) {
+			$currencies = \App\Cache::get('CurrencySupported', 'All');
+		} else {
+			$currencies = (new \App\Db\Query())->from('vtiger_currencies')->indexBy('currency_code')->all();
+			\App\Cache::save('CurrencySupported', 'All', $currencies);
 		}
 		return $currencies;
 	}
@@ -155,5 +165,14 @@ class Currency
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Function clears cache.
+	 */
+	public static function clearCache()
+	{
+		\App\Cache::delete('CurrencyGetAll', 'All');
+		\App\Cache::delete('CurrencySupported', 'All');
 	}
 }

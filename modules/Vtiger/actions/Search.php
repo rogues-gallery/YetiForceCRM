@@ -6,7 +6,7 @@
  * @package   Action
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -20,7 +20,7 @@ class Vtiger_Search_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		if (!$currentUserPriviligesModel->hasModulePermission($request->getModule())) {
@@ -42,7 +42,7 @@ class Vtiger_Search_Action extends \App\Controller\Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function owners(\App\Request $request)
+	public function owners(App\Request $request)
 	{
 		$owner = App\Fields\Owner::getInstance();
 		$owner->showRoleName = true;
@@ -57,7 +57,7 @@ class Vtiger_Search_Action extends \App\Controller\Action
 					'id' => $key,
 					'label' => $value,
 					'image' => $imageUrl ?? '',
-					'icon' => $imageUrl ? '' : 'adminIcon-user'
+					'icon' => $imageUrl ? '' : 'yfi yfi-users-2'
 				];
 			}
 		}

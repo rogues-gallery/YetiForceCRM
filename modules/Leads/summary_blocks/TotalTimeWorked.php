@@ -4,7 +4,7 @@
  * TotalTimeWorked class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class TotalTimeWorked
 {
@@ -22,11 +22,11 @@ class TotalTimeWorked
 	public function process(Vtiger_Record_Model $recordModel)
 	{
 		\App\Log::trace('Entering TotalTimeWorked::process() method ...');
-		$timecontrol = (new App\Db\Query())->from('vtiger_osstimecontrol')
+		$timeControl = (new App\Db\Query())->from('vtiger_osstimecontrol')
 			->innerJoin('vtiger_crmentity', 'vtiger_crmentity.crmid = vtiger_osstimecontrol.osstimecontrolid')
 			->where(['vtiger_crmentity.deleted' => 0, 'vtiger_osstimecontrol.link' => $recordModel->getId()])
 			->sum('vtiger_osstimecontrol.sum_time');
 
-		return \App\Fields\RangeTime::formatHourToDisplay($timecontrol, 'short');
+		return \App\Fields\RangeTime::displayElapseTime($timeControl);
 	}
 }

@@ -4,7 +4,7 @@
  * Reservations record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Reservations_Record_Model extends Vtiger_Record_Model
 {
@@ -12,7 +12,7 @@ class Reservations_Record_Model extends Vtiger_Record_Model
 
 	public function checkID($ID)
 	{
-		if ($ID == 0 || $ID == '') {
+		if (0 == $ID || '' == $ID) {
 			return false;
 		}
 		return true;

@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-RecentActivitiesHeader row marginBottom10px">
 		<div class="col-md-12 btn-toolbar justify-content-end">
@@ -10,7 +10,7 @@
 			{/if}
 			<div class="btn-group btn-group-toggle" data-toggle="buttons">
 				<label class="btn btn-sm btn-outline-primary {if $TYPE eq 'changes'}active{/if}">
-					<input class="js-switch--recentActivities" type="radio" name="options" id="option1" data-js="change"
+					<input class="js-switch--recentActivities" type="radio" name="options" id="activities-option1" data-js="change"
 						   data-on-text="{App\Language::translate('LBL_CURRENT')}"
 						   data-on-val="changes"
 						   data-basic-text="{App\Language::translate('LBL_CURRENT')}"
@@ -19,7 +19,7 @@
 					> {\App\Language::translate('LBL_UPDATES', $MODULE_BASE_NAME)}
 				</label>
 				<label class="btn btn-sm btn-outline-primary {if $TYPE neq 'changes'}active{/if}">
-					<input class="js-switch--recentActivities" type="radio" name="options" id="option2" data-js="change"
+					<input class="js-switch--recentActivities" type="radio" name="options" id="activities-option2" data-js="change"
 						   data-basic-text="{App\Language::translate('LBL_HISTORY')}"
 						   data-off-text="data-off-text {App\Language::translate('LBL_HISTORY')}"
 						   data-off-val="review"

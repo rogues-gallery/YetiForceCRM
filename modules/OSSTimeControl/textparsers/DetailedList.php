@@ -3,7 +3,7 @@
  * Time control detailed list parser.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -47,23 +47,27 @@ class OSSTimeControl_DetailedList_Textparser extends \App\TextParser\Base
 			}
 		}
 		$html .= '</tr></thead><tbody>';
-		$summary = ['sum_time' => 0];
+		$summary = [];
 		foreach ($ids as $recordId) {
 			$html .= '<tr>';
 			$recordModel = Vtiger_Record_Model::getInstanceById($recordId, $this->textParser->moduleName);
+			if (!$recordModel->isViewable()) {
+				continue;
+			}
 			foreach ($columns as $column) {
 				$style = $bodyStyle;
 				$styleDate = $bodyStyle . 'text-align:center;';
 				$columnName = $column->getName();
 				if ('date_start' === $columnName) {
 					$style = $styleDate;
-					$value = \App\Fields\DateTime::formatToViewDate($recordModel->getDisplayValue($columnName) . ' ' . $recordModel->getDisplayValue('time_start'));
-				} elseif ('sum_time' === $columnName) {
-					$style = $styleDate;
-					$value = $recordModel->getDisplayValue($columnName);
-					$summary['sum_time'] += $value;
+					$value = \App\Fields\DateTime::formatToDisplay($recordModel->getDisplayValue($columnName) . ' ' . $recordModel->getDisplayValue('time_start'));
 				} else {
 					$value = $recordModel->getDisplayValue($columnName);
+				}
+				if ('sum_time' === $columnName) {
+					$style = $styleDate;
+					$summary['sum_time'] = $summary['sum_time'] ?? 0;
+					$summary['sum_time'] += $recordModel->get($columnName);
 				}
 				$html .= "<td style=\"{$style}\">" . $value . '</td>';
 			}
@@ -75,13 +79,14 @@ class OSSTimeControl_DetailedList_Textparser extends \App\TextParser\Base
 			$columnName = $column->getName();
 			$content = '';
 			if ('sum_time' === $columnName) {
-				$content = '<strong>' . \App\Fields\RangeTime::formatHourToDisplay($summary['sum_time'], 'short') . '</strong>';
+				$content = '<strong>' . \App\Fields\RangeTime::displayElapseTime($summary['sum_time']) . '</strong>';
 				$style = $bodyStyle . 'text-align:center;';
 			} elseif ('name' === $columnName) {
 				$content = '<strong>' . \App\Language::translate('LBL_SUMMARY', $this->textParser->moduleName) . ':' . '</strong>';
 			}
 			$html .= "<td style=\"{$style}\">" . $content . '</td>';
 		}
-		return $html . '</tr></tfoot></table>';
+		$html .= '</tr></tfoot></table>';
+		return $html;
 	}
 }

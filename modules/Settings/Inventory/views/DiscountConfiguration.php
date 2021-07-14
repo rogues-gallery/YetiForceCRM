@@ -2,7 +2,7 @@
 
 /**
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_Inventory_DiscountConfiguration_View extends Settings_Vtiger_Index_View
@@ -17,7 +17,7 @@ class Settings_Inventory_DiscountConfiguration_View extends Settings_Vtiger_Inde
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		\App\Log::trace('Start ' . __METHOD__);
 		$qualifiedModule = $request->getModule(false);
@@ -33,7 +33,7 @@ class Settings_Inventory_DiscountConfiguration_View extends Settings_Vtiger_Inde
 		\App\Log::trace('End ' . __METHOD__);
 	}
 
-	public function getPageLabels(\App\Request $request)
+	public function getPageLabels(App\Request $request)
 	{
 		$view = $this->getView();
 		$translations = [];
@@ -44,7 +44,7 @@ class Settings_Inventory_DiscountConfiguration_View extends Settings_Vtiger_Inde
 		return $translations;
 	}
 
-	public function getFooterScripts(\App\Request $request)
+	public function getFooterScripts(App\Request $request)
 	{
 		return array_merge(parent::getFooterScripts($request), $this->checkAndConvertJsScripts(['modules.Settings.' . $request->getModule() . '.resources.Config']));
 	}

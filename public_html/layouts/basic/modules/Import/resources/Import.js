@@ -9,7 +9,7 @@
  ************************************************************************************/
 'use strict';
 
-if (typeof (ImportJs) === "undefined") {
+if (typeof ImportJs === 'undefined') {
 	/*
 	 * Namespaced javascript class for Import
 	 */
@@ -58,16 +58,16 @@ if (typeof (ImportJs) === "undefined") {
 			}
 		},
 		uploadAndParse: function () {
-			if (!ImportJs.validateFilePath())
-				return false;
-			if (!ImportJs.validateMergeCriteria())
-				return false;
+			if (!ImportJs.validateFilePath()) return false;
+			if (!ImportJs.validateMergeCriteria()) return false;
 			return true;
 		},
 		registerImportClickEvent() {
-			$('#importButton').removeAttr('disabled').on('click', function (e) {
-				return ImportJs.sanitizeAndSubmit();
-			});
+			$('#importButton')
+				.removeAttr('disabled')
+				.on('click', function (e) {
+					return ImportJs.sanitizeAndSubmit();
+				});
 		},
 		validateFilePath: function () {
 			var importFile = jQuery('#import_file');
@@ -82,10 +82,10 @@ if (typeof (ImportJs) === "undefined") {
 				importFile.focus();
 				return false;
 			}
-			if (!ImportJs.uploadFilter("import_file", "csv|vcf|xml|zip|ics|ical")) {
+			if (!ImportJs.uploadFilter('import_file', 'csv|vcf|xml|zip|ics|ical')) {
 				return false;
 			}
-			if (!ImportJs.uploadFileSize("import_file")) {
+			if (!ImportJs.uploadFileSize('import_file')) {
 				return false;
 			}
 			return true;
@@ -116,7 +116,12 @@ if (typeof (ImportJs) === "undefined") {
 			var importMaxUploadSizeInMb = element.closest('td').data('importUploadSizeMb');
 			var uploadedFileSize = element.get(0).files[0].size;
 			if (uploadedFileSize > importMaxUploadSize) {
-				var errorMessage = app.vtranslate('JS_UPLOADED_FILE_SIZE_EXCEEDS') + " " + importMaxUploadSizeInMb + " MB." + app.vtranslate('JS_PLEASE_SPLIT_FILE_AND_IMPORT_AGAIN');
+				var errorMessage =
+					app.vtranslate('JS_UPLOADED_FILE_SIZE_EXCEEDS') +
+					' ' +
+					importMaxUploadSizeInMb +
+					' MB.' +
+					app.vtranslate('JS_PLEASE_SPLIT_FILE_AND_IMPORT_AGAIN');
 				var params = {
 					text: errorMessage,
 					type: 'error'
@@ -134,7 +139,7 @@ if (typeof (ImportJs) === "undefined") {
 					var errorMessage = app.vtranslate('JS_PLEASE_SELECT_ONE_FIELD_FOR_MERGE');
 					var params = {
 						text: errorMessage,
-						'type': 'error'
+						type: 'error'
 					};
 					Vtiger_Helper_Js.showMessage(params);
 					return false;
@@ -146,31 +151,28 @@ if (typeof (ImportJs) === "undefined") {
 		convertOptionsToJSONArray: function (objName, targetObjName) {
 			var obj = jQuery(objName);
 			var arr = [];
-			if (typeof (obj) !== "undefined" && obj[0] != '') {
+			if (typeof obj !== 'undefined' && obj[0] != '') {
 				for (var i = 0; i < obj[0].length; ++i) {
 					arr.push(obj[0].options[i].value);
 				}
 			}
-			if (targetObjName !== "undefined") {
+			if (targetObjName !== 'undefined') {
 				var targetObj = $(targetObjName);
-				if (typeof (targetObj) !== "undefined")
-					targetObj.val(JSON.stringify(arr));
+				if (typeof targetObj !== 'undefined') targetObj.val(JSON.stringify(arr));
 			}
 			return arr;
 		},
 		copySelectedOptions: function (source, destination) {
+			let srcObj = jQuery(source);
+			let destObj = jQuery(destination);
 
-			var srcObj = jQuery(source);
-			var destObj = jQuery(destination);
+			if (typeof srcObj === 'undefined' || typeof destObj === 'undefined') return;
 
-			if (typeof (srcObj) === "undefined" || typeof (destObj) === "undefined")
-				return;
-
-			for (var i = 0; i < srcObj[0].length; i++) {
+			for (let i = 0; i < srcObj[0].length; i++) {
 				if (srcObj[0].options[i].selected == true) {
-					var rowFound = false;
-					var existingObj = null;
-					for (var j = 0; j < destObj[0].length; j++) {
+					let rowFound = false;
+					let existingObj = null;
+					for (let j = 0; j < destObj[0].length; j++) {
 						if (destObj[0].options[j].value == srcObj[0].options[i].value) {
 							rowFound = true;
 							existingObj = destObj[0].options[j];
@@ -179,17 +181,20 @@ if (typeof (ImportJs) === "undefined") {
 					}
 
 					if (rowFound != true) {
-						var opt = $('<option selected>');
+						let opt = $('<option selected>');
 						opt.attr('value', srcObj[0].options[i].value);
 						opt.text(srcObj[0].options[i].text);
 						jQuery(destObj[0]).append(opt);
 						srcObj[0].options[i].selected = false;
 					} else {
-						if (existingObj != null)
+						if (existingObj != null) {
 							existingObj.selected = true;
+						}
 					}
 				}
 			}
+			srcObj.trigger('change');
+			destObj.trigger('change');
 		},
 		removeSelectedOptions: function (objName) {
 			var obj = jQuery(objName);
@@ -203,10 +208,8 @@ if (typeof (ImportJs) === "undefined") {
 			}
 		},
 		sanitizeAndSubmit: function () {
-			if (!ImportJs.sanitizeFieldMapping())
-				return false;
-			if (!ImportJs.validateCustomMap())
-				return false;
+			if (!ImportJs.sanitizeFieldMapping()) return false;
+			if (!ImportJs.validateCustomMap()) return false;
 			return true;
 		},
 		sanitizeFieldMapping: function () {
@@ -232,7 +235,11 @@ if (typeof (ImportJs) === "undefined") {
 				if (selectedFieldName != '') {
 					var stopImmediately;
 					if (selectElement.hasClass('inventory')) {
-						stopImmediately = ImportJs.checkIfMappedFieldExist(selectedFieldName, inventoryMappedFields, selectedFieldElement);
+						stopImmediately = ImportJs.checkIfMappedFieldExist(
+							selectedFieldName,
+							inventoryMappedFields,
+							selectedFieldElement
+						);
 						inventoryMappedFields[selectedFieldName] = rowId - 1;
 					} else {
 						stopImmediately = ImportJs.checkIfMappedFieldExist(selectedFieldName, mappedFields, selectedFieldElement);
@@ -260,7 +267,7 @@ if (typeof (ImportJs) === "undefined") {
 				errorMessage = app.vtranslate('JS_MAP_MANDATORY_FIELDS') + missingMandatoryFields.join(',');
 				params = {
 					text: errorMessage,
-					'type': 'error'
+					type: 'error'
 				};
 				Vtiger_Helper_Js.showMessage(params);
 				return false;
@@ -272,10 +279,10 @@ if (typeof (ImportJs) === "undefined") {
 		},
 		checkIfMappedFieldExist: function (selectedFieldName, mappedFields, selectedFieldElement) {
 			if (selectedFieldName in mappedFields) {
-				var errorMessage = app.vtranslate('JS_FIELD_MAPPED_MORE_THAN_ONCE') + " " + selectedFieldElement.data('label');
+				var errorMessage = app.vtranslate('JS_FIELD_MAPPED_MORE_THAN_ONCE') + ' ' + selectedFieldElement.data('label');
 				var params = {
 					text: errorMessage,
-					'type': 'error'
+					type: 'error'
 				};
 				Vtiger_Helper_Js.showMessage(params);
 				return true;
@@ -292,7 +299,7 @@ if (typeof (ImportJs) === "undefined") {
 					errorMessage = app.vtranslate('JS_MAP_NAME_CAN_NOT_BE_EMPTY');
 					params = {
 						text: errorMessage,
-						'type': 'error'
+						type: 'error'
 					};
 					Vtiger_Helper_Js.showMessage(params);
 					return false;
@@ -304,7 +311,7 @@ if (typeof (ImportJs) === "undefined") {
 						errorMessage = app.vtranslate('JS_MAP_NAME_ALREADY_EXISTS');
 						params = {
 							text: errorMessage,
-							'type': 'error'
+							type: 'error'
 						};
 						Vtiger_Helper_Js.showMessage(params);
 						return false;
@@ -328,8 +335,7 @@ if (typeof (ImportJs) === "undefined") {
 			}
 			deleteMapContainer.show();
 			var mappingString = selectedMapElement.val();
-			if (mappingString == '')
-				return;
+			if (mappingString == '') return;
 			var mappingPairs = mappingString.split('&');
 			var mapping = {};
 			for (var i = 0; i < mappingPairs.length; ++i) {
@@ -355,33 +361,35 @@ if (typeof (ImportJs) === "undefined") {
 			});
 		},
 		deleteMap: function (module) {
-			let callback = function () {
-				var selectedMapElement = jQuery('#saved_maps option:selected');
-				var mapId = selectedMapElement.attr('id');
-				var status = jQuery('#status');
-				status.show();
-				var postData = {
-					"module": module,
-					"view": 'Import',
-					"mode": 'deleteMap',
-					"mapid": mapId
-				};
-
-				AppConnector.request(postData).done(function (data) {
-					jQuery('#savedMapsContainer').html(data);
-					status.hide();
-					var parent = jQuery("#saved_maps");
-					App.Fields.Picklist.changeSelectElementView(parent);
-				}).fail(function (error, err) {
-					console.error(error)
-				});
-			};
-			app.showConfirmModal(app.vtranslate('LBL_DELETE_CONFIRMATION'), callback);
+			app.showConfirmModal(app.vtranslate('LBL_DELETE_CONFIRMATION'), function (s) {
+				if (s) {
+					var selectedMapElement = jQuery('#saved_maps option:selected');
+					var mapId = selectedMapElement.attr('id');
+					var status = jQuery('#status');
+					status.show();
+					var postData = {
+						module: module,
+						view: 'Import',
+						mode: 'deleteMap',
+						mapid: mapId
+					};
+					AppConnector.request(postData)
+						.done(function (data) {
+							let mapContainer = $('#savedMapsContainer').html(data);
+							status.hide();
+							App.Fields.Picklist.showSelect2ElementView(mapContainer.find('select'));
+							var parent = jQuery('#saved_maps');
+							App.Fields.Picklist.changeSelectElementView(parent);
+						})
+						.fail(function (error, err) {
+							console.error(error);
+						});
+				}
+			});
 		},
 		loadDefaultValueWidget: function (rowIdentifierId) {
 			var affectedRow = jQuery('#' + rowIdentifierId);
-			if (typeof affectedRow === "undefined" || affectedRow == null)
-				return;
+			if (typeof affectedRow === 'undefined' || affectedRow == null) return;
 			var selectedFieldElement = jQuery('[name=mapped_fields]', affectedRow).get(0);
 			var selectedFieldName = jQuery(selectedFieldElement).val();
 			var defaultValueContainer = jQuery(jQuery('[name=default_value_container]', affectedRow).get(0));
@@ -390,7 +398,10 @@ if (typeof (ImportJs) === "undefined") {
 				var copyOfDefaultValueWidget = jQuery(':first', defaultValueContainer).detach();
 				copyOfDefaultValueWidget.appendTo(allDefaultValuesContainer);
 			}
-			var selectedFieldDefValueContainer = jQuery('#' + selectedFieldName + '_defaultvalue_container', allDefaultValuesContainer);
+			var selectedFieldDefValueContainer = jQuery(
+				'#' + selectedFieldName + '_defaultvalue_container',
+				allDefaultValuesContainer
+			);
 			var defaultValueWidget = selectedFieldDefValueContainer.detach();
 			defaultValueWidget.appendTo(defaultValueContainer);
 		},
@@ -403,16 +414,15 @@ if (typeof (ImportJs) === "undefined") {
 					ImportJs.loadDefaultValueWidget(fieldElement.attr('id'));
 				}
 			});
-
 		},
 		submitAction: function () {
 			var form = jQuery('[name="importAdvanced"]');
 			form.on('submit', function () {
 				$.progressIndicator({
-					'message': app.vtranslate('JS_SAVE_LOADER_INFO'),
-					'position': 'html',
-					'blockInfo': {
-						'enabled': true
+					message: app.vtranslate('JS_SAVE_LOADER_INFO'),
+					position: 'html',
+					blockInfo: {
+						enabled: true
 					}
 				});
 			});
@@ -427,19 +437,30 @@ if (typeof (ImportJs) === "undefined") {
 				if ($(this).attr('data-type') !== '') {
 					type = '&type=' + element.data('type');
 				}
-				app.showModalWindow(null, 'index.php?module=' + moduleName + '&view=List&mode=getImportDetails' + type + '&start=1&foruser=' + forUser + '&forModule=' + forModule, function (data) {
-					let container = data.find('.listViewEntriesDiv'),
-						containerH = container.height(),
-						containerOffsetTop = container.offset().top,
-						footerH = $('.js-footer').height(),
-						windowH = $(window).height();
-					if ($(window).width() > app.breakpoints.sm) {
-						if ((containerH + containerOffsetTop + footerH) > windowH) {
-							container.height(windowH - (containerOffsetTop + footerH));
+				app.showModalWindow(
+					null,
+					'index.php?module=' +
+						moduleName +
+						'&view=List&mode=getImportDetails' +
+						type +
+						'&start=1&foruser=' +
+						forUser +
+						'&forModule=' +
+						forModule,
+					function (data) {
+						let container = data.find('.listViewEntriesDiv'),
+							containerH = container.height(),
+							containerOffsetTop = container.offset().top,
+							footerH = $('.js-footer').height(),
+							windowH = $(window).height();
+						if (Quasar.plugins.Platform.is.desktop) {
+							if (containerH + containerOffsetTop + footerH > windowH) {
+								container.height(windowH - (containerOffsetTop + footerH));
+							}
+							app.showNewScrollbarTopBottomRight(container);
 						}
-						app.showNewScrollbarTopBottomRight(container);
 					}
-				});
+				);
 			});
 		}
 	};

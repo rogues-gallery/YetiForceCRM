@@ -3,10 +3,10 @@
 /**
  * YetiForce product Modal.
  *
- * @package   View
+ * @package Settings.View
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Poradzewski <t.poradzewski@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
@@ -25,9 +25,11 @@ class Settings_YetiForce_BuyModal_View extends \App\Controller\ModalSettings
 	 */
 	public $successBtnIcon = 'far fa-credit-card';
 	/**
-	 * {@inheritdoc}
+	 * Header class.
+	 *
+	 * @var string
 	 */
-	public $footerClass = 'px-md-5';
+	public $headerClass = 'modal-header-xl';
 
 	/**
 	 * {@inheritdoc}
@@ -35,7 +37,7 @@ class Settings_YetiForce_BuyModal_View extends \App\Controller\ModalSettings
 	public function preProcessAjax(App\Request $request)
 	{
 		$qualifiedModuleName = $request->getModule(false);
-		$this->modalIcon = 'fas fa-shopping-cart';
+		$this->modalIcon = 'yfi-marketplace';
 		$this->pageTitle = \App\Language::translate('LBL_BUY', $qualifiedModuleName);
 		parent::preProcessAjax($request);
 	}
@@ -50,10 +52,15 @@ class Settings_YetiForce_BuyModal_View extends \App\Controller\ModalSettings
 		$department = $request->isEmpty('department') ? '' : $request->getByType('department');
 		$product = \App\YetiForce\Shop::getProduct($request->getByType('product'), $department);
 		$companies = [];
-		foreach (\App\Company::getAll() as $key => $row) {
-			if (1 === (int) $row['type']) {
-				$companies = $row;
+		$currency = 'EUR';
+		$isCustom = $product->isCustom();
+		if (!$isCustom) {
+			foreach (\App\Company::getAll() as $key => $row) {
+				if (1 === (int) $row['type']) {
+					$companies = $row;
+				}
 			}
+			$currency = $product->currencyCode;
 		}
 		$recordModel = $formFields = [];
 		if ($companies) {
@@ -61,15 +68,19 @@ class Settings_YetiForce_BuyModal_View extends \App\Controller\ModalSettings
 			$formFields = array_filter(Settings_Companies_Module_Model::getFormFields(), function ($key) {
 				return isset($key['paymentData']);
 			});
+		} elseif (!$isCustom) {
+			$this->successBtn = '';
 		}
+		$viewer->assign('VARIABLE', $product->getVariable());
 		$viewer->assign('MODULE', $qualifiedModuleName);
 		$viewer->assign('PRODUCT', $product);
-		$viewer->assign('VARIABLE_PAYMENTS', \App\YetiForce\Shop::getVariablePayments());
-		$viewer->assign('VARIABLE_PRODUCT', $product->getVariable());
+		$viewer->assign('IMAGE', ($request->getBoolean('installation') ? '../' : '') . $product->getImage());
 		$viewer->assign('PAYPAL_URL', \App\YetiForce\Shop::getPaypalUrl());
 		$viewer->assign('COMPANY_DATA', $companies);
 		$viewer->assign('RECORD', $recordModel);
 		$viewer->assign('FORM_FIELDS', $formFields);
+		$viewer->assign('CURRENCY', $currency);
+		$viewer->assign('IS_CUSTOM', $isCustom);
 		$viewer->view('BuyModal.tpl', $qualifiedModuleName);
 	}
 }

@@ -4,7 +4,7 @@
  * Two factor authentication class for save config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  */
 class Settings_TwoFactorAuthentication_SaveAjax_Action extends Settings_Vtiger_Basic_Action
@@ -12,11 +12,13 @@ class Settings_TwoFactorAuthentication_SaveAjax_Action extends Settings_Vtiger_B
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$methods = $request->getByType('methods', 'Alnum');
+		$ipAddresses = array_filter($request->getArray('ip', 'Text'));
 		$config = new \App\ConfigFile('security');
 		$config->set('USER_AUTHY_MODE', $methods);
+		$config->set('whitelistIp2fa', $ipAddresses);
 		$config->create();
 		$response = new Vtiger_Response();
 		$response->setResult([

@@ -6,23 +6,11 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
+ * Contributor(s): YetiForce Sp. z o.o
  * *********************************************************************************** */
 
 class Products_ListView_Model extends Vtiger_ListView_Model
 {
-	/**
-	 * Set list view order by.
-	 */
-	public function loadListViewOrderBy()
-	{
-		//List view will be displayed on recently created/modified records
-		if (empty($this->getForSql('orderby')) && empty($this->getForSql('sortorder')) && 'Users' != $this->getModule()->get('name')) {
-			$this->set('orderby', 'modifiedtime');
-			$this->set('sortorder', 'DESC');
-		}
-		parent::loadListViewOrderBy();
-	}
-
 	/**
 	 * Function to get the list view entries.
 	 *
@@ -38,14 +26,18 @@ class Products_ListView_Model extends Vtiger_ListView_Model
 		$queryGenerator = $this->get('query_generator');
 		// Limit the choice of products/services only to the ones related to currently selected Opportunity - last step.
 		if (Settings_SalesProcesses_Module_Model::checkRelatedToPotentialsLimit($this->get('src_module'))) {
-			if ($this->isEmpty('salesprocessid')) {
+			if ($this->isEmpty('filterFields')) {
+				return [];
+			}
+			$filterFields = $this->get('filterFields');
+			if (!isset($filterFields['salesprocessid']) || empty($salesProcessId = $filterFields['salesprocessid'])) {
 				$pagingModel->calculatePageRange(0);
 				return [];
 			}
 			if (\in_array($moduleName, ['Products', 'Services'])) {
 				$queryGenerator->addNativeCondition(['or',
-					['vtiger_crmentityrel.crmid' => $this->get('salesprocessid'), 'module' => 'SSalesProcesses'],
-					['vtiger_crmentityrel.relcrmid' => $this->get('salesprocessid'), 'relmodule' => 'SSalesProcesses'],
+					['vtiger_crmentityrel.crmid' => $salesProcessId, 'module' => 'SSalesProcesses'],
+					['vtiger_crmentityrel.relcrmid' => $salesProcessId, 'relmodule' => 'SSalesProcesses'],
 				]);
 				if ('Services' === $moduleName) {
 					$queryGenerator->addJoin(['INNER JOIN', 'vtiger_crmentityrel', 'vtiger_crmentityrel.relcrmid = vtiger_service.serviceid OR vtiger_crmentityrel.crmid = vtiger_service.serviceid']);
@@ -57,20 +49,14 @@ class Products_ListView_Model extends Vtiger_ListView_Model
 		$this->loadListViewCondition();
 		$this->loadListViewOrderBy();
 		$query = $queryGenerator->createQuery();
-		if ($this->get('subProductsPopup')) {
-			$this->addSubProductsQuery($query);
-		}
-		$sourceModule = $this->get('src_module');
-		$sourceField = $this->get('src_field');
 		$pageLimit = $pagingModel->getPageLimit();
-		//For Products popup in Price Book Related list
-		if ('PriceBooks' !== $sourceModule && 'priceBookRelatedList' !== $sourceField) {
+		if (0 !== $pagingModel->get('limit')) {
 			$query->limit($pageLimit + 1)->offset($pagingModel->getStartIndex());
 		}
 		$rows = $query->all();
 		$count = \count($rows);
 		$pagingModel->calculatePageRange($count);
-		if ($count > $pageLimit && 'PriceBooks' !== $sourceModule && 'priceBookRelatedList' !== $sourceField) {
+		if ($count > $pageLimit) {
 			array_pop($rows);
 			$pagingModel->set('nextPageExists', true);
 		} else {
@@ -79,12 +65,6 @@ class Products_ListView_Model extends Vtiger_ListView_Model
 		$listViewRecordModels = $this->getRecordsFromArray($rows);
 		unset($rows);
 		return $listViewRecordModels;
-	}
-
-	public function addSubProductsQuery(App\Db\Query $listQuery)
-	{
-		$listQuery->leftJoin('vtiger_seproductsrel', 'vtiger_seproductsrel.crmid = vtiger_products.productid AND vtiger_seproductsrel.setype=:products', [':products' => 'Products']);
-		$listQuery->andWhere(['vtiger_seproductsrel.productid' => $this->get('productId')]);
 	}
 
 	public function getSubProducts($subProductId)
@@ -98,17 +78,20 @@ class Products_ListView_Model extends Vtiger_ListView_Model
 		return $flag;
 	}
 
-	/**
-	 * Function to get the list view count.
-	 *
-	 * @return int
-	 */
-	public function getListViewCount()
+	/** {@inheritdoc} */
+	public function getAdvancedLinks()
 	{
-		$query = $this->get('query_generator')->createQuery();
-		if ($this->get('subProductsPopup')) {
-			$this->addSubProductsQuery($query);
+		$advancedLinks = parent::getAdvancedLinks();
+		$moduleModel = $this->getModule();
+		if ($moduleModel->isPermitted('CreateView') && $moduleModel->isPermitted('Import')) {
+			$advancedLinks[] = [
+				'linktype' => 'LISTVIEWMASSACTION',
+				'linklabel' => 'LBL_IMPORT_STOCKTAKING',
+				'linkdata' => ['url' => 'index.php?module=' . $moduleModel->getName() . '&view=StocktakingModal', 'type' => 'modal', 'check-selected' => 0],
+				'linkclass' => 'js-mass-action',
+				'linkicon' => 'fas fa-boxes'
+			];
 		}
-		return $query->count();
+		return $advancedLinks;
 	}
 }

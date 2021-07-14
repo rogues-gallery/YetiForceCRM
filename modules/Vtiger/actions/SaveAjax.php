@@ -16,30 +16,36 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
-		$recordModel = $this->saveRecord($request);
-		$fieldModelList = $recordModel->getModule()->getFields();
+		if ($mode = $request->getMode()) {
+			$this->invokeExposedMethod($mode, $request);
+			return;
+		}
+		$this->saveRecord($request);
+		$fieldModelList = $this->record->getModule()->getFields();
 		$result = [];
 		foreach ($fieldModelList as $fieldName => $fieldModel) {
 			if (!$fieldModel->isViewable()) {
 				continue;
 			}
-			$recordFieldValue = $recordModel->get($fieldName);
+			$recordFieldValue = $this->record->get($fieldName);
 			$prevDisplayValue = false;
-			if (($recordFieldValuePrev = $recordModel->getPreviousValue($fieldName)) !== false) {
-				$prevDisplayValue = $fieldModel->getDisplayValue($recordFieldValuePrev, $recordModel->getId(), $recordModel);
+			if (false !== ($recordFieldValuePrev = $this->record->getPreviousValue($fieldName))) {
+				$prevDisplayValue = $fieldModel->getDisplayValue($recordFieldValuePrev, $this->record->getId(), $this->record);
 			}
 			$result[$fieldName] = [
 				'value' => \App\Purifier::encodeHtml($recordFieldValue),
-				'display_value' => $fieldModel->getDisplayValue($recordFieldValue, $recordModel->getId(), $recordModel),
+				'display_value' => $fieldModel->getDisplayValue($recordFieldValue, $this->record->getId(), $this->record),
 				'prev_display_value' => $prevDisplayValue
 			];
 		}
-		$result['_recordLabel'] = $recordModel->getName();
-		$result['_recordId'] = $recordModel->getId();
-		$recordModel->clearPrivilegesCache();
-		$result['isEditable'] = $recordModel->isEditable();
+		$result['_recordLabel'] = $this->record->getName();
+		$result['_recordId'] = $this->record->getId();
+		$this->record->clearPrivilegesCache();
+		$result['_isEditable'] = $this->record->isEditable();
+		$result['_isViewable'] = $this->record->isViewable();
+		$result['_reload'] = \count($this->record->getPreviousValue()) > 1;
 
 		$response = new Vtiger_Response();
 		$response->setEmitType(Vtiger_Response::$EMIT_JSON);
@@ -54,9 +60,9 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action
 	 *
 	 * @return Vtiger_Record_Model or Module specific Record Model instance
 	 */
-	public function getRecordModelFromRequest(\App\Request $request)
+	public function getRecordModelFromRequest(App\Request $request)
 	{
-		if (!$request->isEmpty('record')) {
+		if ('QuickEdit' !== $request->getByType('fromView') && !$request->isEmpty('record')) {
 			$recordModel = $this->record ? $this->record : Vtiger_Record_Model::getInstanceById($request->getInteger('record'), $request->getModule());
 			$fieldModel = $recordModel->getModule()->getFieldByName($request->getByType('field', 2));
 			if ($fieldModel && $fieldModel->isEditable()) {
@@ -68,7 +74,7 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action
 		} else {
 			$recordModel = parent::getRecordModelFromRequest($request);
 		}
-		return $recordModel;
+		return $this->record = $recordModel;
 	}
 
 	/**
@@ -95,7 +101,7 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action
 						if ($relFieldValue && $relFieldModel && $toModel && $toModel->isWritable()) {
 							if ($toModel->isReferenceField() || $relFieldModel->isReferenceField()) {
 								$sourceType = \App\Record::getType($relFieldValue);
-								if (in_array($sourceType, $toModel->getReferenceList())) {
+								if (\in_array($sourceType, $toModel->getReferenceList())) {
 									$recordModel->set($toModel->getName(), $relFieldValue);
 								}
 							} else {

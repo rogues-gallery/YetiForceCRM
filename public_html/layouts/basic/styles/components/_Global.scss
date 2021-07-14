@@ -1,10 +1,15 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 .basePanel,
 .bodyContents,
 .mainContainer,
 .contentsDiv {
 	min-height: 100%;
-	height: 100%;
+}
+
+.footer-non--active {
+	.mainContainer {
+		height: 100%;
+	}
 }
 
 .bodyContent {
@@ -13,17 +18,12 @@
 	margin-top: 0;
 	padding-top: 0;
 	padding-bottom: 15px;
-
-	@include media-breakpoint-down(xs) {
-		overflow-y: scroll;
-		-webkit-overflow-scrolling: touch;
-	}
 }
 
-@include media-breakpoint-down(xs) {
-	.ps__rail-x,
-	.ps__rail-y {
-		display: none !important;
+body:not(.desktop) {
+	.bodyContent {
+		overflow-y: scroll;
+		-webkit-overflow-scrolling: touch;
 	}
 }
 
@@ -35,45 +35,41 @@
 
 .c-panel {
 	@extend .card;
-	@extend .mb-2;
-	&.c-panel--collapsible {
-		.c-panel__header {
-			.fa-angle-up {
-				display: inline-block;
-			}
-			.fa-angle-down {
-				display: none;
-			}
-			&.collapsed {
-				.fa-angle-up {
-					display: none;
-				}
-				.fa-angle-down {
-					display: inline-block;
-				}
-			}
-		}
+	margin-bottom: calculate-rem(8px);
+	@include media-breakpoint-down(sm) {
+		margin-bottom: calculate-rem(4px);
 	}
 	&__header {
 		@extend .card-header;
-		@extend .u-cursor-pointer;
-		@extend .px-0;
-		@extend .py-1;
-		background-color: $primary;
-		color: $white;
+		cursor: pointer;
+		padding: 0;
 		display: flex;
 		flex-flow: row-reverse;
 		align-items: center;
-		h5:not(.align-self-center) {
-			@extend .ml-2, .mb-1, .mr-auto;
+		h5 {
+			margin: 0 0 0 0.75rem;
+		}
+		& > h5,
+		& > .c-panel__title {
+			margin-right: auto;
 		}
 	}
-
+	&__title {
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		.yfi {
+			font-size: calculate-rem(29px);
+			margin: 0 0.5rem 0 0;
+			&.yfi-marketplace {
+				font-size: calculate-rem(36px);
+			}
+		}
+	}
 	&__body {
 		@extend .card-body;
-		@extend .px-1;
-		@extend .py-0;
 		@extend .col-md-12;
+		padding: 0 0.25rem;
 	}
 
 	&__label {
@@ -82,13 +78,12 @@
 		@extend .justify-content-sm-start;
 		@extend .justify-content-lg-end;
 		@extend .col-sm-12;
-
+		align-items: center;
 		label {
 			line-height: 1.7;
 			margin-bottom: 0;
 		}
 	}
-
 	&--edit {
 		.row {
 			margin: 0;
@@ -103,6 +98,17 @@
 			}
 		}
 	}
+	&--white {
+		.c-panel__header {
+			background-color: $white;
+			margin: 0 1rem;
+		}
+	}
+}
+
+.c-panel--collapsible .c-panel__header,
+.c-detail-widget .c-detail-widget__header {
+	@include u-transform(180deg);
 }
 
 .c-badge__icon {
@@ -112,7 +118,7 @@
 
 	width: 32px;
 	height: 32px;
-	line-height: 30px;
+	line-height: 27px;
 	font-size: 17px;
 }
 
@@ -125,6 +131,18 @@
 	top: -5px;
 	right: 0;
 	z-index: 100;
+}
+
+.c-circle {
+	$circle-size: calculate-rem(30px);
+	$circle-size-sm: calculate-rem(23px);
+	@extend .rounded-circle;
+	width: $circle-size;
+	height: $circle-size;
+	&--small {
+		width: $circle-size-sm;
+		height: $circle-size-sm;
+	}
 }
 
 .childrenMarginRight > * {
@@ -256,7 +274,7 @@
 			padding: 0.2rem;
 			margin-top: -0.2rem;
 			min-width: unset;
-
+			line-height: 1;
 			.btn-group {
 				vertical-align: top;
 			}
@@ -312,8 +330,9 @@
 //Image
 .c-img {
 	&__user {
-		width: auto;
-		height: calculate-rem(40px);
+		width: calculate-rem(48px);
+		height: calculate-rem(48px);
+		min-width: calculate-rem(48px);
 	}
 
 	&__completion {
@@ -332,8 +351,10 @@
 }
 
 .c-popover--link {
-	max-width: 30%;
-
+	max-width: 100%;
+	@include media-breakpoint-up(md) {
+		max-width: 30%;
+	}
 	.popover-body {
 		padding: 0;
 		border-top-left-radius: calc(0.3rem - 1px);
@@ -369,13 +390,13 @@
 .c-circle-icon {
 	height: calculate-rem(30px);
 	width: calculate-rem(30px);
-	max-width: calculate-rem(30px);
+	min-width: calculate-rem(30px);
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	border-radius: 50%;
 
-	[class^="userIcon-"],
+	[class^="yfm-"],
 	.adminIcon-user,
 	.adminIcon-user {
 		font-size: calculate-rem(20px);
@@ -421,7 +442,6 @@
 
 	&.form-control {
 		height: auto !important;
-		min-height: calc(2.25rem + 2px);
 	}
 }
 
@@ -592,4 +612,99 @@ input[type="checkbox"][disabled] {
 }
 .c-time-period-input {
 	text-align: center;
+}
+
+.c-text-divider {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	position: relative;
+	background-color: inherit;
+
+	&__line {
+		border-top: 1px solid;
+		border-bottom: none;
+		margin-bottom: 0;
+		width: 100%;
+	}
+	&__title {
+		position: absolute;
+		padding: 0 20px;
+		background-color: inherit;
+	}
+}
+
+.c-mds-input {
+	.input-group-append,
+	.input-group-prepend {
+		border-bottom: 1px solid $gray-400;
+	}
+	.form-control {
+		border-radius: 0px !important;
+		border-top: 0px !important;
+		border-left: 0px !important;
+		border-right: 0px !important;
+		&:focus {
+			box-shadow: none;
+			& + .input-group-append,
+			~ .input-group-append,
+			& + .input-group-prepend,
+			~ .input-group-prepend {
+				border-color: #5bb1ff !important;
+			}
+		}
+	}
+}
+.c-search-item {
+	&__mail {
+		color: $gray-600;
+	}
+	&:hover {
+		.c-search-item__btn,
+		.c-search-item__mail {
+			color: white;
+			border-color: white;
+		}
+	}
+	&__btn {
+		font-size: 0.7em !important;
+		height: fit-content;
+	}
+}
+
+.o-expandable__panel__tabs {
+	display: flex;
+	height: 3rem;
+	background: #f8f9fa;
+	position: fixed;
+	top: 3.125rem;
+	right: calc(25% - 1px);
+	z-index: 100;
+	font-size: 0.8125rem;
+
+	@include media-breakpoint-up(lg) {
+		.toggleSiteBarRightButton {
+			padding: 0.6875rem 0;
+			height: 100%;
+			margin-left: 0.0625rem;
+			margin-bottom: 0.0625rem;
+			cursor: pointer;
+			width: 1.375rem;
+			z-index: 100;
+			border: 0;
+			display: inline-block;
+			border-radius: 25px 0 0 25px;
+			background: #546e7a;
+			color: #eceff1;
+		}
+	}
+}
+
+@include media-breakpoint-up(lg) {
+	.hideSiteBar {
+		.o-expandable__panel__tabs {
+			right: 0px;
+		}
+	}
 }

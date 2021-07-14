@@ -4,7 +4,7 @@
  * OSSMailScanner module model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSMailScanner_Module_Model extends Vtiger_Module_Model
 {
@@ -21,19 +21,17 @@ class OSSMailScanner_Module_Model extends Vtiger_Module_Model
 	}
 
 	/**
-	 * Function returns settings links.
-	 *
-	 * @return array
+	 * {@inheritdoc}
 	 */
-	public function getSettingLinks()
+	public function getSettingLinks(): array
 	{
 		Vtiger_Loader::includeOnce('~~modules/com_vtiger_workflow/VTWorkflowUtils.php');
 		$settingsLinks = [];
-		if($menu = Settings_Vtiger_MenuItem_Model::getInstance('Mail Scanner')){
+		if ($menu = Settings_Vtiger_MenuItem_Model::getInstance('Mail Scanner')) {
 			$settingsLinks[] = [
 				'linktype' => 'LISTVIEWSETTING',
 				'linklabel' => 'LBL_MODULE_CONFIGURATION',
-				'linkurl' => 'index.php?module=OSSMailScanner&parent=Settings&view=Index&block=' . $menu->get('blockid').'&fieldid=' . $menu->get('fieldid'),
+				'linkurl' => 'index.php?module=OSSMailScanner&parent=Settings&view=Index&block=' . $menu->get('blockid') . '&fieldid=' . $menu->get('fieldid'),
 				'linkicon' => 'adminIcon-mail-scanner',
 			];
 		}

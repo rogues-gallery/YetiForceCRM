@@ -4,13 +4,13 @@
  * Export to XML Class for PDF Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Maciej Stencel <m.stencel@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Settings_PDF_ExportTemplate_Action extends Settings_Vtiger_Index_Action
 {
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$recordId = $request->getInteger('id');
 		$pdfModel = Vtiger_PDF_Model::getInstanceById($recordId);
@@ -31,10 +31,10 @@ class Settings_PDF_ExportTemplate_Action extends Settings_Vtiger_Index_Action
 
 		$cDataColumns = ['header_content', 'body_content', 'footer_content', 'conditions'];
 		foreach (Settings_PDF_Module_Model::$allFields as $field) {
-			if (in_array($field, $cDataColumns)) {
+			if (\in_array($field, $cDataColumns)) {
 				$name = $xmlField->appendChild($xml->createElement($field));
 				$name->appendChild($xml->createCDATASection(html_entity_decode($pdfModel->getRaw($field))));
-			} elseif ($field === 'watermark_image') {
+			} elseif ('watermark_image' === $field) {
 				if (file_exists($pdfModel->get($field))) {
 					$watermarkPath = $pdfModel->get($field);
 					$im = file_get_contents($watermarkPath);
@@ -63,7 +63,7 @@ class Settings_PDF_ExportTemplate_Action extends Settings_Vtiger_Index_Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function validateRequest(\App\Request $request)
+	public function validateRequest(App\Request $request)
 	{
 		$request->validateReadAccess();
 	}

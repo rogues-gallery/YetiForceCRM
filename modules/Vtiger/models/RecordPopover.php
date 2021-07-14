@@ -5,7 +5,7 @@
  * @package   Model
  *
  * @copyright YetiForce Sp. z o.o.
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 
@@ -80,12 +80,24 @@ class Vtiger_RecordPopover_Model extends \App\Base
 		$detailUrl = $this->recordModel->getFullDetailViewUrl();
 		$editUrl = $this->recordModel->isEditable() ? $this->recordModel->getEditViewUrl() : '';
 		if ($this->recordModel->isEditable()) {
+			if ($this->recordModel->getModule()->isQuickCreateSupported()) {
+				$links[] = [
+					'linktype' => 'RECORD_POPOVER_VIEW',
+					'linklabel' => 'LBL_QUICK_EDIT',
+					'linkicon' => 'yfi yfi-quick-creation',
+					'linkclass' => 'btn-sm btn-outline-primary js-quick-edit-modal',
+					'linkdata' => [
+						'module' => $this->recordModel->getModuleName(),
+						'record' => $this->recordModel->getId(),
+					]
+				];
+			}
 			$links[] = [
 				'linktype' => 'RECORD_POPOVER_VIEW',
 				'linklabel' => 'LBL_EDIT',
 				'linkhref' => true,
 				'linkurl' => $editUrl,
-				'linkicon' => 'fas fa-edit',
+				'linkicon' => 'yfi yfi-full-editing-view',
 				'linkclass' => 'btn-sm btn-outline-secondary js-calendar-popover__button',
 			];
 		}

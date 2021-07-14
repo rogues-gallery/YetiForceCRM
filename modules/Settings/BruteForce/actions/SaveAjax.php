@@ -4,7 +4,7 @@
  * Brute force save action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author YetiForce.com
  */
 class Settings_BruteForce_SaveAjax_Action extends Settings_Vtiger_Index_Action
@@ -24,7 +24,7 @@ class Settings_BruteForce_SaveAjax_Action extends Settings_Vtiger_Index_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function saveConfig(\App\Request $request)
+	public function saveConfig(App\Request $request)
 	{
 		$moduleName = $request->getModule(false);
 		Settings_BruteForce_Module_Model::updateConfig($request->getArray('param', 'Integer'));
@@ -38,7 +38,7 @@ class Settings_BruteForce_SaveAjax_Action extends Settings_Vtiger_Index_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function unBlock(\App\Request $request)
+	public function unBlock(App\Request $request)
 	{
 		$moduleName = $request->getModule(false);
 		if (!Settings_BruteForce_Module_Model::unBlock($request->getInteger('param'))) {

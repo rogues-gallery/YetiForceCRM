@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<form class="tpl-Settings-SMSNotifier-Edit form-horizontal validateForm" id="editForm">
 		<input type="hidden" id="record" name="record" value="{$RECORD_MODEL->getId()}">
@@ -24,21 +24,20 @@
 							{if $FIELD_MODEL->isMandatory()}<span class="redColor">*</span>{/if}
 						</label>
 						<div class="col-md-8 fieldValue">
-							{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE}
+							{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE RECORD=false}
 						</div>
 					</div>
 				{/foreach}
 				{if $RECORD_MODEL->getId()}
 					{assign var="PROVIDER" value=$RECORD_MODEL->getProviderInstance()}
 					{foreach from=$PROVIDER->getSettingsEditFieldsModel() item=FIELD_MODEL name=fields}
-						{assign var="FIELD_MODEL" value=$FIELD_MODEL->set('fieldvalue',$RECORD_MODEL->get($FIELD_NAME))}
 						<div class="form-group form-row" data-provider="{$PROVIDER->getName()}">
 							<label class="col-form-label col-md-4 u-text-small-bold text-right">
 								{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $QUALIFIED_MODULE)}
 								{if $FIELD_MODEL->isMandatory()}<span class="redColor">*</span>{/if}
 							</label>
 							<div class="col-md-8 fieldValue">
-								{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE}
+								{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE RECORD=false}
 							</div>
 						</div>
 					{/foreach}
@@ -59,7 +58,7 @@
 						{if $FIELD_MODEL->isMandatory()}<span class="redColor"> *</span>{/if}:
 					</label>
 					<div class="col-md-8 fieldValue">
-						{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE}
+						{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $QUALIFIED_MODULE) FIELD_MODEL=$FIELD_MODEL MODULE=$QUALIFIED_MODULE RECORD=false}
 					</div>
 				</div>
 			{/foreach}

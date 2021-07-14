@@ -3,7 +3,7 @@
  * Chat model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 
 /**
@@ -19,7 +19,7 @@ class Chat
 	 */
 	public function moduleHandler($moduleName, $eventType)
 	{
-		if ($eventType === 'module.postinstall') {
+		if ('module.postinstall' === $eventType) {
 			\App\Db::getInstance()->update('vtiger_tab', ['customized' => 0], ['name' => $moduleName])->execute();
 		}
 	}

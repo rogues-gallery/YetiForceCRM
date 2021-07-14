@@ -1,18 +1,29 @@
 <?php
+/**
+ * Cache main file.
+ *
+ * @package App
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ */
 
 namespace App;
 
 /**
  * Cache main class.
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Cache
 {
+	/** @var int Long time data storage */
 	const LONG = 3600;
+
+	/** @var int Medium time data storage */
 	const MEDIUM = 300;
+
+	/** @var int Short time data storage */
 	const SHORT = 60;
 	public static $pool;
 	public static $staticPool;
@@ -101,9 +112,9 @@ class Cache
 	 *
 	 * @return bool
 	 */
-	public static function clear()
+	public static function clear(): bool
 	{
-		static::$pool->clear();
+		return static::$pool->clear();
 	}
 
 	/**
@@ -127,7 +138,7 @@ class Cache
 	 *
 	 * @return bool
 	 */
-	public static function staticHas($nameSpace, $key)
+	public static function staticHas($nameSpace, $key = '')
 	{
 		return static::$staticPool->has("$nameSpace-$key");
 	}
@@ -175,7 +186,7 @@ class Cache
 	 *
 	 * @return bool
 	 */
-	public static function clearOpcache()
+	public static function clearOpcache(): bool
 	{
 		if (static::$clearOpcache) {
 			return false;
@@ -183,13 +194,15 @@ class Cache
 		register_shutdown_function(function () {
 			static::resetOpcache();
 		});
-		static::$clearOpcache = true;
+		return static::$clearOpcache = true;
 	}
 
 	/**
 	 * Reset opcache if it is possible.
+	 *
+	 * @return void
 	 */
-	public static function resetOpcache()
+	public static function resetOpcache(): void
 	{
 		if (\function_exists('opcache_reset')) {
 			\opcache_reset();
@@ -200,8 +213,10 @@ class Cache
 	 * Reset file from opcache if it is possible.
 	 *
 	 * @param string $path
+	 *
+	 * @return void
 	 */
-	public static function resetFileCache(string $path)
+	public static function resetFileCache(string $path): void
 	{
 		if (\function_exists('opcache_invalidate')) {
 			\opcache_invalidate($path, true);
@@ -210,11 +225,46 @@ class Cache
 
 	/**
 	 * Clear all cache.
+	 *
+	 * @return void
 	 */
-	public static function clearAll()
+	public static function clearAll(): void
 	{
 		static::clearOpcache();
 		static::clear();
 		clearstatcache();
+	}
+
+	/**
+	 * Clean old cache files.
+	 *
+	 * @param string $days
+	 *
+	 * @return int[]
+	 */
+	public static function clearTemporaryFiles(string $days = '-30 day'): array
+	{
+		$time = strtotime($days);
+		$exclusion = ['.htaccess', 'index.html'];
+		$s = $i = 0;
+		foreach (['pdf', 'import', 'mail', 'vtlib', 'rss_cache', 'upload', 'templates_c'] as $dir) {
+			foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(ROOT_DIRECTORY . "/cache/{$dir}", \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST) as $item) {
+				if ($item->isFile() && !\in_array($item->getBasename(), $exclusion) && $item->getMTime() < $time && $item->getATime() < $time) {
+					$s += $item->getSize();
+					unlink($item->getPathname());
+					++$i;
+				}
+			}
+		}
+		foreach ([ROOT_DIRECTORY . '/cache', \App\Fields\File::getTmpPath()] as $dir) {
+			foreach ((new \DirectoryIterator($dir)) as $item) {
+				if ($item->isFile() && 'index.html' !== $item->getBasename()) {
+					$s += $item->getSize();
+					unlink($item->getPathname());
+					++$i;
+				}
+			}
+		}
+		return ['size' => $s, 'counter' => $i];
 	}
 }

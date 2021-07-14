@@ -13,6 +13,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 {
 	public function __construct()
 	{
+		parent::__construct();
 		$this->exposeMethod('changeStatusRelation');
 		$this->exposeMethod('updateSequenceRelatedModule');
 		$this->exposeMethod('updateSelectedFields');
@@ -20,9 +21,11 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$this->exposeMethod('addRelation');
 		$this->exposeMethod('removeRelation');
 		$this->exposeMethod('updateRelatedViewType');
+		$this->exposeMethod('updateCustomView');
+		Settings_Vtiger_Tracker_Model::addBasic('save');
 	}
 
-	public function changeStatusRelation(\App\Request $request)
+	public function changeStatusRelation(App\Request $request)
 	{
 		$relationId = $request->getInteger('relationId');
 		$status = $request->getBoolean('status');
@@ -36,7 +39,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$response->emit();
 	}
 
-	public function updateSequenceRelatedModule(\App\Request $request)
+	public function updateSequenceRelatedModule(App\Request $request)
 	{
 		$modules = $request->get('modules');
 		$response = new Vtiger_Response();
@@ -49,7 +52,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$response->emit();
 	}
 
-	public function updateSelectedFields(\App\Request $request)
+	public function updateSelectedFields(App\Request $request)
 	{
 		$fields = $request->get('fields');
 		$relationId = $request->getInteger('relationId');
@@ -68,7 +71,28 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$response->emit();
 	}
 
-	public function addRelation(\App\Request $request)
+	/**
+	 * Update relation custom view.
+	 *
+	 * @param App\Request $request
+	 *
+	 * @return void
+	 */
+	public function updateCustomView(App\Request $request): void
+	{
+		$relationId = $request->getInteger('relationId');
+		$cv = $request->getArray('cv', 'Alnum');
+		$response = new Vtiger_Response();
+		try {
+			Vtiger_Relation_Model::updateRelationCustomView($relationId, $cv);
+			$response->setResult(['success' => true, 'message' => \App\Language::translate('LBL_SAVE_NOTIFY_OK', '')]);
+		} catch (Exception $e) {
+			$response->setError($e->getCode(), $e->getMessage());
+		}
+		$response->emit();
+	}
+
+	public function addRelation(App\Request $request)
 	{
 		$source = $request->getByType('source', 'Alnum');
 		$target = $request->getByType('target', 'Alnum');
@@ -76,8 +100,8 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$type = $request->getByType('type', 'Standard');
 		$response = new Vtiger_Response();
 
-		if ($type === 'getAttachments' && $target !== 'Documents') {
-			$response->setError(\App\Language::translate('LBL_WRONG_RELATION', 'Settings::LayoutEditor'));
+		if ('getAttachments' === $type && 'Documents' !== $target) {
+			$response->setResult(['success' => false, 'message' => \App\Language::translate('LBL_WRONG_RELATION', 'Settings::LayoutEditor')]);
 		} else {
 			$module = vtlib\Module::getInstance($source);
 			$moduleInstance = vtlib\Module::getInstance($target);
@@ -87,7 +111,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$response->emit();
 	}
 
-	public function removeRelation(\App\Request $request)
+	public function removeRelation(App\Request $request)
 	{
 		$relationId = $request->getInteger('relationId');
 		$response = new Vtiger_Response();
@@ -105,7 +129,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function updateRelatedViewType(\App\Request $request)
+	public function updateRelatedViewType(App\Request $request)
 	{
 		$response = new Vtiger_Response();
 		try {
@@ -117,7 +141,7 @@ class Settings_LayoutEditor_Relation_Action extends Settings_Vtiger_Index_Action
 		$response->emit();
 	}
 
-	public function updateStateFavorites(\App\Request $request)
+	public function updateStateFavorites(App\Request $request)
 	{
 		$relationId = $request->getInteger('relationId');
 		$status = $request->get('status');

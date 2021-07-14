@@ -87,9 +87,22 @@ class Install_Utils_Model
 			$conn = false;
 			$pdoException = '';
 			try {
-				$dsn = $db_type . ':host=' . $db_server . ';charset=utf8;port=' . $dbPort;
-				$conn = new PDO($dsn, $db_username, $db_password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-			} catch (PDOException $e) {
+				\App\Db::setConfig([
+					'dsn' => $db_type . ':host=' . $db_server . ';charset=utf8;port=' . $dbPort,
+					'host' => $db_server,
+					'port' => $dbPort,
+					'dbName' => $db_name,
+					'tablePrefix' => 'yf_',
+					'username' => $db_username,
+					'password' => $db_password,
+					'charset' => 'utf8',
+					'attributes' => [
+						PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+					],
+				]);
+				$db = \App\Db::getInstance();
+				$conn = $db->getMasterPdo();
+			} catch (\Throwable $e) {
 				$pdoException = $e->getMessage();
 			}
 			$db_type_status = true;
@@ -101,7 +114,7 @@ class Install_Utils_Model
 					$mysql_server_version = $res['Value'];
 				}
 				$stmt = $conn->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$db_name'");
-				if ($stmt->rowCount() == 1) {
+				if (1 == $stmt->rowCount()) {
 					$db_exist_status = true;
 				}
 			}
@@ -164,7 +177,7 @@ class Install_Utils_Model
 		$className = '\Config\Main';
 		if (\class_exists($className)) {
 			foreach ((new \ReflectionClass($className))->getStaticProperties() as $name => $value) {
-				$className::$$name = null;
+				$className::${$name} = null;
 			}
 		}
 	}

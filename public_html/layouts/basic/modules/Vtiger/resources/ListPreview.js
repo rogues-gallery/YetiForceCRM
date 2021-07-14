@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 Vtiger_List_Js(
@@ -10,7 +10,7 @@ Vtiger_List_Js(
 		 * Sets correct page url.
 		 * @param {string} url - current url.
 		 */
-		updatePreview: function(url) {
+		updatePreview: function (url) {
 			var frame = $('.listPreviewframe');
 			this.frameProgress = $.progressIndicator({
 				position: 'html',
@@ -29,49 +29,17 @@ Vtiger_List_Js(
 		/**
 		 * Registers click events.
 		 */
-		registerRowClickEvent: function() {
+		registerRowClickEvent: function () {
 			var thisInstance = this;
 			var listViewContentDiv = this.getListViewContentContainer();
-			listViewContentDiv.on('click', '.listViewEntries', function(e) {
-				if (
-					$(e.target)
-						.closest('div')
-						.hasClass('actions')
-				)
-					return;
-				if (
-					$(e.target).is('button') ||
-					$(e.target)
-						.parent()
-						.is('button')
-				)
-					return;
-				if (
-					$(e.target)
-						.closest('a')
-						.hasClass('noLinkBtn')
-				)
-					return;
+			listViewContentDiv.on('click', '.listViewEntries', function (e) {
+				if ($(e.target).closest('div').hasClass('actions')) return;
+				if ($(e.target).is('button') || $(e.target).parent().is('button')) return;
+				if ($(e.target).closest('a').hasClass('noLinkBtn')) return;
 				if ($(e.target, $(e.currentTarget)).is('td:first-child')) return;
 				if ($(e.target).is('input[type="checkbox"]')) return;
-				if (
-					$.contains(
-						$(e.currentTarget)
-							.find('td:last-child')
-							.get(0),
-						e.target
-					)
-				)
-					return;
-				if (
-					$.contains(
-						$(e.currentTarget)
-							.find('td:first-child')
-							.get(0),
-						e.target
-					)
-				)
-					return;
+				if ($.contains($(e.currentTarget).find('td:last-child').get(0), e.target)) return;
+				if ($.contains($(e.currentTarget).find('td:first-child').get(0), e.target)) return;
 				var elem = $(e.currentTarget);
 				var recordUrl = elem.data('recordurl');
 				if (typeof recordUrl === 'undefined') {
@@ -86,47 +54,56 @@ Vtiger_List_Js(
 		 * Registers list events.
 		 * @param {jQuery} container - current container for reference.
 		 */
-		registerListEvents: function(container) {
-			var listPreview = container.find('.js-detail-preview');
-			var mainBody = container.closest('.mainBody');
-			var commActHeight = $('.commonActionsContainer').height();
+		registerListEvents: function () {
+			var mainBody = this.container.closest('.mainBody');
 			app.showNewScrollbarTopBottomRight(this.list, { wheelPropagation: false });
 			this.registerFixedThead();
-			mainBody.scrollTop(0); // reset scroll to set correct start position
-			$(window).on('resize', () => {
-				if (mainBody.scrollTop() >= this.list.offset().top + commActHeight) {
-					container.find('.gutter').css('left', listPreview.offset().left - 8);
+			this.registerScrollEvent(mainBody);
+			this.registerResizeEvent();
+			this.list.on('click', '.listViewEntries', () => {
+				if (this.split.getSizes()[1] < 10) {
+					const defaultGutterPosition = this.getDefaultSplitSizes();
+					this.split.setSizes(defaultGutterPosition);
+					this.preview.show();
+					this.sideBlockRight.removeClass('d-block');
+					app.moduleCacheSet('userSplitSet', defaultGutterPosition);
 				}
 			});
+		},
+		registerScrollEvent(mainBody) {
+			let scrollContainer = App.Components.Scrollbar.page.element;
+			scrollContainer.scrollTop(0); // reset scroll to set correct start position
 			let listOffsetTop = this.list.offset().top - this.headerH;
 			let initialH = this.sideBlocks.height();
 			let mainViewPortHeightCss = { height: mainBody.height() };
 			let mainViewPortWidthCss = { width: mainBody.height() };
 			this.gutter.addClass('js-fixed-scroll');
-			let fixedElements = container.find('.js-fixed-scroll');
+			let fixedElements = this.container.find('.js-fixed-scroll');
 			let fixedThead = this.list.siblings('.floatThead-container');
-			mainBody.on('scroll', () => {
-				if (mainBody.scrollTop() >= listOffsetTop) {
-					fixedThead.add(fixedElements).css({ top: mainBody.scrollTop() - listOffsetTop });
+			const onScroll = () => {
+				if (scrollContainer.scrollTop() >= listOffsetTop) {
+					fixedThead.add(fixedElements).css({ top: scrollContainer.scrollTop() - listOffsetTop });
 					fixedElements.css(mainViewPortHeightCss);
 					this.rotatedText.css(mainViewPortHeightCss);
 					this.rotatedText.css(mainViewPortWidthCss);
 				} else {
 					fixedThead.add(fixedElements).css({ top: 'initial' });
-					fixedElements.css({ height: initialH + mainBody.scrollTop() });
+					fixedElements.css({ height: initialH + scrollContainer.scrollTop() });
 					this.rotatedText.css({
-						width: initialH + mainBody.scrollTop(),
-						height: initialH + mainBody.scrollTop()
+						width: initialH + scrollContainer.scrollTop(),
+						height: initialH + scrollContainer.scrollTop()
 					});
 				}
-			});
-			this.list.on('click', '.listViewEntries', () => {
-				if (this.split.getSizes()[1] < 10) {
-					const defaultGutterPosition = this.getDefaultSplitSizes();
-					this.split.setSizes(defaultGutterPosition);
-					listPreview.show();
-					this.sideBlockRight.removeClass('d-block');
-					app.moduleCacheSet('userSplitSet', defaultGutterPosition);
+			};
+			scrollContainer.on('scroll', onScroll);
+		},
+		registerResizeEvent() {
+			$(window).on('resize', () => {
+				if (
+					App.Components.Scrollbar.page.element.scrollTop() >=
+					this.list.offset().top + $('.commonActionsContainer').height()
+				) {
+					this.container.find('.gutter').css('left', this.preview.offset().left - 8);
 				}
 			});
 		},
@@ -135,20 +112,17 @@ Vtiger_List_Js(
 			this.listFloatThead = list.find('.js-fixed-thead');
 			this.listFloatThead.floatThead('destroy');
 			this.listFloatThead.floatThead({
-				scrollContainer: function() {
+				scrollContainer: function () {
 					return list;
 				}
 			});
 			this.listFloatThead.floatThead('reflow');
 		},
-		getSecondColMinWidth: function(container) {
+		getSecondColMinWidth: function (container) {
 			let maxWidth = 0,
 				thisWidth;
-			container.find('.listViewEntries').each(function(i) {
-				thisWidth = $(this)
-					.find('.listViewEntryValue a')
-					.first()
-					.width();
+			container.find('.listViewEntries').each(function (i) {
+				thisWidth = $(this).find('.listViewEntryValue a').first().width();
 				if (i === 0) {
 					maxWidth = thisWidth;
 				} else {
@@ -157,11 +131,9 @@ Vtiger_List_Js(
 			});
 			return maxWidth;
 		},
-		getDomParams: function(container) {
-			this.listColumnFirstWidth = container
-				.find('.listViewEntriesDiv .listViewHeaders th')
-				.first()
-				.width();
+		setDomParams: function (container) {
+			this.container = container;
+			this.listColumnFirstWidth = container.find('.listViewEntriesDiv .listViewHeaders th').first().width();
 			this.listColumnSecondWidth = this.getSecondColMinWidth(container);
 			this.windowMinWidth = (15 / $(window).width()) * 100;
 			this.windowMaxWidth = 100 - this.minWidth;
@@ -169,11 +141,12 @@ Vtiger_List_Js(
 			this.sideBlockLeft = this.sideBlocks.first();
 			this.sideBlockRight = this.sideBlocks.last();
 			this.list = container.find('.js-list-preview');
+			this.preview = container.find('.js-detail-preview');
 			this.rotatedText = container.find('.u-rotate-90');
 			this.footerH = $('.js-footer').outerHeight();
 			this.headerH = $('.js-header').outerHeight();
 		},
-		getDefaultSplitSizes: function() {
+		getDefaultSplitSizes: function () {
 			let thWidth = ((this.listColumnFirstWidth + this.listColumnSecondWidth + 82) / $(window).width()) * 100;
 			return [thWidth, 100 - thWidth];
 		},
@@ -182,7 +155,7 @@ Vtiger_List_Js(
 		 * @param {jQuery} container - current container for reference.
 		 * @return Array
 		 */
-		getSplitSizes: function() {
+		getSplitSizes: function () {
 			const cachedParams = app.moduleCacheGet('userSplitSet');
 			if (cachedParams !== undefined) {
 				return cachedParams;
@@ -195,7 +168,7 @@ Vtiger_List_Js(
 		 * @param {jQuery} container - current container for reference.
 		 * @param {Split} split - a split object.
 		 */
-		registerSplitEvents: function(container, split) {
+		registerSplitEvents: function (container, split) {
 			var rightSplitMaxWidth = (400 / $(window).width()) * 100;
 			var minWindowWidth = (25 / $(window).width()) * 100;
 			var maxWindowWidth = 100 - minWindowWidth;
@@ -232,6 +205,7 @@ Vtiger_List_Js(
 					listPreview.hide();
 					this.list.width(this.list.width() - 10);
 				}
+				this.listFloatThead.floatThead('reflow');
 				app.moduleCacheSet('userSplitSet', split.getSizes());
 			});
 			this.sideBlockLeft.on('click', () => {
@@ -243,6 +217,7 @@ Vtiger_List_Js(
 				}
 				this.sideBlockLeft.removeClass('d-block');
 				this.list.removeClass('u-hide-underneath');
+				this.listFloatThead.floatThead('reflow');
 				app.moduleCacheSet('userSplitSet', split.getSizes());
 			});
 			this.sideBlockRight.on('click', () => {
@@ -255,6 +230,7 @@ Vtiger_List_Js(
 				this.sideBlockRight.removeClass('d-block');
 				listPreview.show();
 				this.gutter.css('right', 'initial');
+				this.listFloatThead.floatThead('reflow');
 				app.moduleCacheSet('userSplitSet', split.getSizes());
 			});
 		},
@@ -263,7 +239,7 @@ Vtiger_List_Js(
 		 * @param {jQuery} container - current container for reference.
 		 * @returns {Split} A split object.
 		 */
-		registerSplit: function(container) {
+		registerSplit: function (container) {
 			var rightSplitMaxWidth = (400 / $(window).width()) * 100;
 			var splitMinWidth = (25 / $(window).width()) * 100;
 			var splitMaxWidth = 100 - splitMinWidth;
@@ -294,10 +270,19 @@ Vtiger_List_Js(
 						listPreview.show();
 					}
 					if (split.getSizes()[0] > 10 && split.getSizes()[1] > rightSplitMaxWidth) {
+						this.listFloatThead.floatThead('reflow');
 						app.moduleCacheSet('gutterMidPosition', split.getSizes());
 					}
-					this.listFloatThead.floatThead('reflow');
 					app.moduleCacheSet('userSplitSet', split.getSizes());
+				},
+				onDragStart: () => {
+					listPreview.css('z-index', '1001');
+					this.gutter.css('z-index', '1001');
+				},
+				onDragEnd: () => {
+					listPreview.css('z-index', '0');
+					this.gutter.css('z-index', '0');
+					this.listFloatThead.floatThead('reflow');
 				}
 			});
 			if (splitSizes[0] < 10) {
@@ -311,15 +296,14 @@ Vtiger_List_Js(
 				split.setSizes([splitMaxWidth, splitMinWidth]);
 			}
 			this.gutter = container.find('.gutter');
-			var mainWindowHeightCss = { height: $(window).height() - (this.gutter.offset().top + this.footerH) };
+			var mainWindowHeightCss = {
+				height: $(window).height() - (this.gutter.offset().top + this.footerH)
+			};
 			this.gutter.css(mainWindowHeightCss);
 			this.list.css(mainWindowHeightCss);
 			this.sideBlocks.css(mainWindowHeightCss);
 			this.registerSplitEvents(container, split);
-			this.rotatedText
-				.first()
-				.find('.js-list-name')
-				.append($('.breadcrumbsContainer .js-text-content').text());
+			this.rotatedText.first().find('.js-list-name').append($('.breadcrumbsContainer .js-text-content').text());
 			this.rotatedText.css({
 				width: this.sideBlockLeft.height(),
 				height: this.sideBlockLeft.height()
@@ -330,7 +314,7 @@ Vtiger_List_Js(
 		 * Adds the split and deletes it on resize.
 		 * @param {jQuery} container - current container for reference.
 		 */
-		toggleSplit: function(container) {
+		toggleSplit: function (container) {
 			var thisInstance = this;
 			var listPreview = container.find('.js-detail-preview');
 			var splitsArray = [];
@@ -355,8 +339,8 @@ Vtiger_List_Js(
 						if (mainBody.scrollTop() >= this.list.offset().top) {
 							gutter.addClass('gutterOnScroll');
 							gutter.css('left', listPreview.offset().left - 8);
-							gutter.on('mousedown', function() {
-								$(this).on('mousemove', function(e) {
+							gutter.on('mousedown', function () {
+								$(this).on('mousemove', function (e) {
 									$(this).css('left', listPreview.offset().left - 8);
 								});
 							});
@@ -380,47 +364,40 @@ Vtiger_List_Js(
 		/**
 		 * Sets initial iframe's height and fills the preview with first record's content.
 		 */
-		registerPreviewEvent: function() {
+		registerPreviewEvent: function () {
 			const iframe = $('.listPreviewframe');
 			const container = this.getListViewContentContainer();
-			this.getDomParams(container);
+			this.setDomParams(container);
 			this.toggleSplit(container);
 			if ($(window).width() > 993) {
 				this.registerListEvents(container);
 			}
 			iframe.on('load', () => {
 				this.frameProgress.progressIndicator({ mode: 'hide' });
-				iframe.height(
-					iframe
-						.contents()
-						.find('.bodyContents')
-						.height() - 20
-				);
+				iframe.height(iframe.contents().find('.bodyContents').height() - 20);
 			});
-			$('.listViewEntriesTable .listViewEntries')
-				.first()
-				.trigger('click');
+			$('.listViewEntriesTable .listViewEntries').first().trigger('click');
 		},
 		/**
 		 * Sets the correct parent iframe's size.
 		 * @param {jQuery} currentHeight - ifrmae's body height to be set.
 		 * @param {jQuery} frame - ifrmae's height to be changed.
 		 */
-		updateWindowHeight: function(height, frame) {
+		updateWindowHeight: function (height, frame) {
 			frame.height(height);
 		},
 		/**
 		 * Executes event listener.
 		 * @param {jQuery} container - current container for reference.
 		 */
-		postLoadListViewRecordsEvents: function(container) {
+		postLoadListViewRecordsEvents: function (container) {
 			this._super(container);
 			this.registerPreviewEvent();
 		},
 		/**
 		 * Registers ListPreview's events.
 		 */
-		registerEvents: function() {
+		registerEvents: function () {
 			this._super();
 			this.registerPreviewEvent();
 		}

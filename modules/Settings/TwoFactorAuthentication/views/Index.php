@@ -3,7 +3,7 @@
  * Two factor authentication class for config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  */
 class Settings_TwoFactorAuthentication_Index_View extends Settings_Vtiger_Index_View
@@ -11,7 +11,7 @@ class Settings_TwoFactorAuthentication_Index_View extends Settings_Vtiger_Index_
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$viewer->assign('MODULE', $request->getModule());

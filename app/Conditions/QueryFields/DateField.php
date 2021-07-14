@@ -1,9 +1,7 @@
 <?php
 
 /**
- * Date Query Field Class.
- *
- * @package   App
+ * Date Query Field file.
  */
 
 namespace App\Conditions\QueryFields;
@@ -11,8 +9,10 @@ namespace App\Conditions\QueryFields;
 /**
  * Date Query Field Class.
  *
+ * @package UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class DateField extends BaseField
@@ -51,31 +51,20 @@ class DateField extends BaseField
 	/**
 	 * Get condition.
 	 *
+	 * @param ?string $operator
+	 *
 	 * @return array|bool
 	 */
-	public function getCondition()
+	public function getCondition(?string $operator = null)
 	{
 		$fn = 'operator' . ucfirst($this->operator);
-		if (\in_array($this->operator, array_keys(\App\Condition::DATE_OPERATORS))) {
-			\App\Log::trace('Entering to getStdOperator in ' . __CLASS__);
-			return $this->getStdOperator();
+		if (isset(\App\Condition::DATE_OPERATORS[$this->operator]) && !method_exists($this, $fn)) {
+			$fn = 'getStdOperator';
 		}
-		if (method_exists($this, $fn)) {
-			\App\Log::trace("Entering to $fn in " . __CLASS__);
-			return $this->{$fn}();
+		if (!($methodExists = method_exists($this, $fn))) {
+			\App\Log::error("Not found operator: {$fn}({$this->operator}) in  " . __CLASS__);
 		}
-		\App\Log::error("Not found operator: $fn in  " . __CLASS__);
-		return false;
-	}
-
-	/**
-	 * Get value.
-	 *
-	 * @return mixed
-	 */
-	public function getValue()
-	{
-		return \DateTimeField::convertToDBFormat($this->value);
+		return $methodExists ? $this->{$fn}() : $methodExists;
 	}
 
 	/**
@@ -86,7 +75,7 @@ class DateField extends BaseField
 	public function getArrayValue()
 	{
 		return array_map(function ($row) {
-			return \DateTimeField::convertToDBFormat(\current(explode(' ', $row)));
+			return \current(explode(' ', $row));
 		}, explode(',', $this->value));
 	}
 
@@ -179,5 +168,25 @@ class DateField extends BaseField
 	public function operatorSmallerthannow()
 	{
 		return ['<', $this->getColumnName(), date('Y-m-d')];
+	}
+
+	/**
+	 * MoreThanDaysAgo operator.
+	 *
+	 * @return bool
+	 */
+	public function operatorMoreThanDaysAgo()
+	{
+		return ['<=', $this->getColumnName(), date('Y-m-d', strtotime('-' . $this->getValue() . ' days'))];
+	}
+
+	/**
+	 * Lower operator.
+	 *
+	 * @return array
+	 */
+	public function operatorL()
+	{
+		return ['<', $this->getColumnName(), $this->getValue()];
 	}
 }

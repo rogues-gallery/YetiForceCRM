@@ -1,6 +1,35 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 
-//-------- general --------//
+//-------- mobile first --------//
+
+@include media-breakpoint-down(sm) {
+	.daterangepicker.show-calendar.js-visible {
+		display: flex;
+		height: calc(100vh - #{$h-header}) !important;
+		width: 100vw !important;
+		top: $h-header !important;
+		left: 0 !important;
+		position: fixed;
+		overflow: scroll;
+		-webkit-overflow-scrolling: touch;
+		z-index: 9999999999999999999999 !important;
+		.drp-buttons {
+			position: fixed;
+			text-align: center;
+			width: 100%;
+			bottom: 16px;
+		}
+	}
+}
+@include media-breakpoint-up(sm) {
+	.daterangepicker.show-ranges {
+		max-height: 300px;
+		overflow-y: scroll;
+	}
+	.daterangepicker.show-ranges.ltr .drp-calendar {
+		border-bottom: 1px solid #ddd;
+	}
+}
 
 //-------- select2 --------//
 .select2-selection {
@@ -104,8 +133,15 @@ select.select2 select.select2noactive {
 	height: $input-height !important; //prevent select2 container from changing height when select2 is reloading
 }
 
+.narrow {
+	.select2-selection.select2-selection--multiple {
+		min-height: calc(1.5em) !important;
+	}
+}
+
 .select2-container .select2-search--inline {
 	float: unset; //remove unneeded space in multiple select
+	width: fit-content;
 }
 
 .input-group-sm {
@@ -207,7 +243,29 @@ header {
 	@extend .w-25;
 	@extend .mr-sm-2;
 }
-
+.select2-container--bootstrap .select2-selection--multiple {
+	.select2-selection__choice + .select2-search--inline {
+		.select2-search__field {
+			min-width: 0;
+			padding: 0;
+		}
+	}
+}
+.select2-container--open {
+	.select2-selection {
+		border-color: #5bb1ff !important;
+	}
+	&.select2-container--below {
+		.select2-selection {
+			border-bottom-right-radius: 0 !important;
+		}
+	}
+	&.select2-container--above {
+		.select2-selection {
+			border-top-right-radius: 0 !important;
+		}
+	}
+}
 //-------- leaflet --------//
 .leaflet-popup-content {
 	width: 62px;
@@ -243,7 +301,7 @@ header {
 
 	.ranges {
 		li {
-			margin-bottom: 0.45rem;
+			padding: 4px 12px;
 		}
 
 		li:last-child {
@@ -265,14 +323,14 @@ header {
 .ui-autocomplete {
 	padding: 0 !important;
 
-	a.ui-menu-item-wrapper,
-	a.ui-menu-item-wrapper:hover {
+	.ui-menu-item-wrapper,
+	.ui-menu-item-wrapper:hover {
 		font-weight: inherit !important;
 	}
 }
 
-ul.ui-autocomplete {
-	div.ui-menu-item-wrapper {
+.ui-autocomplete:not(.mobile) {
+	.ui-menu-item-wrapper {
 		@extend .u-text-ellipsis;
 	}
 }
@@ -320,9 +378,14 @@ ul.ui-autocomplete {
 }
 
 //-------- perfectscrollbar --------//
-
-.leftPanel .ps-scrollbar-y-rail {
-	display: none !important;
+body:not(.desktop) {
+	.leftPanel .ps-scrollbar-y-rail {
+		display: none !important;
+	}
+	.ps__rail-x,
+	.ps__rail-y {
+		display: none !important;
+	}
 }
 
 .c-scrollbar-x--small {
@@ -433,6 +496,15 @@ ul.ui-autocomplete {
 		color: #212529;
 		background-color: #fff;
 		background-clip: padding-box;
+
+		.c-circle-icon {
+			font-size: 2em;
+			margin-top: 10px;
+		}
+		.c-img__completion__container {
+			width: 2.5rem;
+			text-align: center;
+		}
 	}
 
 	li.highlight,
@@ -447,4 +519,44 @@ ul.ui-autocomplete {
 	.fa-xs {
 		vertical-align: calculate-rem(1px);
 	}
+}
+
+//-------- pnotify --------//
+.pnotify-container {
+	padding: 0.75rem;
+}
+.pnotify-closer {
+	visibility: visible !important;
+}
+.pnotify-title {
+	line-height: 1.3rem;
+}
+.pnotify .bootstrap4-icon > * {
+	line-height: 1.5rem;
+}
+//-------- Material Design Icons --------//
+.mdi {
+	line-height: 1;
+}
+.btn .mdi::before {
+	position: relative;
+}
+.c-mdi::before {
+	width: 1.25em;
+	font-size: 1.2rem;
+	vertical-align: text-bottom;
+}
+.alert .mdi::before {
+	position: relative;
+	top: 2px;
+}
+.alert .mdi {
+	font-size: 1rem;
+}
+//-------- quasar --------//
+.q-tab__icon {
+	height: unset;
+}
+.dataTables_processing {
+	z-index: 4000;
 }

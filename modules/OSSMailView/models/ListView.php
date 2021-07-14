@@ -4,7 +4,7 @@
  * OSSMailView ListView model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSMailView_ListView_Model extends Vtiger_ListView_Model
 {
@@ -42,7 +42,7 @@ class OSSMailView_ListView_Model extends Vtiger_ListView_Model
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_ChangeType',
 				'linkurl' => 'javascript:OSSMailView_List_Js.triggerChangeType("index.php?module=' . $moduleModel->get('name') . '&view=ChangeType")',
-				'linkicon' => 'fas fa-edit',
+				'linkicon' => 'yfi yfi-full-editing-view',
 			];
 		}
 		if ($moduleModel->isPermitted('MassActive')) {

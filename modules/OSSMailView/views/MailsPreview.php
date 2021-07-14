@@ -2,12 +2,12 @@
 
 /**
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class OSSMailView_MailsPreview_View extends Vtiger_IndexAjax_View
 {
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		$permission = $userPrivilegesModel->hasModulePermission($request->getModule());
@@ -24,7 +24,7 @@ class OSSMailView_MailsPreview_View extends Vtiger_IndexAjax_View
 		}
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$srecord = $request->getInteger('srecord');
@@ -38,7 +38,7 @@ class OSSMailView_MailsPreview_View extends Vtiger_IndexAjax_View
 		$config['widget_limit'] = '';
 
 		$viewer = $this->getViewer($request);
-		$viewer->assign('RECOLDLIST', $recordModel->$mode($srecord, $smodule, $config, $type, $mailFilter));
+		$viewer->assign('RECOLDLIST', $recordModel->{$mode}($srecord, $smodule, $config, $type, $mailFilter));
 		$viewer->assign('MODULENAME', $moduleName);
 		$viewer->assign('SMODULENAME', $smodule);
 		$viewer->assign('RECORD', $record);

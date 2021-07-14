@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Settings-Profiles-ListViewContents -->
 	<input type="hidden" id="pageStartRange" value="{$PAGING_MODEL->getRecordStartRange()}" />
@@ -12,9 +12,8 @@
 	<input type='hidden' value="{$PAGE_NUMBER}" id="pageNumber">
 	<input type='hidden' value="{$PAGING_MODEL->getPageLimit()}" id="pageLimit">
 	<input type="hidden" value="{$LISTVIEW_ENTRIES_COUNT}" id="noOfEntries">
-	<div class="listViewEntriesDiv u-overflow-scroll-xsm-down" style='overflow-x:auto;'>
+	<div class="listViewEntriesDiv u-overflow-scroll-non-desktop" style='overflow-x:auto;'>
 		{assign var="NAME_FIELDS" value=$MODULE_MODEL->getNameFields()}
-		{assign var=WIDTHTYPE value=$USER_MODEL->get('rowheight')}
 		{assign var=WIDTH value={99/(count($LISTVIEW_HEADERS))}}
 		<table class="table table-bordered table-sm listViewEntriesTable">
 			{include file=\App\Layout::getTemplatePath('ListView/TableHeader.tpl', $QUALIFIED_MODULE)}
@@ -29,7 +28,7 @@
 								&nbsp;{\App\Language::translate($LISTVIEW_ENTRY->getDisplayValue($LISTVIEW_HEADERNAME), $QUALIFIED_MODULE)}
 								{if $LAST_COLUMN && $LISTVIEW_ENTRY->getRecordLinks()}
 								</td>
-								<td nowrap class="{$WIDTHTYPE} rightRecordActions">
+								<td nowrap class="{$WIDTHTYPE} rightRecordActions listButtons {$WIDTHTYPE}">
 									{assign var=LINKS value=$LISTVIEW_ENTRY->getRecordLinks()}
 									{if count($LINKS) > 0}
 										<div class="actions">
@@ -37,10 +36,10 @@
 												{foreach from=$LINKS item=LINK}
 													{if $LISTVIEW_ENTRIES_COUNT === 1}
 														{if $LINK->getLabel() neq 'LBL_DELETE_RECORD'}
-															{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE=$QUALIFIED_MODULE}
+															{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE_NAME=$QUALIFIED_MODULE MODULE=$QUALIFIED_MODULE}
 														{/if}
 													{else}
-														{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE=$QUALIFIED_MODULE}
+														{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE_NAME=$QUALIFIED_MODULE MODULE=$QUALIFIED_MODULE}
 													{/if}
 												{/foreach}
 											</div>

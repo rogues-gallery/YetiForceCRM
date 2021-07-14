@@ -14,7 +14,7 @@ class Products_RelationListView_Model extends Vtiger_RelationListView_Model
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getLinks()
+	public function getLinks(): array
 	{
 		$relationModel = $this->getRelationModel();
 		$parentModel = $this->getParentRecordModel();
@@ -41,6 +41,9 @@ class Products_RelationListView_Model extends Vtiger_RelationListView_Model
 			$qtyInStockField->set('column', 'qtyinstock');
 			$qtyInStockField->set('label', 'FL_QTY_IN_STOCK');
 			$qtyInStockField->set('fromOutsideList', true);
+			if (App\Config::module('IStorages', 'allowSetQtyProducts', false) && App\Privilege::isPermitted('IStorages', 'SetQtyProducts')) {
+				$qtyInStockField->set('isEditable', true);
+			}
 			$headerFields['qtyinstock'] = $qtyInStockField;
 		}
 		if ('PriceBooks' === $this->getRelationModel()->getRelationModuleModel()->getName() &&

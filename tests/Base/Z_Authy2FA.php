@@ -2,8 +2,10 @@
 /**
  * 2FA test class.
  *
+ * @package   Tests
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  */
 
@@ -32,11 +34,11 @@ class Z_Authy2FA extends \Tests\Base
 	 * @codeCoverageIgnore
 	 * Setting of tests.
 	 */
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
-		static::$userAuthyMode = \App\Config::security('USER_AUTHY_MODE');
-		static::$transaction = \App\Db::getInstance()->beginTransaction();
-		static::$systemMode = \App\Config::main('systemMode');
+		self::$userAuthyMode = \App\Config::security('USER_AUTHY_MODE');
+		self::$transaction = \App\Db::getInstance()->beginTransaction();
+		self::$systemMode = \App\Config::main('systemMode');
 	}
 
 	/**
@@ -55,20 +57,20 @@ class Z_Authy2FA extends \Tests\Base
 	 */
 	public function testUser()
 	{
-		static::$userId = \App\User::getUserIdByName('demo');
-		$this->assertInternalType('int', static::$userId, 'No user demo');
-		\App\User::setCurrentUserId(static::$userId);
-		$this->assertSame(\App\User::getCurrentUserId(), static::$userId);
-		$userRecordModel = \Users_Record_Model::getInstanceById(static::$userId, 'Users');
+		self::$userId = \App\User::getUserIdByName('demo');
+		$this->assertIsInt(self::$userId, 'No user demo');
+		\App\User::setCurrentUserId(self::$userId);
+		$this->assertSame(\App\User::getCurrentUserId(), self::$userId);
+		$userRecordModel = \Users_Record_Model::getInstanceById(self::$userId, 'Users');
 		$userRecordModel->set('authy_secret_totp', '');
 		$userRecordModel->set('authy_methods', '');
 		$userRecordModel->save();
 		$row = (new \App\Db\Query())
 			->select(['authy_secret_totp', 'authy_methods'])
 			->from('vtiger_users')
-			->where(['id' => static::$userId])
+			->where(['id' => self::$userId])
 			->one();
-		$this->assertNotFalse($row, 'No record id: ' . static::$userId);
+		$this->assertNotFalse($row, 'No record id: ' . self::$userId);
 		$this->assertEmpty($row['authy_secret_totp']);
 		$this->assertEmpty($row['authy_methods']);
 	}
@@ -76,7 +78,7 @@ class Z_Authy2FA extends \Tests\Base
 	/**
 	 * Test config for 2FA.
 	 */
-	public function testConfig()
+	public function testConfig(): void
 	{
 		\App\Config::set('security', 'USER_AUTHY_MODE', 'TOTP_OFF');
 		$this->assertSame(\App\Config::security('USER_AUTHY_MODE'), 'TOTP_OFF', 'Problem with saving the configuration');
@@ -88,14 +90,13 @@ class Z_Authy2FA extends \Tests\Base
 	}
 
 	/**
-	 * @codeCoverageIgnore
 	 * Cleaning after tests.
 	 */
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
-		static::$transaction->rollBack();
-		\App\Config::set('security', 'USER_AUTHY_MODE', static::$userAuthyMode);
-		\App\Config::set('main', 'systemMode', static::$systemMode);
+		self::$transaction->rollBack();
+		\App\Config::set('security', 'USER_AUTHY_MODE', self::$userAuthyMode);
+		\App\Config::set('main', 'systemMode', self::$systemMode);
 		\App\Cache::clear();
 	}
 }

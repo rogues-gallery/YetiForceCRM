@@ -1,9 +1,9 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 <div class="tpl-Settings-Menu-EditMenu modal fade" tabindex="-1">
 	<div class="modal-dialog">
         <div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title"><span class="fas fa-edit u-mr-5px"></span>{\App\Language::translate('LBL_EDITION_MENU', $QUALIFIED_MODULE)}</h5>
+				<h5 class="modal-title"><span class="yfi yfi-full-editing-view u-mr-5px"></span>{\App\Language::translate('LBL_EDITION_MENU', $QUALIFIED_MODULE)}</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="{\App\Language::translate('LBL_CLOSE')}">
 					<span aria-hidden="true" title="{\App\Language::translate('LBL_CLOSE')}">&times;</span>
 				</button>

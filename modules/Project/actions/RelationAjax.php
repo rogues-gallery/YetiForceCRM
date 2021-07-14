@@ -4,7 +4,7 @@
  * RelationAjax Class for Project.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Arkadiusz Dudek <a.dudek@yetiforce.com>
  */
 class Project_RelationAjax_Action extends Vtiger_RelationAjax_Action
@@ -23,7 +23,7 @@ class Project_RelationAjax_Action extends Vtiger_RelationAjax_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function getHierarchyCount(\App\Request $request)
+	public function getHierarchyCount(App\Request $request)
 	{
 		$sourceModule = $request->getModule();
 		$recordId = $request->getInteger('record');
@@ -33,7 +33,7 @@ class Project_RelationAjax_Action extends Vtiger_RelationAjax_Action
 		$focus = CRMEntity::getInstance($sourceModule);
 		$hierarchy = $focus->getHierarchy($recordId);
 		$response = new Vtiger_Response();
-		$response->setResult(count($hierarchy['entries']) - 1);
+		$response->setResult(\count($hierarchy['entries']) - 1);
 		$response->emit();
 	}
 }

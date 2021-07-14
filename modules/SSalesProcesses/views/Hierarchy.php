@@ -4,10 +4,10 @@
  * Class to show hierarchy.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
-class SSalesProcesses_Hierarchy_View extends \App\Controller\View
+class SSalesProcesses_Hierarchy_View extends \App\Controller\View\Page
 {
 	use App\Controller\ClearProcess;
 
@@ -18,7 +18,7 @@ class SSalesProcesses_Hierarchy_View extends \App\Controller\View
 	 *
 	 * @throws \App\Exceptions\NoPermittedToRecord
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$recordId = $request->getInteger('record');
 		if (!$recordId) {
@@ -29,7 +29,7 @@ class SSalesProcesses_Hierarchy_View extends \App\Controller\View
 		}
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

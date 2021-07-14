@@ -30,15 +30,11 @@ class Vtiger_List_View extends Vtiger_Index_View
 	 */
 	protected $viewName;
 
-	public function __construct()
-	{
-		parent::__construct();
-	}
-
-	public function getPageTitle(\App\Request $request)
+	/** {@inheritdoc} */
+	public function getPageTitle(App\Request $request)
 	{
 		$moduleName = $request->getModule();
-		$moduleName = $moduleName === 'Vtiger' ? 'YetiForce' : $moduleName;
+		$moduleName = 'Vtiger' === $moduleName ? 'YetiForce' : $moduleName;
 		$title = App\Language::translate($moduleName, $moduleName);
 		$title = $title . ' ' . App\Language::translate('LBL_VIEW_LIST', $moduleName);
 
@@ -49,14 +45,15 @@ class Vtiger_List_View extends Vtiger_Index_View
 		return $title;
 	}
 
-	public function getBreadcrumbTitle(\App\Request $request)
+	/** {@inheritdoc} */
+	public function getBreadcrumbTitle(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$title = \App\Language::translate('LBL_VIEW_LIST', $moduleName);
 		if ($request->has('viewname') && !empty(CustomView_Record_Model::getAll($moduleName)[$request->getByType('viewname', 2)])) {
 			$customView = CustomView_Record_Model::getAll($moduleName)[$request->getByType('viewname', 2)];
-			$title .= '<div class="breadCrumbsFilter dispaly-inline font-small"> [' . \App\Language::translate('LBL_FILTER', $moduleName)
-				. ': ' . \App\Language::translate($customView->get('viewname'), $moduleName) . ']</div>';
+			$title .= '<div class="pl-1 pb-1 align-items-end"><small class="breadCrumbsFilter"> [' . \App\Language::translate('LBL_FILTER', $moduleName)
+				. ': ' . \App\Language::translate($customView->get('viewname'), $moduleName) . ']</small> </div>';
 		}
 		return $title;
 	}
@@ -67,7 +64,7 @@ class Vtiger_List_View extends Vtiger_Index_View
 	 * @param \App\Request $request
 	 * @param bool         $display
 	 */
-	public function preProcess(\App\Request $request, $display = true)
+	public function preProcess(App\Request $request, $display = true)
 	{
 		parent::preProcess($request, false);
 
@@ -82,10 +79,10 @@ class Vtiger_List_View extends Vtiger_Index_View
 		$linkParams = ['MODULE' => $moduleName, 'ACTION' => $request->getByType('view', 1)];
 		$viewer->assign('CUSTOM_VIEWS', CustomView_Record_Model::getAllByGroup($moduleName, $mid));
 		$this->viewName = App\CustomView::getInstance($moduleName)->getViewId();
-		if ($request->isEmpty('viewname') && App\CustomView::hasViewChanged($moduleName, $this->viewName)) {
+		if ($this->viewName && $request->isEmpty('viewname') && App\CustomView::hasViewChanged($moduleName, $this->viewName)) {
 			$customViewModel = CustomView_Record_Model::getInstanceById($this->viewName);
 			if ($customViewModel) {
-				App\CustomView::setDefaultSortOrderBy($moduleName, ['orderBy' => $customViewModel->getSortOrderBy('orderBy'), 'sortOrder' => $customViewModel->getSortOrderBy('sortOrder')]);
+				App\CustomView::setSortBy($moduleName, $customViewModel->getSortOrderBy());
 			}
 			App\CustomView::setCurrentView($moduleName, $this->viewName);
 		}
@@ -96,18 +93,19 @@ class Vtiger_List_View extends Vtiger_Index_View
 		$viewer->assign('HEADER_LINKS', $this->listViewModel->getHederLinks($linkParams));
 		$this->initializeListViewContents($request, $viewer);
 		$viewer->assign('VIEWID', $this->viewName);
+		$viewer->assign('MID', $mid);
 		$viewer->assign('MODULE_MODEL', Vtiger_Module_Model::getInstance($moduleName));
 		if ($display) {
 			$this->preProcessDisplay($request);
 		}
 	}
 
-	public function preProcessTplName(\App\Request $request)
+	public function preProcessTplName(App\Request $request)
 	{
 		return 'ListViewPreProcess.tpl';
 	}
 
-	protected function preProcessDisplay(\App\Request $request)
+	protected function preProcessDisplay(App\Request $request)
 	{
 		parent::preProcessDisplay($request);
 	}
@@ -115,7 +113,7 @@ class Vtiger_List_View extends Vtiger_Index_View
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -123,14 +121,14 @@ class Vtiger_List_View extends Vtiger_Index_View
 			if (!isset($this->viewName)) {
 				$this->viewName = App\CustomView::getInstance($moduleName)->getViewId();
 			}
-			if (App\CustomView::hasViewChanged($moduleName, $this->viewName)) {
-				$customViewModel = CustomView_Record_Model::getInstanceById($this->viewName);
-				if ($customViewModel) {
-					App\CustomView::setDefaultSortOrderBy($moduleName, ['orderBy' => $customViewModel->getSortOrderBy('orderBy'), 'sortOrder' => $customViewModel->getSortOrderBy('sortOrder')]);
+			$orderBy = $request->getArray('orderby', \App\Purifier::STANDARD, [], \App\Purifier::SQL);
+			if ($this->viewName && App\CustomView::hasViewChanged($moduleName, $this->viewName)) {
+				if ($orderBy || ($customViewModel = CustomView_Record_Model::getInstanceById($this->viewName))) {
+					App\CustomView::setSortBy($moduleName, $orderBy ?: $customViewModel->getSortOrderBy());
 				}
 				App\CustomView::setCurrentView($moduleName, $this->viewName);
 			} else {
-				App\CustomView::setDefaultSortOrderBy($moduleName);
+				App\CustomView::setSortBy($moduleName, $orderBy);
 				if ($request->has('page')) {
 					App\CustomView::setCurrentPage($moduleName, $this->viewName, $request->getInteger('page'));
 				}
@@ -151,7 +149,7 @@ class Vtiger_List_View extends Vtiger_Index_View
 	/**
 	 * {@inheritdoc}
 	 */
-	public function postProcess(\App\Request $request, $display = true)
+	public function postProcess(App\Request $request, $display = true)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -167,13 +165,12 @@ class Vtiger_List_View extends Vtiger_Index_View
 	 *
 	 * @return Vtiger_JsScript_Model[] - List of Vtiger_JsScript_Model instances
 	 */
-	public function getFooterScripts(\App\Request $request)
+	public function getFooterScripts(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$jsFileNames = [
 			'modules.Vtiger.resources.List',
 			"modules.$moduleName.resources.List",
-			'~libraries/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js',
 			'modules.CustomView.resources.CustomView',
 			"modules.$moduleName.resources.CustomView",
 			'modules.Vtiger.resources.ListSearch',
@@ -184,44 +181,24 @@ class Vtiger_List_View extends Vtiger_Index_View
 	}
 
 	/**
-	 * Retrieves css styles that need to loaded in the page.
+	 * Function to initialize the required data in smarty to display the List View Contents.
 	 *
-	 * @param \App\Request $request - request model
-	 *
-	 * @return Vtiger_CssScript_Model[] - array of Vtiger_CssScript_Model
+	 * @param App\Request   $request
+	 * @param Vtiger_Viewer $viewer
 	 */
-	public function getHeaderCss(\App\Request $request)
-	{
-		$cssFileNames = [
-			'~libraries/bootstrap-colorpicker/dist/css/bootstrap-colorpicker.css',
-		];
-
-		return array_merge(parent::getHeaderCss($request), $this->checkAndConvertCssStyles($cssFileNames));
-	}
-
-	// Function to initialize the required data in smarty to display the List View Contents
-
-	public function initializeListViewContents(\App\Request $request, Vtiger_Viewer $viewer)
+	public function initializeListViewContents(App\Request $request, Vtiger_Viewer $viewer)
 	{
 		$moduleName = $request->getModule();
 		$pageNumber = $request->getInteger('page');
-		$orderBy = $request->getForSql('orderby');
-		$sortOrder = $request->getForSql('sortorder');
-		if (empty($orderBy) && empty($sortOrder)) {
-			$orderBy = App\CustomView::getSortby($moduleName);
-			$sortOrder = App\CustomView::getSorder($moduleName);
-			if (empty($orderBy)) {
-				$moduleInstance = CRMEntity::getInstance($moduleName);
-				$orderBy = $moduleInstance->default_order_by;
-				$sortOrder = $moduleInstance->default_sort_order;
+		$orderBy = $request->getArray('orderby', \App\Purifier::STANDARD, [], \App\Purifier::SQL);
+		if (empty($orderBy) && !($orderBy = App\CustomView::getSortBy($moduleName))) {
+			$moduleInstance = CRMEntity::getInstance($moduleName);
+			if ($moduleInstance->default_order_by && $moduleInstance->default_sort_order) {
+				$orderBy = [];
+				foreach ((array) $moduleInstance->default_order_by as $value) {
+					$orderBy[$value] = $moduleInstance->default_sort_order;
+				}
 			}
-		}
-		if ($sortOrder === 'ASC') {
-			$nextSortOrder = 'DESC';
-			$sortImage = 'fas fa-chevron-down';
-		} else {
-			$nextSortOrder = 'ASC';
-			$sortImage = 'fas fa-chevron-up';
 		}
 		if (empty($pageNumber)) {
 			$pageNumber = App\CustomView::getCurrentPage($moduleName, $this->viewName);
@@ -239,7 +216,6 @@ class Vtiger_List_View extends Vtiger_Index_View
 		$pagingModel->set('viewid', $this->viewName);
 		if (!empty($orderBy)) {
 			$this->listViewModel->set('orderby', $orderBy);
-			$this->listViewModel->set('sortorder', $sortOrder);
 		}
 		$operator = 's';
 		if (!$request->isEmpty('operator', true)) {
@@ -258,20 +234,21 @@ class Vtiger_List_View extends Vtiger_Index_View
 			$this->listViewModel->set('entityState', $request->getByType('entityState'));
 		}
 		$searchParams = App\Condition::validSearchParams($moduleName, $request->getArray('search_params'));
-		if (!empty($searchParams) && is_array($searchParams)) {
+		if (!empty($searchParams) && \is_array($searchParams)) {
 			$transformedSearchParams = $this->listViewModel->getQueryGenerator()->parseBaseSearchParamsToCondition($searchParams);
 			$this->listViewModel->set('search_params', $transformedSearchParams);
 			//To make smarty to get the details easily accesible
-			foreach ($searchParams as $fieldListGroup) {
+			foreach ($request->getArray('search_params') as $fieldListGroup) {
+				$searchParamsRaw[] = $fieldListGroup;
 				foreach ($fieldListGroup as $fieldSearchInfo) {
 					$fieldSearchInfo['searchValue'] = $fieldSearchInfo[2];
 					$fieldSearchInfo['fieldName'] = $fieldName = $fieldSearchInfo[0];
-					$fieldSearchInfo['specialOption'] = $fieldSearchInfo[3] ?? null;
+					$fieldSearchInfo['specialOption'] = \in_array($fieldSearchInfo[1], ['ch', 'kh']) ? true : '';
 					$searchParams[$fieldName] = $fieldSearchInfo;
 				}
 			}
 		} else {
-			$searchParams = [];
+			$searchParamsRaw = $searchParams = [];
 		}
 		if (!$this->listViewHeaders) {
 			$this->listViewHeaders = $this->listViewModel->getListViewHeaders();
@@ -279,7 +256,7 @@ class Vtiger_List_View extends Vtiger_Index_View
 		if (!$this->listViewEntries) {
 			$this->listViewEntries = $this->listViewModel->getListViewEntries($pagingModel);
 		}
-		$noOfEntries = count($this->listViewEntries);
+		$noOfEntries = \count($this->listViewEntries);
 		$viewer->assign('MODULE', $moduleName);
 		if (!$this->listViewLinks) {
 			$this->listViewLinks = $this->listViewModel->getListViewLinks($linkParams);
@@ -289,10 +266,6 @@ class Vtiger_List_View extends Vtiger_Index_View
 		$viewer->assign('PAGING_MODEL', $pagingModel);
 		$viewer->assign('PAGE_NUMBER', $pageNumber);
 		$viewer->assign('ORDER_BY', $orderBy);
-		$viewer->assign('SORT_ORDER', $sortOrder);
-		$viewer->assign('NEXT_SORT_ORDER', $nextSortOrder);
-		$viewer->assign('SORT_IMAGE', $sortImage);
-		$viewer->assign('COLUMN_NAME', $orderBy);
 		$viewer->assign('LISTVIEW_ENTRIES_COUNT', $noOfEntries);
 		$viewer->assign('LISTVIEW_HEADERS', $this->listViewHeaders);
 		$viewer->assign('LISTVIEW_ENTRIES', $this->listViewEntries);
@@ -311,5 +284,6 @@ class Vtiger_List_View extends Vtiger_Index_View
 		$viewer->assign('IS_MODULE_EDITABLE', $this->listViewModel->getModule()->isPermitted('EditView'));
 		$viewer->assign('IS_MODULE_DELETABLE', $this->listViewModel->getModule()->isPermitted('Delete'));
 		$viewer->assign('SEARCH_DETAILS', $searchParams);
+		$viewer->assign('SEARCH_PARAMS', $searchParamsRaw);
 	}
 }

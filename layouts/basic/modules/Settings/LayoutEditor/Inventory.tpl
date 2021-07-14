@@ -1,10 +1,10 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{assign var='INVENTORY_BLOKS' value=$INVENTORY_MODEL->getFieldsByBlocks()}
 	<div class="tpl-Settings-LayoutEditor-Inventory">
 		<div class="moduleBlocks inventoryBlock" data-block-id="0">
 			<div class="editFieldsTable block card card-default mb-2">
-				<div class="card-header py-1 px-2">
+				<div class="card-header px-2">
 					<div class="float-right">
 						<button class="btn btn-sm btn-success pr-1 saveFieldSequence invisible inventorySequence"
 								type="button">
@@ -34,7 +34,7 @@
 										<span class="fieldLabel">{App\Language::translate($FIELD_MODEL->get('label'), $SELECTED_MODULE_NAME)}</span>
 										<div class="float-right actions">
 											<a href="#" class="editInventoryField mr-1">
-											<span class="fas fa-edit"
+											<span class="yfi yfi-full-editing-view"
 												  title="{App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
 											</a>
 											<a class="deleteInventoryField mr-1" href="#"><span
@@ -51,9 +51,9 @@
 		</div>
 		<div class="moduleBlocks inventoryBlock" data-block-id="1">
 			<div class="editFieldsTable block card card-default mb-2">
-				<div class="card-header py-1 px-2">
+				<div class="card-header px-2">
 					<div class="float-right">
-						<button class="btn btn-sm btn-success saveFieldSequence invisible inventorySequence"
+						<button class="btn btn-sm btn-success saveFieldSequence invisible inventorySequence mr-1"
 								type="button">
 							<strong>{App\Language::translate('LBL_SAVE_FIELD_SEQUENCE', $QUALIFIED_MODULE)}</strong>
 						</button>
@@ -81,7 +81,7 @@
 										<span class="fieldLabel">{App\Language::translate($FIELD_MODEL->get('label'), $SELECTED_MODULE_NAME)}</span>
 										<span class="btn-group float-right actions">
 								<a href="#" class="editInventoryField mr-1">
-									<span class="fas fa-edit"
+									<span class="yfi yfi-full-editing-view"
 										  title="{App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
 								</a>
 								<a class="deleteInventoryField mr-1" href="#"><span
@@ -98,7 +98,7 @@
 		</div>
 		<div class="moduleBlocks inventoryBlock" data-block-id="2">
 			<div class="editFieldsTable block card card-default mb-2">
-				<div class="card-header py-1 px-2">
+				<div class="card-header px-2">
 					<div class="float-right">
 						<button class="btn btn-sm btn-success saveFieldSequence invisible inventorySequence"
 								type="button">
@@ -128,7 +128,7 @@
 										<span class="fieldLabel">{App\Language::translate($FIELD_MODEL->get('label'), $SELECTED_MODULE_NAME)}</span>
 										<span class="btn-group float-right actions">
 								<a href="#" class="editInventoryField mr-1">
-									<span class="fas fa-edit"
+									<span class="yfi yfi-full-editing-view"
 										  title="{App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
 								</a>
 								<a class="deleteInventoryField mr-1" href="#"><span
@@ -152,7 +152,7 @@
 				<span class="fieldLabel"></span>
 				<span class="btn-group float-right actions">
 			<a href="#" class="editInventoryField mr-1">
-				<span class="fas fa-edit" title="{App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
+				<span class="yfi yfi-full-editing-view" title="{App\Language::translate('LBL_EDIT', $QUALIFIED_MODULE)}"></span>
 			</a>
 			<a class="deleteInventoryField mr-1" href="#"><span
 						title="{App\Language::translate('LBL_DELETE', $QUALIFIED_MODULE)}"

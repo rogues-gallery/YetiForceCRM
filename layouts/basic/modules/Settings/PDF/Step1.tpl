@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{if empty($RECORDID)}
 		{assign var=RECORDID value=''}
@@ -288,12 +288,7 @@
 									{\App\Language::translate('LBL_DEFAULT_TPL', $QUALIFIED_MODULE)}
 								</label>
 								<div class="col-sm-6">
-									{if $PDF_MODEL->get('default') === 0}
-										{assign 'DEFAULT' false}
-									{else}
-										{assign 'DEFAULT' true}
-									{/if}
-									<input type="checkbox" id="default" name="default" value="1" {if $DEFAULT eq 'true'}checked="checked"{/if} />
+									<input type="checkbox" id="default" name="default" value="1" {if !empty($PDF_MODEL->get('default'))}checked="checked"{/if} />
 								</div>
 							</div>
 							<div class="form-group row">

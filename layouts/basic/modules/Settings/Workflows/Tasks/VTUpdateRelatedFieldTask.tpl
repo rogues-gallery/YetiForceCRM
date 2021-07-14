@@ -1,5 +1,6 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
+	<!-- tpl-Settings-Workflows-Tasks-VTUpdateRelatedFieldTask -->
 	<div class="d-flex px-1 px-md-2">
 		<strong class="align-self-center mr-2">{\App\Language::translate('LBL_SET_FIELD_VALUES',$QUALIFIED_MODULE)}</strong>
 		<button type="button" class="btn btn-outline-dark"
@@ -7,14 +8,13 @@
 	</div>
 	<br/>
 	<div class="row js-conditions-container no-gutters px-1" id="save_fieldvaluemapping" data-js="container">
-		<input type="hidden" id="fieldValueMapping" name="field_value_mapping"
-			   value="{if isset($TASK_OBJECT->field_value_mapping)}{\App\Purifier::encodeHtml($TASK_OBJECT->field_value_mapping)}{/if}"/>
+		<input type="hidden" id="fieldValueMapping" name="field_value_mapping" value="{if isset($TASK_OBJECT->field_value_mapping)}{\App\Purifier::encodeHtml($TASK_OBJECT->field_value_mapping)}{/if}"/>
 		{if isset($TASK_OBJECT->field_value_mapping)}
 			{foreach from=\App\Json::decode($TASK_OBJECT->field_value_mapping) item=FIELD_MAP}
 				<div class="row no-gutters col-12 col-xl-6 js-conditions-row padding-bottom1per px-md-1"
 					data-js="container | clone">
 					<div class="col-md-5 mb-1 mb-md-0">
-						<select name="fieldname" class="select2" style="min-width: 250px"
+						<select name="fieldname" class="select2 form-control" style="min-width: 250px"
 								data-placeholder="{\App\Language::translate('LBL_SELECT_FIELD',$QUALIFIED_MODULE)}">
 							<option></option>
 							{foreach item=REFERENCE_FIELD from=$MODULE_MODEL->getFieldsByReference()}
@@ -27,6 +27,10 @@
 												{continue}
 											{/if}
 											{assign var=FIELD_INFO value=$FIELD_MODEL->getFieldInfo()}
+											{if in_array($FIELD_MODEL->getFieldDataType(), ['categoryMultipicklist', 'tree'])}
+												{$FIELD_INFO['treetemplate'] = App\Purifier::decodeHtml($FIELD_MODEL->getFieldParams())}
+												{$FIELD_INFO['displayvalue'] = $FIELD_MODEL->getDisplayValue($FIELD_MAP['value'])}
+											{/if}
 											{assign var=VALUE value=$REFERENCE_FIELD->get('name')|cat:'::'|cat:$RELATION_MODULE_NAME|cat:'::'|cat:$FIELD_MODEL->getName()}
 											<option value="{$VALUE}" {if $FIELD_MAP['fieldname'] eq $VALUE} selected=""{/if}
 													data-fieldtype="{$FIELD_MODEL->getFieldType()}"
@@ -38,7 +42,7 @@
 									</optgroup>
 								{/foreach}
 							{/foreach}
-							{foreach item=RELATION_MODEL from=$MODULE_MODEL->getRelations()}
+							{foreach item=RELATION_MODEL from=Vtiger_Relation_Model::getAllRelations($MODULE_MODEL, false)}
 								{assign var=RELATION_MODULE_NAME value=$RELATION_MODEL->getRelationModuleName()}
 								{assign var=RELATION_MODULE_MODEL value=$RELATION_MODEL->getRelationModuleModel()}
 								<optgroup
@@ -48,6 +52,10 @@
 												{continue}
 											{/if}
 										{assign var=FIELD_INFO value=$FIELD_MODEL->getFieldInfo()}
+										{if in_array($FIELD_MODEL->getFieldDataType(), ['categoryMultipicklist', 'tree'])}
+											{$FIELD_INFO['treetemplate'] = App\Purifier::decodeHtml($FIELD_MODEL->getFieldParams())}
+											{$FIELD_INFO['displayvalue'] = $FIELD_MODEL->getDisplayValue($FIELD_MAP['value'])}
+										{/if}
 										<option value="{$RELATION_MODULE_NAME}::{$FIELD_MODEL->getName()}"
 												{if $FIELD_MAP['fieldname'] eq $RELATION_MODULE_NAME|cat:'::'|cat:$FIELD_MODEL->getName()}selected=""
 												{/if}data-fieldtype="{$FIELD_MODEL->getFieldType()}"
@@ -101,7 +109,7 @@
 						</optgroup>
 					{/foreach}
 				{/foreach}
-				{foreach item=RELATION_MODEL from=$MODULE_MODEL->getRelations()}
+				{foreach item=RELATION_MODEL from=Vtiger_Relation_Model::getAllRelations($MODULE_MODEL, false)}
 					{assign var=RELATION_MODULE_NAME value=$RELATION_MODEL->getRelationModuleName()}
 					{assign var=RELATION_MODULE_MODEL value=$RELATION_MODEL->getRelationModuleModel()}
 					<optgroup
@@ -132,4 +140,5 @@
 			</button>
 		</div>
 	</div>
+	<!-- /tpl-Settings-Workflows-Tasks-VTUpdateRelatedFieldTask -->
 {/strip}

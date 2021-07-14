@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div>
 		<input type="checkbox" value="{$LISTVIEW_ENTRY->getId()}" class="listViewEntriesCheckBox" title="{\App\Language::translate('LBL_SELECT_SINGLE_ROW')}" />
@@ -27,7 +27,7 @@
 	{/if}
 	<div>
 		{if in_array($MODULE_NAME, \App\Config::module('ModTracker', 'SHOW_TIMELINE_IN_LISTVIEW', [])) && $MODULE_MODEL->isPermitted('TimeLineList')}
-			<a  data-url="{$LISTVIEW_ENTRY->getTimeLineUrl()}" class="c-badge__icon fa-fw timeLineIconList d-none"></a>
+			<a  data-url="{$LISTVIEW_ENTRY->getTimeLineUrl()}" class="c-badge__icon fa-fw timeLineIconList d-none u-cursor-pointer"></a>
 		{/if}
 		{if \App\Config::module('ModTracker', 'UNREVIEWED_COUNT') && $MODULE_MODEL->isPermitted('ReviewingUpdates') && $MODULE_MODEL->isTrackingEnabled() && $LISTVIEW_ENTRY->isViewable()}
 			<a href="{$LISTVIEW_ENTRY->getUpdatesUrl()}" class="unreviewed d-none" aria-label="{\App\Language::translate('LBL_NOTIFICATIONS')}">

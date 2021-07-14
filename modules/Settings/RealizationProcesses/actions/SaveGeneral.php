@@ -4,7 +4,7 @@
  * Settings RealizationProcesses SaveGeneral action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_RealizationProcesses_SaveGeneral_Action extends Settings_Vtiger_Index_Action
 {
@@ -18,10 +18,11 @@ class Settings_RealizationProcesses_SaveGeneral_Action extends Settings_Vtiger_I
 	 * Save date.
 	 *
 	 * @param <array> request
+	 * @param \App\Request $request
 	 *
 	 * @return true if saved, false otherwise
 	 */
-	public function save(\App\Request $request)
+	public function save(App\Request $request)
 	{
 		$response = new Vtiger_Response();
 		$status = $request->getByType('status', 'Text');

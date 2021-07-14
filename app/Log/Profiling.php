@@ -25,7 +25,7 @@ class Profiling extends Target
 	public function init()
 	{
 		parent::init();
-		$this->db = DB::getInstance('admin');
+		$this->db = DB::getInstance('log');
 	}
 
 	/**
@@ -53,7 +53,6 @@ class Profiling extends Target
 				}
 			}
 		}
-
 		$logID = (new \App\Db\Query())->from($this->db->quoteSql($this->logTable))->max('id', $this->db);
 		++$logID;
 		foreach ($timings as &$message) {

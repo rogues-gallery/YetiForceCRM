@@ -6,7 +6,7 @@
  * @package   Modules
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
  */
 
@@ -35,7 +35,7 @@ class Settings_YetiForce_Register_Action extends Settings_Vtiger_Save_Action
 	 *
 	 * @throws \Exception
 	 */
-	public function serial(\App\Request $request)
+	public function serial(App\Request $request)
 	{
 		$serial = $request->getByType('key', 'Alnum');
 		$responseType = 'success';
@@ -63,13 +63,33 @@ class Settings_YetiForce_Register_Action extends Settings_Vtiger_Save_Action
 	 * @throws \App\Exceptions\IllegalValue
 	 * @throws \yii\db\Exception
 	 */
-	public function online(\App\Request $request)
+	public function online(App\Request $request)
 	{
 		$responseType = 'success';
 		$response = new Vtiger_Response();
 		$result = true;
 		$message = App\Language::translate('LBL_REGISTERED', $request->getModule(false));
-		if (!\App\Company::registerOnline($request->getByType('companies', 'Text'))) {
+		$companies = $request->getMultiDimensionArray('companies', [
+			'id' => 'Integer',
+			'type' => 'Integer',
+			'name' => 'Text',
+			'vat_id' => 'Text',
+			'country' => 'Text',
+			'post_code' => 'Text',
+			'city' => 'Text',
+			'address' => 'Text',
+			'industry' => 'Text',
+			'companysize' => 'Integer',
+			'website' => 'Url',
+			'newsletter' => 'Integer',
+			'firstname' => 'Text',
+			'lastname' => 'Text',
+			'email' => 'Email',
+			'facebook' => 'Url',
+			'twitter' => 'Url',
+			'linkedin' => 'Url',
+		]);
+		if (!\App\Company::registerOnline($companies)) {
 			$result = false;
 			$message = App\Language::translate('LBL_ONLINE_REGISTRATION_FAILED', $request->getModule(false));
 			$responseType = 'error';
@@ -83,16 +103,27 @@ class Settings_YetiForce_Register_Action extends Settings_Vtiger_Save_Action
 	}
 
 	/**
-	 * Check register status
+	 * Check register status.
 	 *
 	 * @param \App\Request $request
 	 */
-	public function check(\App\Request $request)
+	public function check(App\Request $request)
 	{
+		$status = \App\YetiForce\Register::check(true);
+		$label = 'LBL_REGISTRATION_PENDING';
+		switch ($status) {
+			case 3:
+				$label = 'LBL_REGISTRATION_COMPANY_DETAILS_VARY';
+				break;
+			case 0:
+			case 4:
+				$label = 'ERR_OCCURRED_CHECK_LOGS';
+				break;
+		}
 		$response = new Vtiger_Response();
 		$response->setResult([
-			'success' => \App\YetiForce\Register::check(true),
-			'message' => App\Language::translate('LBL_REGISTRATION_PENDING', $request->getModule(false)),
+			'success' => 1 === $status,
+			'message' => App\Language::translate($label, $request->getModule(false)),
 		]);
 		$response->emit();
 	}

@@ -4,7 +4,7 @@
  * Module Model.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 class OpenStreetMap_Module_Model extends Vtiger_Module_Model
@@ -18,7 +18,7 @@ class OpenStreetMap_Module_Model extends Vtiger_Module_Model
 	 */
 	public function isAllowModules($moduleName)
 	{
-		return in_array($moduleName, \App\Config::module($this->getName(), 'ALLOW_MODULES', []));
+		return \in_array($moduleName, \App\Config::module($this->getName(), 'ALLOW_MODULES', []));
 	}
 
 	/**

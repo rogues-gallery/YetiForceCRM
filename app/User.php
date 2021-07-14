@@ -5,8 +5,10 @@ namespace App;
 /**
  * User basic class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -16,7 +18,7 @@ class User
 	protected static $currentUserRealId = false;
 	protected static $currentUserCache = false;
 	protected static $userModelCache = [];
-	protected $privileges;
+	protected $privileges = [];
 
 	/**
 	 * Get current user Id.
@@ -35,6 +37,9 @@ class User
 	 */
 	public static function setCurrentUserId($userId)
 	{
+		if (!self::isExists($userId, false)) {
+			throw new \App\Exceptions\AppException('User not exists: ' . $userId);
+		}
 		static::$currentUserId = $userId;
 		static::$currentUserCache = false;
 	}
@@ -55,7 +60,6 @@ class User
 			$id = static::getCurrentUserId();
 		}
 		static::$currentUserRealId = $id;
-
 		return $id;
 	}
 
@@ -89,9 +93,7 @@ class User
 		}
 		$userModel = new self();
 		if ($userId) {
-			$privileges = static::getPrivilegesFile($userId);
-			$privileges = $privileges['_privileges'];
-			$userModel->privileges = $privileges;
+			$userModel->privileges = static::getPrivilegesFile($userId)['_privileges'] ?? [];
 			static::$userModelCache[$userId] = $userModel;
 		}
 		return $userModel;
@@ -185,11 +187,11 @@ class User
 	/**
 	 * Get user id.
 	 *
-	 * @return int
+	 * @return int|null
 	 */
 	public function getId()
 	{
-		return $this->privileges['details']['record_id'];
+		return $this->privileges['details']['record_id'] ?? null;
 	}
 
 	/**
@@ -211,7 +213,7 @@ class User
 	 */
 	public function getDetail($fieldName)
 	{
-		return $this->privileges['details'][$fieldName];
+		return $this->privileges['details'][$fieldName] ?? null;
 	}
 
 	/**
@@ -223,7 +225,7 @@ class User
 	 */
 	public function getDetails()
 	{
-		return $this->privileges['details'];
+		return $this->privileges['details'] ?? null;
 	}
 
 	/**
@@ -233,7 +235,7 @@ class User
 	 */
 	public function getProfiles()
 	{
-		return $this->privileges['profiles'];
+		return $this->privileges['profiles'] ?? null;
 	}
 
 	/**
@@ -243,7 +245,7 @@ class User
 	 */
 	public function getGroups()
 	{
-		return $this->privileges['groups'];
+		return $this->privileges['groups'] ?? null;
 	}
 
 	/**
@@ -294,7 +296,7 @@ class User
 	/**
 	 * Get user parent roles seq.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function getParentRolesSeq()
 	{
@@ -308,7 +310,17 @@ class User
 	 */
 	public function isAdmin()
 	{
-		return $this->privileges['details']['is_admin'];
+		return !empty($this->privileges['details']['is_admin']);
+	}
+
+	/**
+	 * Function to check whether the user is an super user.
+	 *
+	 * @return bool
+	 */
+	public function isSuperUser(): bool
+	{
+		return !empty($this->privileges['details']['super_user']);
 	}
 
 	/**
@@ -321,6 +333,18 @@ class User
 	public function get($key)
 	{
 		return $this->privileges[$key];
+	}
+
+	/**
+	 * Check for existence of key.
+	 *
+	 * @param string $key
+	 *
+	 * @return bool
+	 */
+	public function has(string $key): bool
+	{
+		return \array_key_exists($key, $this->privileges);
 	}
 
 	/**
@@ -344,35 +368,37 @@ class User
 	 */
 	public function isActive()
 	{
-		return 'Active' === $this->privileges['details']['status'];
+		return 'Active' === ($this->privileges['details']['status'] ?? null);
 	}
 
 	/**
 	 * Function checks if user exists.
 	 *
-	 * @param int $id - User ID
+	 * @param int  $id     - User ID
+	 * @param bool $active
 	 *
 	 * @return bool
 	 */
-	public static function isExists($id)
+	public static function isExists(int $id, bool $active = true): bool
 	{
-		if (Cache::has('UserIsExists', $id)) {
-			return Cache::get('UserIsExists', $id);
+		$cacheKey = $active ? 'UserIsExists' : 'UserIsExistsInactive';
+		if (Cache::has($cacheKey, $id)) {
+			return Cache::get($cacheKey, $id);
 		}
 		$isExists = false;
 		if (\App\Config::performance('ENABLE_CACHING_USERS')) {
 			$users = PrivilegeFile::getUser('id');
-			if (isset($users[$id]) && !$users[$id]['deleted']) {
+			if (($active && isset($users[$id]) && 'Active' == $users[$id]['status'] && !$users[$id]['deleted']) || (!$active && isset($users[$id]))) {
 				$isExists = true;
 			}
 		} else {
-			$isExists = (new \App\Db\Query())
-				->from('vtiger_users')
-				->where(['status' => 'Active', 'deleted' => 0, 'id' => $id])
-				->exists();
+			$isExistsQuery = (new \App\Db\Query())->from('vtiger_users')->where(['id' => $id]);
+			if ($active) {
+				$isExistsQuery->andWhere(['status' => 'Active', 'deleted' => 0]);
+			}
+			$isExists = $isExistsQuery->exists();
 		}
-		Cache::save('UserIsExists', $id, $isExists);
-
+		Cache::save($cacheKey, $id, $isExists);
 		return $isExists;
 	}
 
@@ -383,9 +409,10 @@ class User
 	 */
 	public static function getActiveAdminId()
 	{
-		$key = 'id';
-		if (Cache::has(__METHOD__, $key)) {
-			return Cache::get(__METHOD__, $key);
+		$key = '';
+		$cacheName = 'ActiveAdminId';
+		if (Cache::has($cacheName, $key)) {
+			return Cache::get($cacheName, $key);
 		}
 		$adminId = 1;
 		if (\App\Config::performance('ENABLE_CACHING_USERS')) {
@@ -401,9 +428,9 @@ class User
 				->from('vtiger_users')
 				->where(['is_admin' => 'on', 'status' => 'Active'])
 				->orderBy(['id' => SORT_ASC])
-				->limit(1)->scalar();
+				->scalar();
 		}
-		Cache::save(__METHOD__, $key, $adminId, Cache::LONG);
+		Cache::save($cacheName, $key, $adminId, Cache::LONG);
 
 		return $adminId;
 	}
@@ -415,15 +442,28 @@ class User
 	 *
 	 * @return int
 	 */
-	public static function getUserIdByName($name)
+	public static function getUserIdByName($name): ?int
 	{
-		if (Cache::has(__METHOD__, $name)) {
-			return Cache::get(__METHOD__, $name);
+		if (Cache::has('UserIdByName', $name)) {
+			return Cache::get('UserIdByName', $name);
 		}
-		$userId = (new Db\Query())->select(['id'])->from('vtiger_users')->where(['user_name' => $name])->limit(1)->scalar();
-		Cache::save(__METHOD__, $name, $userId, Cache::LONG);
+		$userId = (new Db\Query())->select(['id'])->from('vtiger_users')->where(['user_name' => $name])->scalar();
+		return Cache::save('UserIdByName', $name, false !== $userId ? $userId : null, Cache::LONG);
+	}
 
-		return $userId;
+	/**
+	 * Function gets user ID by user full name.
+	 *
+	 * @param string $fullName
+	 *
+	 * @return int
+	 */
+	public static function getUserIdByFullName(string $fullName): int
+	{
+		$instance = \App\Fields\Owner::getInstance();
+		$instance->showRoleName = false;
+		$users = array_column($instance->initUsers(), 'id', 'fullName');
+		return $users[$fullName] ?? 0;
 	}
 
 	/**
@@ -449,6 +489,24 @@ class User
 	}
 
 	/**
+	 * Gets member structure.
+	 *
+	 * @return array
+	 */
+	public function getMemberStructure(): array
+	{
+		$member[] = \App\PrivilegeUtil::MEMBER_TYPE_USERS . ":{$this->getId()}";
+		$member[] = \App\PrivilegeUtil::MEMBER_TYPE_ROLES . ":{$this->getRole()}";
+		foreach ($this->getGroups() as $groupId) {
+			$member[] = \App\PrivilegeUtil::MEMBER_TYPE_GROUPS . ":{$groupId}";
+		}
+		foreach (explode('::', $this->getParentRolesSeq()) as $role) {
+			$member[] = \App\PrivilegeUtil::MEMBER_TYPE_ROLE_AND_SUBORDINATES . ":{$role}";
+		}
+		return $member;
+	}
+
+	/**
 	 * Get user image details by id.
 	 *
 	 * @param int $userId
@@ -467,5 +525,68 @@ class User
 			return [];
 		}
 		return $userModel->getImage();
+	}
+
+	/**
+	 * Get number of users.
+	 *
+	 * @return int
+	 */
+	public static function getNumberOfUsers(): int
+	{
+		if (Cache::has('NumberOfUsers', '')) {
+			return Cache::get('NumberOfUsers', '');
+		}
+		$count = (new Db\Query())->from('vtiger_users')->where(['status' => 'Active'])->andWhere(['<>', 'id', 1])->count();
+		Cache::save('NumberOfUsers', '', $count, Cache::LONG);
+		return $count;
+	}
+
+	/**
+	 * Update users labels.
+	 *
+	 * @param int $fromUserId
+	 *
+	 * @return void
+	 */
+	public static function updateLabels(int $fromUserId = 0): void
+	{
+		$timeLimit = 180;
+		$timeMax = $timeLimit + time();
+		$query = (new \App\Db\Query())->select(['id'])->where(['>=', 'id', $fromUserId])->from('vtiger_users');
+		$dataReader = $query->createCommand()->query();
+		while ($row = $dataReader->read()) {
+			if (time() >= $timeMax) {
+				(new \App\BatchMethod(['method' => __METHOD__, 'params' => [$row['id'], microtime()]]))->save();
+				break;
+			}
+			if (self::isExists($row['id'], false)) {
+				$userRecordModel = \Users_Record_Model::getInstanceById($row['id'], 'Users');
+				$userRecordModel->updateLabel();
+			}
+		}
+	}
+
+	/**
+	 * The function gets the all users label.
+	 *
+	 * @return bool|array
+	 */
+	public static function getAllLabels()
+	{
+		return (new \App\Db\Query())->from('u_#__users_labels')->select(['id', 'label'])->createCommand()->queryAllByGroup();
+	}
+
+	/**
+	 * Check the previous password.
+	 *
+	 * @param int    $userId
+	 * @param string $password
+	 *
+	 * @return bool
+	 */
+	public static function checkPreviousPassword(int $userId, string $password): bool
+	{
+		return (new \App\Db\Query())->from('l_#__userpass_history')->where(['user_id' => $userId, 'pass' => Encryption::createHash($password)])->exists(\App\Db::getInstance('log'));
 	}
 }

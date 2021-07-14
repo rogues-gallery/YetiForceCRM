@@ -4,7 +4,7 @@
  * OSSMailView detail view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSMailView_Detail_View extends Vtiger_Detail_View
 {
@@ -28,7 +28,7 @@ class OSSMailView_Detail_View extends Vtiger_Detail_View
 	/**
 	 * {@inheritdoc}
 	 */
-	public function showSummary(\App\Request $request)
+	public function showSummary(App\Request $request)
 	{
 		$record = $request->getInteger('record');
 		$viewer = $this->getViewer($request);

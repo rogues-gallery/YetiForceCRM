@@ -11,12 +11,23 @@
 
 class Vtiger_Save_Action extends \App\Controller\Action
 {
+	use \App\Controller\ExposeMethod;
 	/**
 	 * Record model instance.
 	 *
 	 * @var Vtiger_Record_Model
 	 */
-	protected $record = false;
+	protected $record;
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->exposeMethod('preSaveValidation');
+		$this->exposeMethod('recordChanger');
+	}
 
 	/**
 	 * Function to check permission.
@@ -25,7 +36,7 @@ class Vtiger_Save_Action extends \App\Controller\Action
 	 *
 	 * @throws \App\Exceptions\NoPermittedToRecord
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		if (!$request->isEmpty('record', true)) {
@@ -34,7 +45,7 @@ class Vtiger_Save_Action extends \App\Controller\Action
 				throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
 			}
 			$this->record = Vtiger_Record_Model::getInstanceById($recordId, $moduleName);
-			if (!$this->record->isEditable()) {
+			if ('recordChanger' !== $request->getMode() && !$this->record->isEditable()) {
 				throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
 			}
 		} else {
@@ -44,6 +55,9 @@ class Vtiger_Save_Action extends \App\Controller\Action
 			}
 		}
 		if ($request->getBoolean('_isDuplicateRecord') && !\App\Privilege::isPermitted($moduleName, 'DetailView', $request->getInteger('_duplicateRecord'))) {
+			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
+		}
+		if ($request->has('recordConverter') && !\App\RecordConverter::getInstanceById($request->getInteger('recordConverter'))->isPermitted($request->getInteger('sourceRecord'))) {
 			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
 		}
 		if ($request->getBoolean('relationOperation') && !\App\Privilege::isPermitted($request->getByType('sourceModule', 2), 'DetailView', $request->getInteger('sourceRecord'))) {
@@ -56,46 +70,54 @@ class Vtiger_Save_Action extends \App\Controller\Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
-		$recordModel = $this->saveRecord($request);
-		if ($request->getBoolean('relationOperation')) {
-			$parentRecordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('sourceRecord'), $request->getByType('sourceModule', 2));
-			$loadUrl = $parentRecordModel->getDetailViewUrl();
-		} elseif ($request->getBoolean('returnToList')) {
-			$loadUrl = $recordModel->getModule()->getListViewUrl();
+		if ($mode = $request->getMode()) {
+			$this->invokeExposedMethod($mode, $request);
 		} else {
-			$recordModel->clearPrivilegesCache();
-			if ($recordModel->isViewable()) {
-				$loadUrl = $recordModel->getDetailViewUrl();
+			$this->saveRecord($request);
+			if ($request->getBoolean('relationOperation')) {
+				$loadUrl = Vtiger_Record_Model::getInstanceById($request->getInteger('sourceRecord'), $request->getByType('sourceModule', 2))->getDetailViewUrl();
+			} elseif ($request->getBoolean('returnToList')) {
+				$loadUrl = $this->record->getModule()->getListViewUrl();
 			} else {
-				$loadUrl = $recordModel->getModule()->getDefaultUrl();
+				$this->record->clearPrivilegesCache();
+				if ($this->record->isViewable()) {
+					$loadUrl = $this->record->getDetailViewUrl();
+				} else {
+					$loadUrl = $this->record->getModule()->getDefaultUrl();
+				}
 			}
+			header("location: $loadUrl");
 		}
-		header("location: $loadUrl");
 	}
 
-	/**
-	 * Function to save record.
-	 *
-	 * @param \App\Request $request - values of the record
-	 *
-	 * @return Vtiger_Record_Model - record Model of saved record
-	 */
-	public function saveRecord(\App\Request $request)
+	/** {@inheritdoc} */
+	public function saveRecord(App\Request $request)
 	{
-		$recordModel = $this->getRecordModelFromRequest($request);
-		$recordModel->save();
-		if ($request->getBoolean('relationOperation')) {
-			$parentModuleModel = Vtiger_Module_Model::getInstance($request->getByType('sourceModule', 2));
-			$relatedModule = $recordModel->getModule();
-			$relatedRecordId = $recordModel->getId();
-			$relationModel = Vtiger_Relation_Model::getInstance($parentModuleModel, $relatedModule);
-			if ($relationModel) {
-				$relationModel->addRelation($request->getInteger('sourceRecord'), $relatedRecordId);
+		$this->getRecordModelFromRequest($request);
+		$eventHandler = $this->record->getEventHandler();
+		foreach ($eventHandler->getHandlers(\App\EventHandler::EDIT_VIEW_PRE_SAVE) as $handler) {
+			if (!(($response = $eventHandler->triggerHandler($handler))['result'] ?? null)) {
+				throw new \App\Exceptions\NoPermittedToRecord($response['message'], 406);
 			}
 		}
-		return $recordModel;
+		if (!$request->isEmpty('fromView') && 'MassQuickCreate' === $request->getByType('fromView')) {
+			$this->multiSave($request);
+		} else {
+			$this->record->save();
+			if ($request->has('recordConverter')) {
+				$converter = \App\RecordConverter::getInstanceById($request->getInteger('recordConverter'))->set('sourceRecord', $request->getInteger('sourceRecord'));
+				$eventHandler->setParams(['converter' => $converter]);
+				$eventHandler->trigger(\App\EventHandler::RECORD_CONVERTER_AFTER_SAVE);
+			}
+		}
+		if ($request->getBoolean('relationOperation')) {
+			$relationId = $request->isEmpty('relationId') ? false : $request->getInteger('relationId');
+			if ($relationModel = Vtiger_Relation_Model::getInstance(Vtiger_Module_Model::getInstance($request->getByType('sourceModule', 2)), $this->record->getModule(), $relationId)) {
+				$relationModel->addRelation($request->getInteger('sourceRecord'), $this->record->getId());
+			}
+		}
 	}
 
 	/**
@@ -105,7 +127,7 @@ class Vtiger_Save_Action extends \App\Controller\Action
 	 *
 	 * @return Vtiger_Record_Model or Module specific Record Model instance
 	 */
-	protected function getRecordModelFromRequest(\App\Request $request)
+	protected function getRecordModelFromRequest(App\Request $request)
 	{
 		if (empty($this->record)) {
 			$this->record = $request->isEmpty('record', true) ? Vtiger_Record_Model::getCleanInstance($request->getModule()) : Vtiger_Record_Model::getInstanceById($request->getInteger('record'), $request->getModule());
@@ -122,6 +144,93 @@ class Vtiger_Save_Action extends \App\Controller\Action
 		if ($request->has('inventory') && $this->record->getModule()->isInventory()) {
 			$this->record->initInventoryDataFromRequest($request);
 		}
+		$fromView = $request->has('fromView') ? $request->getByType('fromView') : ($request->isEmpty('record', true) ? 'Create' : 'Edit');
+		$fieldsDependency = \App\FieldsDependency::getByRecordModel($fromView, $this->record);
+		if ($fields = array_merge($fieldsDependency['hide']['frontend'], $fieldsDependency['hide']['backend'])) {
+			foreach ($fields as $fieldName) {
+				$this->record->revertPreviousValue($fieldName);
+			}
+		}
 		return $this->record;
+	}
+
+	/**
+	 * Validation before saving.
+	 *
+	 * @param App\Request $request
+	 */
+	public function preSaveValidation(App\Request $request)
+	{
+		$this->getRecordModelFromRequest($request);
+		$eventHandler = $this->record->getEventHandler();
+		$result = [];
+		foreach ($eventHandler->getHandlers(\App\EventHandler::EDIT_VIEW_PRE_SAVE) as $handler) {
+			if (!(($response = $eventHandler->triggerHandler($handler))['result'] ?? null)) {
+				$result[] = $response;
+			}
+		}
+		$response = new Vtiger_Response();
+		$response->setEmitType(Vtiger_Response::$EMIT_JSON);
+		$response->setResult($result);
+		$response->emit();
+	}
+
+	/**
+	 * Quick change of record value.
+	 *
+	 * @param App\Request $request
+	 */
+	public function recordChanger(App\Request $request)
+	{
+		$this->getRecordModelFromRequest($request);
+		$id = $request->getInteger('id');
+		$field = App\Field::getQuickChangerFields($this->record->getModule()->getId())[$id] ?? false;
+		if (!$field || !App\Field::checkQuickChangerConditions($field, $this->record)) {
+			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
+		}
+		$fields = $this->record->getModule()->getFields();
+		foreach ($field['values'] as $fieldName => $value) {
+			if (isset($fields[$fieldName]) && $fields[$fieldName]->isEditable()) {
+				$this->record->set($fieldName, $value);
+			}
+		}
+		$this->record->save();
+		$response = new Vtiger_Response();
+		$response->setEmitType(Vtiger_Response::$EMIT_JSON);
+		$response->setResult(true);
+		$response->emit();
+	}
+
+	/**
+	 * Multiple record save mode.
+	 *
+	 * @param App\Request $request
+	 *
+	 * @return void
+	 */
+	protected function multiSave(App\Request $request): void
+	{
+		$moduleName = $request->getByType('module', 'Alnum');
+		$multiSaveField = $request->getByType('multiSaveField', 'Alnum');
+		$sourceModule = $request->getByType('sourceModule', 'Alnum');
+		$sourceView = $request->getByType('sourceView');
+		if ('ListView' === $sourceView) {
+			$request->set('module', $sourceModule);
+			$ids = Vtiger_Mass_Action::getRecordsListFromRequest($request);
+			$request->set('module', $moduleName);
+		} elseif ('RelatedListView' === $sourceView) {
+			$request->set('module', $request->getByType('relatedModule', 'Alnum'));
+			$request->set('relatedModule', $request->getByType('sourceModule', 'Alnum'));
+			$request->set('record', $request->getByType('relatedRecord', 'Alnum'));
+			$ids = Vtiger_RelationAjax_Action::getRecordsListFromRequest($request);
+			$request->set('module', $moduleName);
+		}
+		foreach ($ids as $id) {
+			$recordModel = \Vtiger_Record_Model::getCleanInstance($this->record->getModuleName());
+			$recordModel->setData($this->record->getData());
+			$recordModel->ext = $this->record->ext;
+			$recordModel->set($multiSaveField, $id);
+			$recordModel->save();
+		}
 	}
 }

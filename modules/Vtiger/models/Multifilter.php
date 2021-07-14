@@ -3,8 +3,10 @@
 /**
  * Multifilter model.
  *
+ * @package Model
+ *
  * @copyright YetiForce Sp. z o.o.
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Dudek <a.dudek@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -91,7 +93,7 @@ class Vtiger_Multifilter_Model extends Vtiger_Widget_Model
 	{
 		$this->widgetModel = $widgetModel;
 		$this->extraData = $this->widgetModel->get('data');
-		if (is_string($this->extraData)) {
+		if (\is_string($this->extraData)) {
 			$this->extraData = \App\Json::decode(App\Purifier::decodeHtml($this->extraData));
 		}
 	}
@@ -168,7 +170,7 @@ class Vtiger_Multifilter_Model extends Vtiger_Widget_Model
 	{
 		if (!$this->listviewHeaders) {
 			$this->initListViewController();
-			$this->listviewHeaders = array_slice($this->listViewModel->getListViewHeaders(), 0, static::SHOW_COMULNS);
+			$this->listviewHeaders = \array_slice($this->listViewModel->getListViewHeaders(), 0, static::SHOW_COMULNS);
 		}
 		return $this->listviewHeaders;
 	}
@@ -180,7 +182,7 @@ class Vtiger_Multifilter_Model extends Vtiger_Widget_Model
 	 */
 	public function getHeaderCount()
 	{
-		return count($this->getHeaders());
+		return \count($this->getHeaders());
 	}
 
 	/**
@@ -203,9 +205,8 @@ class Vtiger_Multifilter_Model extends Vtiger_Widget_Model
 		if (!isset($this->listviewRecords)) {
 			$this->initListViewController();
 			$customViewModel = CustomView_Record_Model::getInstanceById($this->getFilterId());
-			if (!($orderBy = $customViewModel->getSortOrderBy('orderBy'))) {
+			if (!($orderBy = $customViewModel->getSortOrderBy())) {
 				$this->listViewModel->set('orderby', $orderBy);
-				$this->listViewModel->set('sortorder', $customViewModel->getSortOrderBy('sortOrder'));
 			}
 			$fields = array_column($this->getHeaders(), 'name');
 			$fields[] = 'id';

@@ -22,13 +22,12 @@
 	<input type='hidden' value="{$PAGE_NUMBER}" id='pageNumber'>
 	<input type='hidden' value="{$PAGING_MODEL->getPageLimit()}" id='pageLimit'>
 	<input type="hidden" value="{$LISTVIEW_ENTRIES_COUNT}" id="noOfEntries">
-	<div class="listViewEntriesDiv u-overflow-scroll-xsm-down">
+	<div class="listViewEntriesDiv u-overflow-scroll-non-desktop">
 		<span class="listViewLoadingImageBlock d-none modal" id="loadingListViewModal">
 			<img class="listViewLoadingImage" src="{\App\Layout::getImagePath('loading.gif')}" alt="no-image" title="{\App\Language::translate('LBL_LOADING')}" />
 			<p class="listViewLoadingMsg">{\App\Language::translate('LBL_LOADING_LISTVIEW_CONTENTS')}........</p>
 		</span>
 		{assign var="NAME_FIELDS" value=$MODULE_MODEL->getNameFields()}
-		{assign var=WIDTHTYPE value=$USER_MODEL->get('rowheight')}
 		{assign var=WIDTH value={99/(count($LISTVIEW_HEADERS))}}
 		<table class="table tableRWD table-bordered table-sm listViewEntriesTable">
 			{include file=\App\Layout::getTemplatePath('ListView/TableHeader.tpl', $QUALIFIED_MODULE)}
@@ -39,15 +38,16 @@
 							{assign var=LISTVIEW_HEADERNAME value=$LISTVIEW_HEADER->get('name')}
 							{assign var=LAST_COLUMN value=$LISTVIEW_HEADER@last}
 							<td class="listViewEntryValue {$WIDTHTYPE}"  width="{$WIDTH}%" nowrap>
-								&nbsp;{\App\Language::translate($LISTVIEW_ENTRY->getDisplayValue($LISTVIEW_HEADERNAME), $QUALIFIED_MODULE)}
+								{$LISTVIEW_ENTRY->getDisplayValue($LISTVIEW_HEADERNAME)}
 								{if $LAST_COLUMN && $LISTVIEW_ENTRY->getRecordLinks()}
-								</td><td nowrap class="{$WIDTHTYPE} rightRecordActions">
+							</td>
+							<td nowrap class="{$WIDTHTYPE} rightRecordActions listButtons {$WIDTHTYPE}">
 									{assign var=LINKS value=$LISTVIEW_ENTRY->getRecordLinks()}
 									{if count($LINKS) > 0}
 										<div class="actions">
 											<div class="float-right">
 												{foreach from=$LINKS item=LINK}
-													{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE=$QUALIFIED_MODULE}
+													{include file=\App\Layout::getTemplatePath('ButtonLink.tpl', $QUALIFIED_MODULE) BUTTON_VIEW='listViewBasic' MODULE_NAME=$QUALIFIED_MODULE MODULE=$QUALIFIED_MODULE}
 												{/foreach}
 											</div>
 										</div>
@@ -60,8 +60,6 @@
 				{/foreach}
 			</tbody>
 		</table>
-
-		<!--added this div for Temporarily -->
 		{if $LISTVIEW_ENTRIES_COUNT eq '0'}
 			<table class="emptyRecordsDiv">
 				<tbody>

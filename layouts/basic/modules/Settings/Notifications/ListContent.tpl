@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<table class="table table-bordered themeTableColor">
 		<thead>
@@ -17,7 +17,7 @@
 						{if $RECORD->get('presence') == 1}
 							<div class="float-right actions">
 								<a class="edit u-cursor-pointer" data-url="{$RECORD->getEditUrl()}">
-									<span class="fas fa-edit alignBottom" title="Edycja"></span>
+									<span class="yfi yfi-full-editing-view alignBottom" title="Edycja"></span>
 								</a>
 								<a class="remove u-cursor-pointer"><span title="" class="fas fa-trash-alt alignBottom"></span>
 								</a>

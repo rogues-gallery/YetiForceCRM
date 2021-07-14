@@ -4,7 +4,7 @@
  * Record Class for Competition.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Michał Lorencik <m.lorencik@yetiforce.com>
  */
 class Competition_Record_Model extends Vtiger_Record_Model
@@ -22,7 +22,7 @@ class Competition_Record_Model extends Vtiger_Record_Model
 			preg_match('/<a href="+/', $data[0], $matches);
 			if (!empty($matches)) {
 				preg_match('/[.\s]+/', $data[0], $dashes);
-				preg_match("/<a(.*)>(.*)<\/a>/i", $data[0], $name);
+				preg_match('/<a(.*)>(.*)<\\/a>/i', $data[0], $name);
 
 				$recordModel = Vtiger_Record_Model::getCleanInstance('Competition');
 				$recordModel->setId($competitionId);

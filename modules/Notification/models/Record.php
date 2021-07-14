@@ -4,7 +4,7 @@
  * Notification Record Model.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class Notification_Record_Model extends Vtiger_Record_Model
@@ -19,9 +19,12 @@ class Notification_Record_Model extends Vtiger_Record_Model
 	public function getParseField($fieldName)
 	{
 		$relatedRecords = $this->getRelatedRecord();
+		$value = $this->get($fieldName);
+		if (empty($relatedRecords['id'])) {
+			return $value;
+		}
 		$relatedModule = $relatedRecords['module'];
 		$relatedId = $relatedRecords['id'];
-		$value = $this->get($fieldName);
 		if (\App\Record::isExists($relatedId)) {
 			$textParser = \App\TextParser::getInstanceById($relatedId, $relatedModule);
 			$textParser->setContent($value)->parse();
@@ -40,32 +43,6 @@ class Notification_Record_Model extends Vtiger_Record_Model
 	public function getTitle()
 	{
 		return $this->getDisplayValue('title', $this->getId(), $this);
-	}
-
-	/**
-	 * Fuction to get the Name of the record.
-	 *
-	 * @return string - Entity Name of the record
-	 */
-	public function getName()
-	{
-		$labelName = [];
-		$metaInfo = \App\Module::getEntityInfo($this->getModuleName());
-		foreach ($metaInfo['fieldnameArr'] as $columnName) {
-			$field = $this->getModule()->getFieldByColumn($columnName);
-			$labelName[] = $this->getDisplayValue($field->getName(), $this->getId(), $this);
-		}
-		return trim(implode(' ', $labelName));
-	}
-
-	/**
-	 * Function to get id.
-	 *
-	 * @return type
-	 */
-	public function getId()
-	{
-		return $this->get('id');
 	}
 
 	/**
@@ -108,22 +85,19 @@ class Notification_Record_Model extends Vtiger_Record_Model
 		$subprocess = $this->get('subprocess');
 		$process = $this->get('process');
 		$link = $this->get('link');
-		if (!empty($subprocess)) {
+		$linkextend = $this->get('linkextend');
+		if (!empty($subprocess) && \App\Record::isExists($subprocess)) {
 			$relatedId = $subprocess;
+		} elseif (!empty($process) && \App\Record::isExists($process)) {
+			$relatedId = $process;
+		} elseif (!empty($link) && \App\Record::isExists($link)) {
+			$relatedId = $link;
+		} elseif (!empty($linkextend) && \App\Record::isExists($linkextend)) {
+			$relatedId = $linkextend;
 		} else {
-			if (!empty($process)) {
-				$relatedId = $process;
-			} else {
-				if (empty($link)) {
-					return false;
-				}
-				$relatedId = $link;
-			}
+			return false;
 		}
-		$relatedModule = \vtlib\Functions::getCRMRecordMetadata($relatedId);
-		$relatedModule = $relatedModule['setype'];
-
-		return ['id' => $relatedId, 'module' => $relatedModule];
+		return ['id' => $relatedId, 'module' => \vtlib\Functions::getCRMRecordMetadata($relatedId)['setype']];
 	}
 
 	/**
@@ -168,12 +142,12 @@ class Notification_Record_Model extends Vtiger_Record_Model
 		if ($relatedModule && 'PLL_USERS' !== $notificationType && \App\Record::isExists($relatedId)) {
 			$textParser = \App\TextParser::getInstanceById($relatedId, $relatedModule);
 			$this->setFromUserValue('description', $textParser->withoutTranslations()->setContent($this->get('description'))->parse()->getContent());
-			$this->setFromUserValue('title', \App\TextParser::textTruncate(\App\Purifier::purifyByType($textParser->setContent($this->get('title'))->parse()->getContent(),'Text'), $this->getField('title')->get('maximumlength'), false));
+			$this->setFromUserValue('title', \App\TextParser::textTruncate(\App\Purifier::purifyByType($textParser->setContent($this->get('title'))->parse()->getContent(), 'Text'), $this->getField('title')->get('maximumlength'), false));
 		}
 		$users = $this->get('shownerid');
 		$usersCollection = $this->isEmpty('assigned_user_id') ? [] : [$this->get('assigned_user_id')];
 		if (!empty($users)) {
-			$users = is_array($users) ? $users : explode(',', $users);
+			$users = \is_array($users) ? $users : explode(',', $users);
 			foreach ($users as $userId) {
 				$userType = \App\Fields\Owner::getType($userId);
 				if ('Groups' === $userType) {
@@ -187,7 +161,7 @@ class Notification_Record_Model extends Vtiger_Record_Model
 		$usersCollection = array_unique($usersCollection);
 		$isNew = $this->isNew;
 		foreach ($usersCollection as $userId) {
-			if ($relatedId && 'PLL_SYSTEM' === $notificationType && !\App\Privilege::isPermitted($relatedModule, 'DetailView', $relatedId, $userId)) {
+			if ($isNew && $relatedId && 'PLL_SYSTEM' === $notificationType && !\App\Privilege::isPermitted($relatedModule, 'DetailView', $relatedId, $userId)) {
 				continue;
 			}
 			$this->set('assigned_user_id', $userId);
@@ -208,11 +182,11 @@ class Notification_Record_Model extends Vtiger_Record_Model
 	{
 		$icon = false;
 		if ('PLL_USERS' === $this->get('notification_type')) {
-			$userModel = Users_Privileges_Model::getInstanceById($this->get('smcreatorid'));
+			$id = $this->get('smcreatorid');
 			$icon = [
 				'type' => 'image',
-				'title' => $userModel->getName(),
-				'src' => $userModel->getImage()['path'],
+				'title' => \App\Fields\Owner::getUserLabel($id),
+				'src' => \App\User::getImageById($id)['path'] ?? '',
 				'class' => 'userImage',
 			];
 		} else {
@@ -220,7 +194,7 @@ class Notification_Record_Model extends Vtiger_Record_Model
 			$icon = [
 				'type' => 'icon',
 				'title' => \App\Language::translate($relatedRecord['module'], $relatedRecord['module']),
-				'class' => 'userIcon-' . $relatedRecord['module'],
+				'class' => 'yfm-' . $relatedRecord['module'],
 			];
 		}
 		return $icon;

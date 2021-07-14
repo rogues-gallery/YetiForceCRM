@@ -4,16 +4,16 @@
  * ListView Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 class Settings_AdvancedPermission_ListView_Model extends Settings_Vtiger_ListView_Model
 {
-	/*
-	 * Function to get Basic links
+	/**
+	 * Function to get Basic links.
+	 *
 	 * @return array of Basic links
 	 */
-
 	public function getBasicLinks()
 	{
 		$basicLinks = [];

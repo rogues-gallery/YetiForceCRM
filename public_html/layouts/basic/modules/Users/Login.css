@@ -1,3 +1,19 @@
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+.logo {
+	text-align: center;
+	padding: 0.5rem 0;
+}
+.logo__img {
+	max-height: 200px;
+	max-width: 200px;
+}
+@media (min-width: 768px) {
+	.logo__img {
+		max-height: 700px;
+		max-width: 400px;
+	}
+}
+
 @media only screen and (max-width: 480px) {
 	#loginDiv {
 		width: 100%;
@@ -6,6 +22,9 @@
 	.login-area {
 		max-width: 100%;
 		margin: 0 auto;
+	}
+	.login-space {
+		margin-top: 0;
 	}
 }
 
@@ -16,19 +35,19 @@
 	}
 }
 
-@media only screen and (max-height: 340px) {
+@media only screen and (max-width: 340px) {
 	.login-space {
 		margin-top: 0;
 	}
 }
 
-@media only screen and (min-height: 340px) and (max-height: 480px) {
+@media only screen and (min-width: 340px) and (max-width: 480px) {
 	.login-space {
 		margin-top: 10px;
 	}
 }
 
-@media only screen and (min-height: 480px) {
+@media only screen and (min-width: 480px) {
 	.login-space {
 		margin-top: 70px;
 	}
@@ -53,7 +72,8 @@
 	margin-top: 5px;
 }
 
-html, body {
+html,
+body {
 	background: #f0f0f0;
 }
 
@@ -77,10 +97,6 @@ html, body {
 	padding-bottom: 10px;
 }
 
-#forgotpass, .login-text a {
-	color: #adb0b5;
-}
-
 .fieldContainer span:not(.fas) {
 	color: #4a5364;
 	font-size: 24px;
@@ -94,7 +110,7 @@ html, body {
 .fieldContainer button {
 	font-size: 35px;
 	color: #fff !important;
-	padding: 0 !important;
+	padding: 0;
 }
 
 @media (min-width: 768px) {

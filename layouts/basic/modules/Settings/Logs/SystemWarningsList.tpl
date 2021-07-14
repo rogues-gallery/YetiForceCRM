@@ -1,5 +1,5 @@
 {strip}
-	{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+	{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 	<table class="table table-bordered table-sm">
 		<thead>
 			<tr>
@@ -22,6 +22,7 @@
 						{elseif $ITEM->getStatus() == 2}
 							<span class="fas fa-minus"></span>
 						{/if}&nbsp;
+						<span class="d-none">{$ITEM->getStatus()}</span>
 					</td>
 					<td data-order="{$ITEM->getPriority()}" class="text-center">{$ITEM->getPriority()}</td>
 					<td class="text-center">

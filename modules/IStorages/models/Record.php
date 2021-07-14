@@ -4,7 +4,7 @@
  * Record Class for IStorages.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class IStorages_Record_Model extends Vtiger_Record_Model
@@ -22,7 +22,7 @@ class IStorages_Record_Model extends Vtiger_Record_Model
 			preg_match('/<a href="+/', $storageInfo[0], $matches);
 			if (!empty($matches)) {
 				preg_match('/[.\s]+/', $storageInfo[0], $dashes);
-				preg_match("/<a(.*)>(.*)<\/a>/i", $storageInfo[0], $name);
+				preg_match('/<a(.*)>(.*)<\\/a>/i', $storageInfo[0], $name);
 
 				$recordModel = Vtiger_Record_Model::getCleanInstance('IStorages');
 				$recordModel->setId($storageId);
@@ -38,9 +38,36 @@ class IStorages_Record_Model extends Vtiger_Record_Model
 	public function getDisplayValue($fieldName, $record = false, $rawText = false, $length = false)
 	{
 		// This is special field / displayed only in Products module [view=Detail relatedModule=IStorages]
-		if ($fieldName === 'qtyinstock') {
+		if ('qtyinstock' === $fieldName) {
 			return $this->get($fieldName);
 		}
 		return parent::getDisplayValue($fieldName, $record, $rawText, $length);
+	}
+
+	/**
+	 * Function updates number of product in storage.
+	 *
+	 * @param int   $relatedRecordId - Product Id
+	 * @param float $qty
+	 *
+	 * @return bool
+	 */
+	public function updateQtyProducts(int $relatedRecordId, float $qty): bool
+	{
+		$tableInfo = Vtiger_Relation_Model::getReferenceTableInfo('IStorages', 'Products');
+		$isExists = (new \App\Db\Query())->from($tableInfo['table'])->where([$tableInfo['rel'] => $this->getId(), $tableInfo['base'] => $relatedRecordId])->exists();
+		if ($isExists) {
+			$status = App\Db::getInstance()->createCommand()
+				->update($tableInfo['table'], ['qtyinstock' => $qty], [$tableInfo['rel'] => $this->getId(), $tableInfo['base'] => $relatedRecordId])
+				->execute();
+		} else {
+			$status = App\Db::getInstance()->createCommand()
+				->insert($tableInfo['table'], [
+					$tableInfo['rel'] => $this->getId(),
+					$tableInfo['base'] => $relatedRecordId,
+					'qtyinstock' => $qty,
+				])->execute();
+		}
+		return (bool) $status;
 	}
 }

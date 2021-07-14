@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="modal-header">
 		<h5 class="modal-title">{\App\Language::translate('LBL_SELECT_ICON', $QUALIFIED_MODULE)}</h5>
@@ -9,23 +9,6 @@
 		<input type="hidden" id="iconName" value="-"/>
 		<div>
 			<select class="form-control" id="iconsList" name="type">
-				<option value="">-</option>
-				{foreach from=Settings_Vtiger_Icons_Model::getUserIcon() key=NAME item=CLASS}
-					<option value="{$CLASS}" data-class="{$CLASS}" data-type="icon" title="{$NAME}">{$NAME}</option>
-				{/foreach}
-				{foreach from=Settings_Vtiger_Icons_Model::getAdminIcon() key=NAME item=CLASS}
-					<option value="{$CLASS}" data-class="{$CLASS}" data-type="icon" title="{$NAME}">{$NAME}</option>
-				{/foreach}
-				{foreach from=Settings_Vtiger_Icons_Model::getAdditionalIcon() key=NAME item=CLASS}
-					<option value="{$CLASS}" data-class="{$CLASS}" data-type="icon" title="{$NAME}">{$NAME}</option>
-				{/foreach}
-				{foreach from=Settings_Vtiger_Icons_Model::getFontAwesomeIcon() key=NAME item=CLASS}
-					<option value="{$CLASS}" data-class="{$CLASS}" data-type="icon" title="{$NAME}">{$NAME}</option>
-				{/foreach}
-				{foreach from=Settings_Vtiger_Icons_Model::getImageIcon() key=NAME item=URL}
-					<option value="{\Vtiger_Theme::getImagePath($URL)}" data-type="image"
-							title="{$NAME}">{$NAME}</option>
-				{/foreach}
 			</select>
 		</div>
 		<br/>
@@ -45,7 +28,7 @@
 						:</strong>
 				</div>
 				<div class="col-sm-7 d-flex">
-					<div class="iconExample m-sm-auto u-font-size-38px"></div>
+					<div class="iconExample m-sm-auto u-fs-38px"></div>
 				</div>
 			</div>
 		</div>

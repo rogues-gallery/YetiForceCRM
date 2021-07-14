@@ -4,7 +4,7 @@
  * Export to XML Class for PDF Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Maciej Stencel <m.stencel@yetiforce.com>
  */
 class Settings_Workflows_ExportWorkflow_Action extends Settings_Vtiger_Index_Action
@@ -33,7 +33,7 @@ class Settings_Workflows_ExportWorkflow_Action extends Settings_Vtiger_Index_Act
 		$cDataColumns = ['conditions'];
 		foreach (Settings_Workflows_Module_Model::$allFields as $field) {
 			if ($workflowModel->has($field)) {
-				if (in_array($field, $cDataColumns)) {
+				if (\in_array($field, $cDataColumns)) {
 					$name = $xmlField->appendChild($xml->createElement($field));
 					$name->appendChild($xml->createCDATASection(json_encode($workflowModel->get($field))));
 				} else {
@@ -61,7 +61,7 @@ class Settings_Workflows_ExportWorkflow_Action extends Settings_Vtiger_Index_Act
 				$taskObject = unserialize(html_entity_decode($task['task']));
 				$method = Settings_Workflows_Module_Model::exportTaskMethod($taskObject->methodName);
 
-				if (!array_key_exists($method['workflowtasks_entitymethod_id'], $method)) {
+				if (!\array_key_exists($method['workflowtasks_entitymethod_id'], $method)) {
 					$workflowMethods[$method['workflowtasks_entitymethod_id']] = $method;
 				}
 			}

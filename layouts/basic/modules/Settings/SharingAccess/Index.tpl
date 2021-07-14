@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="" id="sharingAccessContainer">
 		<div class="contents">
@@ -6,9 +6,9 @@
 				<input type="hidden" name="module" value="SharingAccess" />
 				<input type="hidden" name="action" value="SaveAjax" />
 				<input type="hidden" name="parent" value="Settings" />
-				<input type="hidden" class="dependentModules" value='{\App\Json::encode($DEPENDENT_MODULES)}' />
+				<input type="hidden" class="dependentModules" value='{\App\Purifier::encodeHtml(\App\Json::encode($DEPENDENT_MODULES))}' />
 
-				<div class="widget_header row align-items-center">
+				<div class="o-breadcrumb widget_header row align-items-center">
 					<div class="col-md-8">
 						{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 					</div>

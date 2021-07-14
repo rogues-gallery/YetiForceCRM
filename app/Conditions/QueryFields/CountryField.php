@@ -2,8 +2,10 @@
 /**
  * Country query field class.
  *
+ * @package UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -14,21 +16,6 @@ namespace App\Conditions\QueryFields;
  */
 class CountryField extends BaseField
 {
-	/**
-	 * Auto operator.
-	 *
-	 * @return array
-	 */
-	public function operatorA()
-	{
-		$values = $this->getValue();
-		$condition = ['or'];
-		foreach ($values as $value) {
-			$condition[] = [$this->getColumnName() => $value];
-		}
-		return $condition;
-	}
-
 	/**
 	 * Not equal operator.
 	 *
@@ -47,5 +34,13 @@ class CountryField extends BaseField
 	public function getValue()
 	{
 		return explode('##', $this->value);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getOperator()
+	{
+		return 'a' === $this->operator ? 'e' : $this->operator;
 	}
 }

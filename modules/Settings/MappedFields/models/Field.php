@@ -4,7 +4,7 @@
  * Field Class for MappedFields Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_MappedFields_Field_Model extends Vtiger_Field_Model
@@ -35,9 +35,6 @@ class Settings_MappedFields_Field_Model extends Vtiger_Field_Model
 			$this->fieldDataType = 'inventory';
 		} elseif (empty($this->fieldDataType)) {
 			$this->fieldDataType = parent::getFieldDataType();
-		}
-		if ('salutation' == $this->fieldDataType) {
-			$this->fieldDataType = 'string';
 		}
 		return $this->fieldDataType;
 	}
@@ -154,7 +151,6 @@ class Settings_MappedFields_Field_Model extends Vtiger_Field_Model
 
 		$instance = self::fromArray($row);
 		$instance->inventoryField = $inventoryField;
-
 		return $instance;
 	}
 
@@ -174,17 +170,27 @@ class Settings_MappedFields_Field_Model extends Vtiger_Field_Model
 				$fieldModel = parent::getInstance($value, $module);
 				if (!$fieldModel) {
 					$fields = Settings_MappedFields_Module_Model::getSpecialFields();
-					$fieldModel = $fields[$value];
+					if (isset($fields[$value])) {
+						$fieldModel = $fields[$value];
+					} else {
+						\App\Log::warning('Not found field: ' . $value, 'MappedFields');
+					}
 				}
 				break;
 			case 'INVENTORY':
 				$inventoryModel = Vtiger_Inventory_Model::getInstance($module->getName());
-				return self::getInstanceFromInventoryFieldObject($inventoryModel->getField($value));
+				$inventoryField = $inventoryModel->getField($value);
+				if (empty($inventoryField)) {
+					\App\Log::warning('Not found inventory field: ' . $value, 'MappedFields');
+					$return = false;
+				} else {
+					$return = self::getInstanceFromInventoryFieldObject($inventoryField);
+				}
+				return $return;
 			default:
 				$fieldModel = parent::getInstance($value, $module);
 				break;
 		}
-
 		if ($fieldModel) {
 			$objectProperties = get_object_vars($fieldModel);
 			$fieldModel = new self();

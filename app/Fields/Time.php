@@ -2,9 +2,12 @@
 /**
  * Tools for time class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Rafał Pospiech <r.pospiech@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
 namespace App\Fields;
@@ -37,33 +40,30 @@ class Time
 	 */
 	public static function formatToDB($time, bool $convertTimeZone = true)
 	{
-		return (new \DateTimeField(date(Date::currentUserJSDateFormat()) . ' ' . $time))->getDBInsertTimeValue($convertTimeZone);
+		$date = $convertTimeZone ? \App\Fields\Date::formatToDisplay(date('Y-m-d'), false) : date('Y-m-d');
+		return (new \DateTimeField($date . ' ' . $time))->getDBInsertTimeValue($convertTimeZone);
 	}
 
 	/**
-	 * Convert seconds to decimal time format.
+	 * Function changes the time format to the database format without changing the time zone.
 	 *
-	 * @param int $seconds
+	 * @param string $time
 	 *
-	 * @return float
+	 * @return string
 	 */
-	public static function secondsToDecimal(int $seconds)
+	public static function sanitizeDbFormat(string $time)
 	{
-		$h = floor($seconds / 60 / 60);
-		$m = floor(($seconds - ($h * 60 * 60)) / 60);
-		return self::timeToDecimal(sprintf('%02d:%02d:%02d', $h, $m, $seconds - ($h * 60 * 60) - ($m * 60)));
-	}
-
-	/**
-	 * Convert elapsed time from "H:i:s" to decimal equivalent.
-	 *
-	 * @param string $time "12:00:00"
-	 *
-	 * @return float
-	 */
-	public static function timeToDecimal(string $time)
-	{
-		$hms = explode(':', $time);
-		return $hms[0] + ($hms[1] / 60) + ($hms[2] / 3600);
+		if ($time) {
+			$timeDetails = array_pad(explode(' ', $time), 2, '');
+			[$hours, $minutes, $seconds] = array_pad(explode(':', $timeDetails[0]), 3, '00');
+			if ('PM' === $timeDetails[1] && '12' !== $hours) {
+				$hours = $hours + 12;
+			}
+			if ('AM' === $timeDetails[1] && '12' === $hours) {
+				$hours = '00';
+			}
+			$time = "$hours:$minutes:$seconds";
+		}
+		return $time;
 	}
 }

@@ -1,8 +1,8 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Base-ConditionBuilder-Boolean">
 		<select class="js-boolean-field select2 form-control js-condition-builder-value"
-				title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE)}"
+				title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE_NAME)}"
 				data-placeholder="{\App\Language::translate('LBL_SELECT_OPTION')}"
 		<optgroup class="p-0">
 			<option value="">{\App\Language::translate('LBL_SELECT_OPTION')}</option>

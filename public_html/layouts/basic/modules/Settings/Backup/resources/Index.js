@@ -1,12 +1,14 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 jQuery.Class(
-	'Settings_Backup_Index_Js', {}, {
-		registerDataTableinBackup: function() {
+	'Settings_Backup_Index_Js',
+	{},
+	{
+		registerDataTableinBackup: function () {
 			app.registerDataTables($('.js-data-table'));
 		},
-		registerEvents: function() {
+		registerEvents: function () {
 			this.registerDataTableinBackup();
 		}
 	}

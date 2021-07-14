@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 /**
@@ -9,8 +9,9 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	/**
 	 * Constructor.
 	 */
-	constructor() {
+	constructor(modalUrl = 'index.php?module=YetiForce&parent=Settings') {
 		this.container = $('.js-products-container');
+		this.modalUrl = modalUrl;
 	}
 	/**
 	 * Register events.
@@ -18,13 +19,48 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	registerEvents() {
 		this.registerProductModalClick();
 		this.registerBuyModalClick();
+		this.registerShopSearch();
+		this.registerCategories();
+		this.showInitialModal();
+	}
+	showInitialModal() {
+		const request = app.convertUrlToObject(window.location.href);
+		if (request.mode) {
+			if (request.showBuyModal === 'buy') {
+				this.showBuyModal(request.product, request.department);
+			} else if (request.mode === 'showProductModal') {
+				this.showProductModal(request.product, request.department);
+			}
+		}
+	}
+	/**
+	 * Register events.
+	 */
+	registerShopSearch() {
+		let searchField = this.container.find('.js-shop-search');
+		searchField = searchField.length ? searchField : $('.js-shop-search');
+		searchField
+			.on('keyup', (e) => {
+				let value = $(e.currentTarget).val().toLowerCase();
+				this.container.find('.js-product .js-text-search').filter(function () {
+					let item = $(this).closest('.js-product');
+					if ($(this).text().toLowerCase().indexOf(value) > -1) {
+						item.removeClass('d-none');
+					} else {
+						item.addClass('d-none');
+					}
+				});
+			})
+			.on('click', (e) => {
+				e.stopPropagation();
+			});
 	}
 	/**
 	 * Register product modal click.
 	 *
 	 */
 	registerProductModalClick() {
-		this.container.find('.js-product-modal').on('click', e => {
+		this.container.find('.js-product').on('click', (e) => {
 			const currentTarget = $(e.currentTarget);
 			this.showProductModal(currentTarget.data('product'), this.getDepartment(currentTarget));
 		});
@@ -38,9 +74,9 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	showProductModal(productName, department) {
 		app.showModalWindow(
 			null,
-			`index.php?module=YetiForce&parent=Settings&view=ProductModal&product=${productName}&department=${department}`,
-			modalContainer => {
-				modalContainer.find('.js-modal__save').on('click', _ => {
+			`${this.modalUrl}&view=ProductModal&product=${productName}${department ? '&department=' + department : ''}`,
+			(modalContainer) => {
+				modalContainer.find('.js-modal__save').on('click', (_) => {
 					app.hideModalWindow();
 					this.showBuyModal(productName, department);
 				});
@@ -52,7 +88,7 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	 *
 	 */
 	registerBuyModalClick() {
-		this.container.find('.js-buy-modal').on('click', e => {
+		this.container.find('.js-buy-modal').on('click', (e) => {
 			e.stopPropagation();
 			const currentTarget = $(e.currentTarget);
 			this.showBuyModal(currentTarget.data('product'), this.getDepartment(currentTarget));
@@ -67,9 +103,7 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	showBuyModal(productName, department) {
 		app.showModalWindow(
 			null,
-			`index.php?module=YetiForce&parent=Settings&view=BuyModal&product=${productName}${
-				department ? '&department=' + department : ''
-			}`,
+			`${this.modalUrl}&view=BuyModal&product=${productName}${department ? '&department=' + department : ''}`,
 			this.registerBuyModalEvents.bind(this)
 		);
 	}
@@ -77,12 +111,15 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	registerBuyModalEvents(modalContainer) {
 		const companyForm = modalContainer.find('.js-update-company-form');
 		const buyForm = modalContainer.find('.js-buy-form');
-		modalContainer.find('.js-modal__save').on('click', _ => {
+		modalContainer.find('.js-modal__save').on('click', (_) => {
 			this.registerBuyModalForms(companyForm, buyForm);
 		});
 		if (companyForm.length) {
 			companyForm.validationEngine(app.validationEngineOptions);
 			companyForm.find('[data-inputmask]').inputmask();
+		}
+		if (buyForm.length) {
+			buyForm.validationEngine(app.validationEngineOptions);
 		}
 	}
 	registerBuyModalForms(companyForm, buyForm) {
@@ -100,7 +137,7 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 				const progressIndicatorElement = $.progressIndicator({
 					blockInfo: { enabled: true }
 				});
-				AppConnector.request(params).done(data => {
+				AppConnector.request(params).done((data) => {
 					if (data.success) {
 						buyForm.submit();
 						app.hideModalWindow();
@@ -111,8 +148,34 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 				app.formAlignmentAfterValidation(companyForm);
 			}
 		} else {
-			buyForm.submit();
-			app.hideModalWindow();
+			if (buyForm.validationEngine('validate') === true) {
+				this.updateCustomData(buyForm);
+				buyForm.submit();
+				app.hideModalWindow();
+			} else {
+				app.formAlignmentAfterValidation(buyForm);
+			}
+		}
+	}
+	/**
+	 * Update custom data.
+	 */
+	updateCustomData(buyForm) {
+		let customField = buyForm.find('.js-custom-data');
+		let priceBySize = buyForm.find('.js-price-by-size');
+		if (customField.length) {
+			let customFields = buyForm.find('.js-custom-field');
+			customFields.each((i, el) => {
+				let field = $(el);
+				customField.val(
+					`${customField.val()}${field.data('name')}::${field.val()}${customFields.length - 1 !== i ? '|' : ''}`
+				);
+			});
+		}
+		if (priceBySize.length) {
+			priceBySize
+				.siblings('.js-price-by-size-input')
+				.val(priceBySize.find(`option[value="${priceBySize.val()}"]`).data('os0'));
 		}
 	}
 	/**
@@ -125,5 +188,31 @@ window.Settings_YetiForce_Shop_Js = class Settings_YetiForce_Shop_Js {
 	getDepartment(element) {
 		let department = element.closest('.js-department');
 		return department.length ? department.data('department') : '';
+	}
+	/**
+	 * Register categories.
+	 *
+	 */
+	registerCategories() {
+		this.container.find('.js-select-category').on('click', (e) => {
+			this.changeCategory($(e.currentTarget).data('tab'));
+		});
+		this.changeCategory(this.container.find('.js-select-category.active').data('tab'));
+	}
+	/**
+	 * Register categories.
+	 *
+	 */
+	changeCategory(category) {
+		this.container.find('.js-nav-premium .js-product').each(function () {
+			let product = $(this);
+			if (category === 'All') {
+				product.removeClass('d-none');
+			} else if (product.data('category') === category) {
+				product.removeClass('d-none');
+			} else {
+				product.addClass('d-none');
+			}
+		});
 	}
 };

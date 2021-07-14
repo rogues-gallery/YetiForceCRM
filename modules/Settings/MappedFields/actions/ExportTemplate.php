@@ -4,12 +4,12 @@
  * Export to XML Class for MappedFields Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_MappedFields_ExportTemplate_Action extends Settings_Vtiger_Index_Action
 {
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$recordId = $request->getInteger('id');
 		$moduleInstance = Settings_MappedFields_Module_Model::getInstanceById($recordId);
@@ -46,7 +46,7 @@ class Settings_MappedFields_ExportTemplate_Action extends Settings_Vtiger_Index_
 		foreach ($moduleInstance->getMapping() as $field) {
 			$xmlField = $xml->createElement('field');
 			foreach ($field as $key => $details) {
-				if (gettype($details) == 'object') {
+				if ('object' == \gettype($details)) {
 					$value = $details->getFieldName();
 				} else {
 					$value = $details;
@@ -66,7 +66,7 @@ class Settings_MappedFields_ExportTemplate_Action extends Settings_Vtiger_Index_
 	/**
 	 * {@inheritdoc}
 	 */
-	public function validateRequest(\App\Request $request)
+	public function validateRequest(App\Request $request)
 	{
 		$request->validateReadAccess();
 	}

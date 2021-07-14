@@ -1,18 +1,38 @@
 <?php
 
+/**
+ * Address finder OpenCageGeocoder file.
+ *
+ * @see       https://geocoder.opencagedata.com/api Documentation  of OpenCage Geocoder API
+ *
+ * @package App
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ */
+
 namespace App\Map\Address;
 
 /**
  * Address finder OpenCageGeocoder class.
- *
- * @see       https://geocoder.opencagedata.com/api Documentation  of OpenCage Geocoder API
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class OpenCageGeocoder extends Base
 {
+	/**
+	 * {@inheritdoc}
+	 */
+	public $customFields = [
+		'country_codes' => [
+			'type' => 'text',
+			'info' => 'LBL_COUNTRY_CODES_INFO',
+			'link' => 'https://wikipedia.org/wiki/List_of_ISO_3166_country_codes',
+		],
+		'key' => [
+			'type' => 'text',
+			'validator' => 'required,custom[onlyLetterNumber]',
+		],
+	];
 	/**
 	 * API Address to retrieve data.
 	 *
@@ -21,35 +41,35 @@ class OpenCageGeocoder extends Base
 	protected static $url = 'https://api.opencagedata.com/geocode/v1/';
 
 	/**
-	 * Function checks if teryt is active.
-	 *
-	 * @return bool
+	 * {@inheritdoc}
 	 */
-	public static function isActive()
-	{
-		return (bool) \App\Map\Address::getConfig()['opencage_data']['nominatim'];
-	}
+	public $docUrl = 'https://opencagedata.com/api/';
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function find($value)
 	{
+		if (empty($value) || !\App\RequestUtil::isNetConnection()) {
+			return [];
+		}
 		$config = \App\Map\Address::getConfig();
 		$urlAddress = static::$url . 'json?q=' . $value . '&pretty=1';
 		$urlAddress .= '&language=' . \App\Language::getLanguage();
 		$urlAddress .= '&limit=' . $config['global']['result_num'];
-		$urlAddress .= '&key=' . $config['opencage_data']['key'];
-		if ($countryCode = \App\Config::component('AddressFinder', 'OPENCAGE_COUNTRY_CODE')) {
-			$urlAddress .= '&countrycode=' . implode(',', $countryCode);
+		$urlAddress .= '&key=' . $config['OpenCageGeocoder']['key'];
+		if (!empty($this->config['country_codes'])) {
+			$urlAddress .= '&countrycode=' . $this->config;
 		}
 		try {
-			$response = \Requests::get($urlAddress);
-			if (!$response->success) {
-				\App\Log::warning($response->status_code . ' ' . $response->body, __NAMESPACE__);
+			\App\Log::beginProfile("GET|OpenCageGeocoder::find|{$urlAddress}", __NAMESPACE__);
+			$response = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->request('GET', $urlAddress);
+			\App\Log::endProfile("GET|OpenCageGeocoder::find|{$urlAddress}", __NAMESPACE__);
+			if (200 !== $response->getStatusCode()) {
+				\App\Log::warning('Error: ' . $urlAddress . ' | ' . $response->getStatusCode() . ' ' . $response->getReasonPhrase(), __CLASS__);
 				return false;
 			}
-			$body = \App\Json::decode($response->body);
+			$body = \App\Json::decode($response->getBody());
 			$rows = [];
 			if ($body['total_results']) {
 				$mainMapping = \App\Config::component('AddressFinder', 'REMAPPING_OPENCAGE');
@@ -64,12 +84,12 @@ class OpenCageGeocoder extends Base
 					}
 					$rows[] = [
 						'label' => $row['formatted'],
-						'address' => \call_user_func_array($mappingFunction, [$row])
+						'address' => \call_user_func_array($mappingFunction, [$row]),
 					];
 				}
 			}
 		} catch (\Throwable $e) {
-			\App\Log::warning($e->getMessage());
+			\App\Log::error('Error - ' . $e->getMessage(), __CLASS__);
 			return false;
 		}
 		return $rows;

@@ -1,6 +1,6 @@
 {strip}
-	{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
-	<div class="widget_header row">
+	{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+	<div class="o-breadcrumb widget_header row">
 		<div class="col-md-8">
 			{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 		</div>
@@ -25,10 +25,14 @@
 			{/if}
 		</div>
 	</div>
+	{if {$RECORD_MODEL->get('status')}==2 }
+		<div class="alert alert-warning">
+			{$RECORD_MODEL->getDisplayValue('error')}
+		</div>
+	{/if}
 	<div class="detailViewInfo">
 		{if $RECORD_MODEL}
 			<input type="hidden" value="{$RECORD_MODEL->getId()}" id="recordId">
-			{assign var=WIDTHTYPE value=$USER_MODEL->get('rowheight')}
 			<table class="table table-bordered">
 				<thead>
 					<tr class="blockHeader">

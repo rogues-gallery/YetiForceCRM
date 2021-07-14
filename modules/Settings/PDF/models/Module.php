@@ -4,7 +4,7 @@
  * Module Class for PDF Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Maciej Stencel <m.stencel@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
@@ -173,7 +173,7 @@ class Settings_PDF_Module_Model extends Settings_Vtiger_Module_Model
 				$type = Vtiger_PDF_Model::TEMPLATE_TYPE_DYNAMIC;
 				break;
 			}
-			if ('custom' === $match[1] && in_array($match[2], ['UserGroup|OSSTimeControl', 'List|OSSTimeControl', 'DetailedList|OSSTimeControl'])) {
+			if ('custom' === $match[1] && (\in_array($match[2], ['UserGroup|OSSTimeControl', 'List|OSSTimeControl', 'DetailedList|OSSTimeControl']) || false !== strpos($match[2], 'RecordsList'))) {
 				$type = Vtiger_PDF_Model::TEMPLATE_TYPE_SUMMARY;
 				break;
 			}

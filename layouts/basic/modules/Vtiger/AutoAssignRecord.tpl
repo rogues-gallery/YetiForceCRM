@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="modal-header">
 		<div class="col-10">
@@ -6,7 +6,7 @@
 		</div>
 		<div class="float-right btn-group">
 			{if $RECORD->isEditable()}
-				<a href="{$RECORD->getEditViewUrl()}" class="btn btn-light" title="{\App\Language::translate('LBL_EDIT',$MODULE_NAME)}"><span class="fas fa-edit js-detail-quick-edit"></span></a>
+				<a href="{$RECORD->getEditViewUrl()}" class="btn btn-light" title="{\App\Language::translate('LBL_EDIT',$MODULE_NAME)}"><span class="yfi yfi-full-editing-view js-detail-quick-edit"></span></a>
 				{/if}
 				{if $RECORD->isViewable()}
 				<a href="{$RECORD->getDetailViewUrl()}" class="btn btn-light" title="{\App\Language::translate('LBL_SHOW_COMPLETE_DETAILS', $MODULE_NAME)}"><span  class="fas fa-th-list js-detail-quick-edit"></span></a>
@@ -20,7 +20,7 @@
 			{assign var=DEFAULT_OWNER value=$AUTO_ASSIGN_RECORD->getDefaultOwner()}
 			{if $USERS}
 				<div class="table-responsive col-12">
-					<table id="assignTable" class="table table-striped table-bordered dataTable">
+					<table id="assignTable" class="table table-striped table-bordered js-modal-data-table">
 						<thead>
 							<tr>
 								<th>

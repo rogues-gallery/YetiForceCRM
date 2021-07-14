@@ -1,14 +1,20 @@
 <?php
 /**
- * Request test class.
+ * Request test file.
+ *
+ * @package   Tests
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
 namespace Tests\App;
 
+/**
+ * Request test class.
+ */
 class Request extends \Tests\Base
 {
 	/**
@@ -24,8 +30,8 @@ class Request extends \Tests\Base
 	 */
 	public function testGetAll()
 	{
-		$this->assertInternalType('array', \App\Request::init()->getAll());
-		$this->assertInternalType('array', \App\Request::init()->getAllRaw());
+		$this->assertIsArray(\App\Request::init()->getAll());
+		$this->assertIsArray(\App\Request::init()->getAllRaw());
 	}
 
 	/**

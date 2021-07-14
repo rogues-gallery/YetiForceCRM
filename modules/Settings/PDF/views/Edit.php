@@ -4,20 +4,20 @@
  * Edit View Class for PDF Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Maciej Stencel <m.stencel@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Rafal Pospiech <r.pospiech@yetiforce.com>
  */
 class Settings_PDF_Edit_View extends Settings_Vtiger_Index_View
 {
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$step = strtolower($request->getMode());
 		$this->step($step, $request);
 	}
 
-	public function preProcess(\App\Request $request, $display = true)
+	public function preProcess(App\Request $request, $display = true)
 	{
 		parent::preProcess($request);
 		$viewer = $this->getViewer($request);
@@ -25,7 +25,7 @@ class Settings_PDF_Edit_View extends Settings_Vtiger_Index_View
 		$viewer->view('EditHeader.tpl', $request->getModule(false));
 	}
 
-	public function step($step, \App\Request $request)
+	public function step($step, App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -65,7 +65,7 @@ class Settings_PDF_Edit_View extends Settings_Vtiger_Index_View
 		}
 	}
 
-	public function getFooterScripts(\App\Request $request)
+	public function getFooterScripts(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		return array_merge(parent::getFooterScripts($request), $this->checkAndConvertJsScripts([
@@ -83,7 +83,7 @@ class Settings_PDF_Edit_View extends Settings_Vtiger_Index_View
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getHeaderCss(\App\Request $request)
+	public function getHeaderCss(App\Request $request)
 	{
 		return array_merge($this->checkAndConvertCssStyles([
 			'modules.Settings.' . $request->getModule() . '.Edit',

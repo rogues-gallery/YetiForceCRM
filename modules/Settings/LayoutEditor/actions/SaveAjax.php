@@ -4,7 +4,7 @@
  * Save Inventory Action Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_LayoutEditor_SaveAjax_Action extends Settings_Vtiger_Basic_Action
@@ -20,6 +20,7 @@ class Settings_LayoutEditor_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 		$this->exposeMethod('saveSequence');
 		$this->exposeMethod('delete');
 		$this->exposeMethod('contextHelp');
+		Settings_Vtiger_Tracker_Model::addBasic('save');
 	}
 
 	/**
@@ -32,7 +33,7 @@ class Settings_LayoutEditor_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 		$type = $request->getInteger('type');
 		$moduleName = $request->getByType('sourceModule', 'Alnum');
 		if ($result['success'] = (new \App\BatchMethod(['method' => '\App\Module::changeType', 'params' => ['module' => $moduleName, 'type' => $type]]))->save()) {
-			$result['message'] = \App\Language::translate('LBL_CHANGED_MODULE_TYPE_INFO', $request->getModule(true));
+			$result['message'] = \App\Language::translate('LBL_CHANGED_MODULE_TYPE_INFO', $request->getModule(false));
 		}
 		$response = new Vtiger_Response();
 		$response->setResult($result);
@@ -139,7 +140,7 @@ class Settings_LayoutEditor_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 		$fieldModel->set('helpinfo', implode(',', $views));
 		$fieldModel->save();
 		$label = $fieldModel->getModuleName() . '|' . $fieldModel->getFieldLabel();
-		\App\Language::translationModify($request->getByType('lang'), 'Other/HelpInfo', 'php', $label, str_replace("\n", '', $request->getForHtml('context')));
+		\App\Language::translationModify($request->getByType('lang'), 'Other__HelpInfo', 'php', $label, str_replace("\n", '', $request->getForHtml('context')));
 		$response = new Vtiger_Response();
 		$response->setResult(['success' => true]);
 		$response->emit();

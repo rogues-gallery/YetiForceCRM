@@ -1,11 +1,11 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-InventoryDiscounts -->
 	{assign var="AGGREGATION" value=$CONFIG['aggregation']}
 	<div class="modelContainer modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<div class="modal-header contentsBackground align-items-center">
+				<div class="modal-header align-items-center">
 					<span class="mr-2 small">
 						<span class="fas fa-long-arrow-alt-down"></span>
 						<span class="fas fa-percent"></span>

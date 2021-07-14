@@ -3,7 +3,7 @@
  * Notification module config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 return [
 	'AUTO_REFRESH_REMINDERS' => [
@@ -17,5 +17,10 @@ return [
 		'description' => 'Auto mark notifications as readed after send emails to users',
 		'validation' => '\App\Validator::bool',
 		'sanitization' => '\App\Purifier::bool'
+	],
+	'MAX_NUMBER_NOTIFICATIONS' => [
+		'default' => 200,
+		'description' => 'Max number of notifications to display, 0 - no limits',
+		'validation' => '\App\Validator::naturalNumber',
 	]
 ];

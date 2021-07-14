@@ -1,73 +1,102 @@
-<!-- /* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */ -->
+<!-- /* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */ -->
 <template>
   <q-header class="bg-grey-10">
     <q-bar>
       <div class="flex items-center no-wrap full-width justify-between js-drag">
         <div class="flex no-wrap">
-          <q-btn dense flat round icon="mdi-menu" @click="toggleLeftPanel()" />
+          <ChatButtonNotify />
           <q-btn
-            @click="toggleEnter()"
-            dense
-            round
-            flat
-            icon="mdi-keyboard-outline"
-            :color="sendByEnter ? 'info' : ''"
-          />
-          <notify-btn />
-          <q-btn
-            @click="toggleSoundNotification()"
-            dense
-            round
-            flat
             :icon="isSoundNotification ? 'mdi-volume-high' : 'mdi-volume-off'"
             :color="isSoundNotification ? 'info' : ''"
-          />
+            dense
+            round
+            flat
+            @click="toggleSoundNotification()"
+          >
+            <q-tooltip>{{ translate(isSoundNotification ? 'JS_CHAT_SOUND_ON' : 'JS_CHAT_SOUND_OFF') }}</q-tooltip>
+          </q-btn>
         </div>
         <q-tabs
-          @input="toggleRoomTimer"
           v-model="tab"
           class="chat-tabs"
+          indicator-color="info"
+          active-color="info"
           dense
           shrink
           inline-label
           narrow-indicator
-          indicator-color="info"
-          active-color="info"
         >
           <q-tab
-            name="chat"
-            icon="mdi-forum-outline"
-            :label="isSmall ? '' : translate('JS_CHAT')"
             :style="{ 'min-width': '40px' }"
-          />
-          <q-tab name="unread" icon="mdi-email-alert" :label="isSmall ? '' : translate('JS_CHAT_UNREAD')" />
-          <q-tab name="history" icon="mdi-history" :label="isSmall ? '' : translate('JS_CHAT_HISTORY')" />
+            name="chat"
+          >
+            <YfIcon
+              class="q-icon q-tab__icon"
+              size="20px"
+              icon="yfi-branding-chat"
+            />
+            <span class="q-tab__label">{{ isSmall ? '' : translate('JS_CHAT') }}</span>
+            <q-tooltip>{{ translate('JS_CHAT_DESC') }}</q-tooltip>
+          </q-tab>
+          <q-tab name="unread">
+            <YfIcon
+              class="q-icon q-tab__icon"
+              size="20px"
+              icon="yfi-unread-messages"
+            />
+            <span class="q-tab__label">{{ isSmall ? '' : translate('JS_CHAT_UNREAD') }}</span>
+            <q-tooltip>{{ translate('JS_CHAT_UNREAD_DESC') }}</q-tooltip>
+          </q-tab>
+          <q-tab
+            name="history"
+            :label="isSmall ? '' : translate('JS_CHAT_HISTORY')"
+            icon="mdi-history"
+          >
+            <q-tooltip>{{ translate('JS_CHAT_HISTORY_DESC') }}</q-tooltip>
+          </q-tab>
         </q-tabs>
         <div class="flex no-wrap">
           <template v-if="$q.platform.is.desktop">
-						<btn-grab v-show="miniMode" class="text-white flex flex-center" grabClass="js-drag" size="19px" />
-            <q-btn dense flat :icon="miniMode ? 'mdi-window-maximize' : 'mdi-window-restore'" @click="toggleSize()">
+            <ButtonGrab
+              v-show="miniMode"
+              class="text-white flex flex-center"
+              linkClass=""
+              grabClass="js-drag"
+              size="19px"
+            />
+            <q-btn
+              :icon="miniMode ? 'mdi-window-maximize' : 'mdi-window-restore'"
+              dense
+              flat
+              round
+              @click="toggleSize()"
+            >
               <q-tooltip>{{ miniMode ? translate('JS_MAXIMIZE') : translate('JS_MINIMIZE') }}</q-tooltip>
             </q-btn>
           </template>
-          <q-btn dense flat icon="mdi-close" @click="setDialog(false)">
+          <q-btn
+            dense
+            flat
+            round
+            icon="mdi-close"
+            @click="setDialog(false)"
+          >
             <q-tooltip>{{ translate('JS_CLOSE') }}</q-tooltip>
           </q-btn>
-          <q-btn dense flat round icon="mdi-menu" @click="toggleRightPanel()" />
         </div>
       </div>
     </q-bar>
   </q-header>
 </template>
 <script>
-import NotifyBtn from './NotifyBtn.vue'
-import BtnGrab from 'components/BtnGrab.vue'
+import ChatButtonNotify from './ChatButtonNotify.vue'
+import ButtonGrab from 'components/ButtonGrab.vue'
 import { createNamespacedHelpers } from 'vuex'
 const { mapActions, mapMutations, mapGetters } = createNamespacedHelpers('Chat')
 
 export default {
   name: 'ChatHeader',
-  components: { NotifyBtn, BtnGrab },
+  components: { ChatButtonNotify, ButtonGrab },
   props: {
     inputSearchVisible: { type: Boolean, required: false },
     tabHistoryShow: { type: Boolean, required: false },
@@ -76,13 +105,12 @@ export default {
   },
   data() {
     return {
-      iconSize: '.75rem',
       moduleName: 'Chat',
       timerRoom: false
     }
   },
   computed: {
-    ...mapGetters(['config', 'isSoundNotification', 'sendByEnter']),
+    ...mapGetters(['config', 'isSoundNotification', 'leftPanel', 'rightPanel']),
     miniMode: {
       get() {
         return this.$store.getters['Chat/miniMode']
@@ -104,55 +132,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['toggleRightPanel', 'toggleLeftPanel', 'maximize']),
-    ...mapMutations([
-      'setDialog',
-      'setLeftPanel',
-      'setRightPanel',
-      'setSendByEnter',
-      'setSoundNotification',
-      'updateRooms'
-    ]),
+    ...mapActions(['maximize']),
+    ...mapMutations(['setDialog', 'setSoundNotification']),
     showTabHistory: function(value) {
       this.$emit('showTabHistory', value)
     },
-    toggleRoomTimer(tabName) {
-      if (tabName === 'chat' && this.timerRoom) {
-        clearTimeout(this.timerRoom)
-        this.timerRoom = false
-      } else if (!this.timerRoom) {
-        this.initTimer()
-      }
-    },
-    initTimer() {
-      this.timerRoom = setTimeout(() => {
-        AppConnector.request({
-          module: 'Chat',
-          action: 'ChatAjax',
-          mode: 'getRooms'
-        }).done(({ result }) => {
-          this.updateRooms(result.roomList)
-          this.initTimer()
-        })
-      }, this.config.refreshRoomTime)
-    },
-    rightPanel(value) {
-      this.$emit('rightPanel', value)
-    },
-    leftPanel(value) {
-      this.$emit('leftPanel', value)
-    },
     toggleSize() {
-      if (!this.miniMode) {
-        this.miniMode = true
-        this.setLeftPanel(false)
-        this.setRightPanel(false)
-      } else {
-        this.miniMode = false
-      }
-    },
-    toggleEnter() {
-      this.setSendByEnter(!this.sendByEnter)
+      this.miniMode = !this.miniMode
     },
     toggleSoundNotification() {
       this.setSoundNotification(!this.isSoundNotification)

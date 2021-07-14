@@ -5,7 +5,7 @@
  * @package   UIType
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -14,9 +14,7 @@
  */
 class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 {
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDBValue($value, $recordModel = false)
 	{
 		$data = \App\Json::isEmpty($value) ? [] : \App\Json::decode($value);
@@ -26,9 +24,7 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		return \App\Json::encode($data);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function validate($value, $isUserFormat = false)
 	{
 		if (empty($value)) {
@@ -55,9 +51,7 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		}
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getDisplayValue($value, $record = false, $recordModel = false, $rawText = false, $length = false)
 	{
 		if (($value = (\App\Json::isEmpty($value) ? 0 : \App\Json::decode($value))) && \is_array($value)) {
@@ -81,9 +75,7 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		return \App\Json::isEmpty($value) ? null : \App\Json::decode($value)['currencyId'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getEditViewDisplayValue($value, $recordModel = false)
 	{
 		if ($value = (\App\Json::isEmpty($value) ? 0 : \App\Json::decode($value))) {
@@ -160,18 +152,14 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		return $result;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getQueryOperators()
 	{
 		return ['y', 'ny'];
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getValueToExport($value)
+	/** {@inheritdoc} */
+	public function getValueToExport($value, int $recordId)
 	{
 		$result = [];
 		$value = \App\Json::isEmpty($value) ? [] : \App\Json::decode($value);
@@ -186,9 +174,7 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		return $result ? \App\Json::encode($result) : '';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getValueFromImport($value)
 	{
 		$result = [];
@@ -204,41 +190,31 @@ class Vtiger_MultiCurrency_UIType extends Vtiger_Base_UIType
 		return \App\Json::encode($result);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getTemplateName()
 	{
 		return 'Edit/Field/MultiCurrency.tpl';
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function isActiveSearchView()
 	{
 		return false;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function isAjaxEditable()
 	{
 		return false;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function isListviewSortable()
 	{
 		return false;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
+	/** {@inheritdoc} */
 	public function getAllowedColumnTypes()
 	{
 		return ['text'];

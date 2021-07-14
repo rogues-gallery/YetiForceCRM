@@ -3,8 +3,10 @@
 /**
  * Vtiger TransferOwnership model class.
  *
+ * @package Model
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Vtiger_TransferOwnership_Model extends \App\Base
 {
@@ -15,7 +17,7 @@ class Vtiger_TransferOwnership_Model extends \App\Base
 		return $this->skipModules;
 	}
 
-	public function getRelatedModuleRecordIds(\App\Request $request, $recordIds, $relModData)
+	public function getRelatedModuleRecordIds(App\Request $request, $recordIds, $relModData)
 	{
 		$basicModule = $request->getModule();
 		$parentModuleModel = Vtiger_Module_Model::getInstance($basicModule);
@@ -25,15 +27,13 @@ class Vtiger_TransferOwnership_Model extends \App\Base
 		$type = $relModData[1];
 		switch ($type) {
 			case 0:
-
 				$field = $relModData[2];
 				foreach ($recordIds as $recordId) {
 					$recordModel = Vtiger_Record_Model::getInstanceById($recordId, $basicModule);
-					if ($recordModel->get($field) != 0 && \App\Record::getType($recordModel->get($field)) == $relatedModule) {
+					if (0 != $recordModel->get($field) && \App\Record::getType($recordModel->get($field)) == $relatedModule) {
 						$relatedIds[] = $recordModel->get($field);
 					}
 				}
-
 				break;
 			case 1:
 				$tablename = Vtiger_Relation_Model::getInstance($parentModuleModel, Vtiger_Module_Model::getInstance($relatedModule))->getRelationField()->get('table');
@@ -63,8 +63,10 @@ class Vtiger_TransferOwnership_Model extends \App\Base
 	{
 		foreach ($relatedModuleRecordIds as $record) {
 			$recordModel = Vtiger_Record_Model::getInstanceById($record, $module);
-			$recordModel->set('assigned_user_id', $transferOwnerId);
-			$recordModel->save();
+			if($recordModel->isEditable()){
+				$recordModel->set('assigned_user_id', $transferOwnerId);
+				$recordModel->save();
+			}
 		}
 	}
 
@@ -105,8 +107,7 @@ class Vtiger_TransferOwnership_Model extends \App\Base
 		$module = $this->get('module');
 		$moduleModel = Vtiger_Module_Model::getInstance($module);
 		$relatedModules = [];
-		$relations = $moduleModel->getRelations();
-		foreach ($relations as $relation) {
+		foreach ($moduleModel->getRelations() as $relation) {
 			$relationModule = $relation->getRelationModuleName();
 			if (\App\Privilege::isPermitted($relationModule, 'EditView')) {
 				$relatedModules[] = [
@@ -125,7 +126,7 @@ class Vtiger_TransferOwnership_Model extends \App\Base
 		foreach ($relatedModelFields as $fieldModel) {
 			if ($fieldModel->isReferenceField()) {
 				$referenceList = $fieldModel->getReferenceList();
-				if (in_array($findModule, $referenceList)) {
+				if (\in_array($findModule, $referenceList)) {
 					return $fieldModel->get('column');
 				}
 			}

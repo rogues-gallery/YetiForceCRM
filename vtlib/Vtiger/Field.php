@@ -28,15 +28,15 @@ class Field extends FieldBasic
 	 * Set values for picklist field (for all the roles).
 	 *
 	 * @param array List of values to add
+	 * @param mixed $values
 	 *
 	 * @internal Creates picklist base if it does not exists
 	 */
 	public function setPicklistValues($values)
 	{
 		// Non-Role based picklist values
-		if ($this->uitype === 16) {
+		if (16 === $this->uitype) {
 			$this->setNoRolePicklistValues($values);
-
 			return true;
 		}
 		$db = \App\Db::getInstance();
@@ -53,16 +53,17 @@ class Field extends FieldBasic
 			]);
 			$db->createCommand()->insert('vtiger_picklist', ['name' => $this->name])->execute();
 			$newPicklistId = $db->getLastInsertID('vtiger_picklist_picklistid_seq');
+			$db->createCommand()->createIndex("{$this->name}_valueid_idx", $picklistTable, 'picklist_valueid', true)->execute();
 			\App\Log::trace("Creating table $picklistTable ... DONE", __METHOD__);
 		} else {
 			$newPicklistId = (new \App\Db\Query())->select(['picklistid'])->from('vtiger_picklist')->where(['name' => $this->name])->scalar();
 		}
 		// END
 		// Add value to picklist now
-		$picklistValues = self::getPicklistValues();
+		$picklistValues = $this->getPicklistValues();
 		$sortid = 0;
 		foreach ($values as $value) {
-			if (in_array($value, $picklistValues)) {
+			if (\in_array($value, $picklistValues)) {
 				continue;
 			}
 			$newPicklistValueId = $db->getUniqueID('vtiger_picklistvalues');
@@ -83,12 +84,14 @@ class Field extends FieldBasic
 				->batchInsert('vtiger_role2picklist', ['roleid', 'picklistvalueid', 'picklistid', 'sortid'], $insertedData)
 				->execute();
 		}
+		\App\Fields\Picklist::clearCache($this->name, $this->getModuleName());
 	}
 
 	/**
 	 * Set values for picklist field (non-role based).
 	 *
 	 * @param array List of values to add
+	 * @param mixed $values
 	 *
 	 * @internal Creates picklist base if it does not exists
 	 */
@@ -98,10 +101,9 @@ class Field extends FieldBasic
 		$pickListNameIDs = ['recurring_frequency', 'payment_duration'];
 		$picklistTable = 'vtiger_' . $this->name;
 		$picklistIdCol = $this->name . 'id';
-		if (in_array($this->name, $pickListNameIDs)) {
+		if (\in_array($this->name, $pickListNameIDs)) {
 			$picklistIdCol = $this->name . '_id';
 		}
-
 		if (!$db->isTableExists($picklistTable)) {
 			$importer = new \App\Db\Importers\Base();
 			$db->createTable($picklistTable, [
@@ -112,37 +114,36 @@ class Field extends FieldBasic
 			]);
 			\App\Log::trace("Creating table $picklistTable ... DONE", __METHOD__);
 		}
-		// Add value to picklist now
+		$dbCommand = $db->createCommand();
 		$picklistValues = $this->getPicklistValues();
-
-		$sortid = 1;
-		foreach ($values as &$value) {
-			if (in_array($value, $picklistValues)) {
+		$sortId = \count($picklistValues) + 1;
+		foreach ($values as $value) {
+			if (\in_array($value, $picklistValues)) {
 				continue;
 			}
-			$presence = 1; // 0 - readonly, Refer function in include/ComboUtil.php
-
 			$data = [
 				$this->name => $value,
-				'sortorderid' => $sortid,
-				'presence' => $presence,
+				'sortorderid' => $sortId,
+				'presence' => 1,
 			];
-			$db->createCommand()->insert($picklistTable, $data)->execute();
-			$sortid = $sortid + 1;
+			$dbCommand->insert($picklistTable, $data)->execute();
+			++$sortId;
 		}
+		\App\Fields\Picklist::clearCache($this->name, $this->getModuleName());
 	}
 
 	/**
 	 * Set relation between field and modules (UIType 10).
 	 *
 	 * @param array List of module names
+	 * @param mixed $moduleNames
 	 *
 	 * @internal Creates table vtiger_fieldmodulerel if it does not exists
 	 */
 	public function setRelatedModules($moduleNames)
 	{
-		if (count($moduleNames) == 0) {
-			\App\Log::trace("Setting $this->name relation with $relmodule ... ERROR: No module names", __METHOD__);
+		if (0 == \count($moduleNames)) {
+			\App\Log::trace("Setting $this->name relation with $moduleNames ... ERROR: No module names", __METHOD__);
 
 			return false;
 		}
@@ -166,6 +167,7 @@ class Field extends FieldBasic
 	 * Remove relation between the field and modules (UIType 10).
 	 *
 	 * @param array List of module names
+	 * @param mixed $moduleNames
 	 */
 	public function unsetRelatedModules($moduleNames)
 	{
@@ -183,17 +185,15 @@ class Field extends FieldBasic
 	 * @param string|int    $value          mixed fieldid or fieldname
 	 * @param \vtlib\Module $moduleInstance Instance of the module if fieldname is used
 	 *
-	 * @return \vtlib\Field|null
+	 * @return \vtlib\Field|bool
 	 */
 	public static function getInstance($value, $moduleInstance = false)
 	{
-		$instance = false;
-		$moduleId = false;
+		$moduleId = $instance = false;
 		if ($moduleInstance) {
 			$moduleId = $moduleInstance->id;
 		}
-		$data = \App\Field::getFieldInfo($value, $moduleId);
-		if ($data) {
+		if ($data = \App\Field::getFieldInfo($value, $moduleId)) {
 			$instance = new self();
 			$instance->initialize($data, $moduleId);
 		}
@@ -205,30 +205,34 @@ class Field extends FieldBasic
 	 *
 	 * @param vtlib\Block Instnace of block to use
 	 * @param Module Instance of module to which block is associated
+	 * @param mixed $blockInstance
+	 * @param mixed $moduleInstance
 	 */
 	public static function getAllForBlock($blockInstance, $moduleInstance = false)
 	{
 		$cache = \Vtiger_Cache::getInstance();
 		if ($cache->getBlockFields($blockInstance->id, $moduleInstance->id)) {
 			return $cache->getBlockFields($blockInstance->id, $moduleInstance->id);
-		} else {
-			$instances = false;
-			$query = false;
-			if ($moduleInstance) {
-				$query = (new \App\Db\Query())->from('vtiger_field')->where(['block' => $blockInstance->id, 'tabid' => $moduleInstance->id])->orderBy('sequence');
-			} else {
-				$query = (new \App\Db\Query())->from('vtiger_field')->where(['block' => $blockInstance->id])->orderBy('sequence');
-			}
-			$dataReader = $query->createCommand()->query();
-			while ($row = $dataReader->read()) {
-				$instance = new self();
-				$instance->initialize($row, $moduleInstance->id, $blockInstance);
-				$instances[] = $instance;
-			}
-			$cache->setBlockFields($blockInstance->id, $moduleInstance->id, $instances);
-
-			return $instances;
 		}
+		$instances = false;
+		$query = (new \App\Db\Query())
+			->from('vtiger_field')
+			->leftJoin('s_#__fields_anonymization', 'vtiger_field.fieldid = s_#__fields_anonymization.field_id')
+			->orderBy('sequence');
+		if ($moduleInstance) {
+			$query->where(['block' => $blockInstance->id, 'tabid' => $moduleInstance->id]);
+		} else {
+			$query->where(['block' => $blockInstance->id]);
+		}
+		$dataReader = $query->createCommand()->query();
+		while ($row = $dataReader->read()) {
+			$instance = new self();
+			$instance->initialize($row, $moduleInstance->id, $blockInstance);
+			$instances[] = $instance;
+		}
+		$cache->setBlockFields($blockInstance->id, $moduleInstance->id, $instances);
+
+		return $instances;
 	}
 
 	/**
@@ -244,9 +248,12 @@ class Field extends FieldBasic
 		if (\App\Cache::has('AllFieldForModule', $moduleId)) {
 			$rows = \App\Cache::get('AllFieldForModule', $moduleId);
 		} else {
-			$rows = (new \App\Db\Query())->select(['vtiger_field.*'])->from('vtiger_field')
+			$rows = (new \App\Db\Query())->select(['vtiger_field.*', 's_#__fields_anonymization.*'])
+				->from('vtiger_field')
 				->leftJoin('vtiger_blocks', 'vtiger_field.block = vtiger_blocks.blockid')
-				->where(['vtiger_field.tabid' => $moduleId])->orderBy(['vtiger_blocks.sequence' => SORT_ASC, 'vtiger_field.sequence' => SORT_ASC])
+				->leftJoin('s_#__fields_anonymization', 'vtiger_field.fieldid = s_#__fields_anonymization.field_id')
+				->where(['vtiger_field.tabid' => $moduleId])
+				->orderBy(['vtiger_blocks.sequence' => SORT_ASC, 'vtiger_field.sequence' => SORT_ASC])
 				->all();
 			\App\Cache::save('AllFieldForModule', $moduleId, $rows);
 		}
@@ -294,6 +301,7 @@ class Field extends FieldBasic
 	 * Function to remove uitype10 fields.
 	 *
 	 * @param Module Instance of module
+	 * @param mixed $moduleInstance
 	 */
 	public static function deleteUiType10Fields($moduleInstance)
 	{
@@ -302,8 +310,8 @@ class Field extends FieldBasic
 		$dataReader = $query->createCommand()->query();
 		while ($fieldId = $dataReader->readColumn(0)) {
 			$count = (new \App\Db\Query())->from('vtiger_fieldmodulerel')->where(['fieldid' => $fieldId])->count();
-			if ((int) $count === 1) {
-				$field = self::getInstance($fieldId, $moduleInstance->id);
+			if (1 === (int) $count) {
+				$field = self::getInstance($fieldId, $moduleInstance);
 				$field->delete();
 			}
 		}
@@ -314,6 +322,7 @@ class Field extends FieldBasic
 	 * Function to remove picklist-type or multiple choice picklist-type table.
 	 *
 	 * @param Module Instance of module
+	 * @param mixed $moduleInstance
 	 */
 	public static function deletePickLists($moduleInstance)
 	{

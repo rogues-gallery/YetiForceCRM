@@ -1,12 +1,10 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 
 .c-header {
 	background-color: $bg-navbar;
 	top: 0;
 	right: 0;
 	z-index: 1031;
-
-	@extend .u-remove-dropdown-icon;
 
 	.moduleIcon {
 		width: 34px;
@@ -40,6 +38,18 @@
 				padding: 0.315rem 0.75rem;
 			}
 		}
+	}
+	.c-user-avatar-small {
+		border-radius: 50%;
+		width: 1.25em;
+		height: 1.25em;
+		vertical-align: sub;
+	}
+	.c-user-avatar-medium {
+		border-radius: 50%;
+		width: 48px;
+		height: 48px;
+		min-width: 48px;
 	}
 }
 
@@ -146,6 +156,9 @@
 .active {
 	font-weight: bold;
 }
+.active .table {
+	font-weight: initial;
+}
 
 .o-chat-modal-window {
 	position: fixed;
@@ -221,7 +234,7 @@
 }
 
 @include media-breakpoint-down(lg) {
-	.ui-menu.ui-widget {
+	.ui-menu.ui-widget:not(.mobile) {
 		top: 253px !important;
 	}
 }
@@ -234,7 +247,7 @@
 
 @include media-breakpoint-down(sm) {
 	.ui-menu.ui-widget {
-		left: -4px !important;
+		left: 4px !important;
 	}
 }
 
@@ -292,6 +305,7 @@
 		}
 
 		&__actions {
+			visibility: visible;
 			position: fixed;
 			left: auto;
 			right: -100%;
@@ -299,9 +313,9 @@
 			color: $color-navbar;
 			background-color: darken($gray-100, 2%);
 			z-index: 2000;
-			padding: 30px;
-			-webkit-transition: right ease-in-out 0.35s;
-			transition: right ease-in-out 0.35s;
+			padding: calculate-rem(30px);
+			-webkit-transition: ease-in-out 0.35s;
+			transition: ease-in-out 0.35s;
 			text-align: center;
 			overflow: auto;
 
@@ -313,8 +327,20 @@
 
 	.o-header-toggle__detail {
 		.o-header-toggle__actions {
-			top: 193px !important;
-			position: absolute !important;
+			box-shadow: $box-shadow-lg;
+			bottom: -100%;
+			padding: calculate-rem(10px);
+			padding-bottom: calculate-rem(60px);
+			.btn {
+				text-align: left;
+			}
+			&-btn {
+				@include c-btn-floating-right-bottom();
+				position: fixed;
+			}
+			&.is-active {
+				bottom: 0;
+			}
 		}
 
 		.c-btn-link--responsive {
@@ -354,7 +380,7 @@
 				margin: 0 0 5px !important;
 
 				.fas,
-				[class*="userIcon-"] {
+				[class*="yfm-"] {
 					margin: 0 5px 0 0;
 				}
 
@@ -397,7 +423,17 @@
 
 //breadcrumbs
 .o-breadcrumb {
-	min-height: calculate-rem(48px);
+	@include media-breakpoint-up(sm) {
+		min-height: calculate-rem(48px);
+	}
+
+	@include media-breakpoint-down(sm) {
+		visibility: hidden;
+		height: 0;
+		min-height: 0;
+	}
+
+	min-height: calculate-rem(32px);
 	&__container {
 		width: 100%;
 		display: flex;

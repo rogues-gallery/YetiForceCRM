@@ -1,8 +1,8 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="btn btn-sm">
 		{assign var=IMAGE_CLASS value=Documents_Record_Model::getFileIconByFileType($RELATED_RECORD->get('filetype'))}
-		<span class="{$IMAGE_CLASS} fa-lg">{if $IMAGE_CLASS neq 'userIcon-Documents'}&nbsp;{/if}</span>
+		<span class="{$IMAGE_CLASS} fa-lg">{if $IMAGE_CLASS neq 'yfm-Documents'}&nbsp;{/if}</span>
 	</div>
 	{if !empty($IS_FAVORITES)}
 		{assign var=RECORD_IS_FAVORITE value=(int)in_array($RELATED_RECORD->getId(),$FAVORITES)}

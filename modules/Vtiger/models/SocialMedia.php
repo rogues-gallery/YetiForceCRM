@@ -3,8 +3,10 @@
 /**
  * SocialMedia Model.
  *
+ * @package Model
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Adach <a.adach@yetiforce.com>
  */
 class Vtiger_SocialMedia_Model extends \App\Base
@@ -21,7 +23,7 @@ class Vtiger_SocialMedia_Model extends \App\Base
 	 *
 	 * @param \Vtiger_Record_Model $recordModel
 	 */
-	public function __construct(\Vtiger_Record_Model $recordModel)
+	public function __construct(Vtiger_Record_Model $recordModel)
 	{
 		parent::__construct();
 		$this->recordModel = $recordModel;
@@ -34,7 +36,7 @@ class Vtiger_SocialMedia_Model extends \App\Base
 	 *
 	 * @return self
 	 */
-	public static function getInstanceByRecordModel(\Vtiger_Record_Model $recordModel)
+	public static function getInstanceByRecordModel(Vtiger_Record_Model $recordModel)
 	{
 		return new self($recordModel);
 	}

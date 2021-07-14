@@ -98,19 +98,19 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model
 	 */
 	public function hadTimedout()
 	{
+		$maxTaskTime = $this->get('max_exe_time');
 		$lastEnd = (int) $this->get('lastend');
 		$lastStart = (int) $this->get('laststart');
 		if ($lastEnd < $lastStart && !$this->isRunning()) {
 			return true;
 		}
-
-		$maxExecutionTime = (int) \App\Config::main('maxExecutionCronTime');
-		$iniMaxExecutionTime = (int) ini_get('max_execution_time');
-		if ($maxExecutionTime > $iniMaxExecutionTime) {
-			$maxExecutionTime = $iniMaxExecutionTime;
-		}
-		if ($lastEnd < $lastStart && $this->isRunning() && time() > ($lastStart + $maxExecutionTime)) {
-			return true;
+		if ($lastEnd < $lastStart && $this->isRunning()) {
+			if (time() > ($lastStart + \App\Cron::getMaxExecutionTime())) {
+				return true;
+			}
+			if (!empty($maxTaskTime) && time() > ($lastStart + ($maxTaskTime * 60))) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -120,19 +120,17 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model
 	 */
 	public function getLastEndDateTime()
 	{
-		if ($this->get('lastend') !== null) {
+		if (null !== $this->get('lastend')) {
 			$lastScannedTime = App\Fields\DateTime::formatToDisplay(date('Y-m-d H:i:s', $this->get('lastend')));
 			$hourFormat = \App\User::getCurrentUserModel()->getDetail('hour_format');
-			if ($hourFormat == '24') {
+			if ('24' == $hourFormat) {
 				return $lastScannedTime;
-			} else {
-				$dateTimeList = explode(' ', $lastScannedTime);
-
-				return $dateTimeList[0] . ' ' . date('g:i:sa', strtotime($dateTimeList[1]));
 			}
-		} else {
-			return '';
+			$dateTimeList = explode(' ', $lastScannedTime);
+
+			return $dateTimeList[0] . ' ' . date('g:i:sa', strtotime($dateTimeList[1]));
 		}
+		return '';
 	}
 
 	/**
@@ -148,35 +146,34 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model
 	/**
 	 * Get cron operation duration.
 	 *
-	 * @param string $type string format 'short' for '1h 3m 0s', 'full' for '1 hour 3 minutes 4 seconds'
-	 *
 	 * @return string duration string or 'running','timeout'
 	 */
-	public function getDuration($type = 'short')
+	public function getDuration()
 	{
 		$lastStart = (int) $this->get('laststart');
 		if (!$lastStart) {
-			return '-';
-		}
-		if ($this->isRunning() && !$this->hadTimedout()) {
-			return 'running';
+			$duration = '-';
+		} elseif ($this->isRunning() && !$this->hadTimedout()) {
+			$duration = 'running';
 		} elseif ($this->hadTimedout()) {
-			return 'timeout';
+			$duration = 'timeout';
+		} else {
+			$duration = \App\Fields\RangeTime::displayElapseTime((int) $this->get('lastend') - $lastStart, 's', 's');
 		}
-		return \App\Fields\RangeTime::formatHourToDisplay(\App\Fields\Time::secondsToDecimal((int) $this->get('lastend') - $lastStart), $type, true);
+		return $duration;
 	}
 
 	/**
 	 * Function to get display value of every field from this record.
 	 *
-	 * @param string $fieldName
+	 * @param string $key
 	 *
 	 * @return string
 	 */
-	public function getDisplayValue($fieldName)
+	public function getDisplayValue(string $key)
 	{
-		$fieldValue = $this->get($fieldName);
-		switch ($fieldName) {
+		$fieldValue = $this->get($key);
+		switch ($key) {
 			case 'frequency':
 				$fieldValue = (int) $fieldValue;
 				$hours = str_pad((int) (($fieldValue / (60 * 60))), 2, 0, STR_PAD_LEFT);
@@ -292,7 +289,7 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model
 				'linktype' => 'LISTVIEWRECORD',
 				'linklabel' => 'LBL_EDIT_RECORD',
 				'linkurl' => "javascript:Settings_CronTasks_List_Js.triggerEditEvent('" . $this->getEditViewUrl() . "')",
-				'linkicon' => 'fas fa-edit',
+				'linkicon' => 'yfi yfi-full-editing-view',
 			],
 		];
 		foreach ($recordLinks as $recordLink) {

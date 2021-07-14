@@ -4,7 +4,7 @@
  * Auto assign record View Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Vtiger_AutoAssignRecord_View extends Vtiger_BasicModal_View
@@ -18,7 +18,7 @@ class Vtiger_AutoAssignRecord_View extends Vtiger_BasicModal_View
 	 *
 	 * @return bool
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if (!$request->isEmpty('record', true)) {
 			$recordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('record'), $request->getModule());
@@ -36,7 +36,7 @@ class Vtiger_AutoAssignRecord_View extends Vtiger_BasicModal_View
 	 *
 	 * @return string
 	 */
-	public function getSize(\App\Request $request)
+	public function getSize(App\Request $request)
 	{
 		return 'modal-lg';
 	}
@@ -46,7 +46,7 @@ class Vtiger_AutoAssignRecord_View extends Vtiger_BasicModal_View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$recordId = $request->getInteger('record');
@@ -71,7 +71,7 @@ class Vtiger_AutoAssignRecord_View extends Vtiger_BasicModal_View
 	 *
 	 * @return Vtiger_JsScript_Model[] - List of Vtiger_CssScript_Model instances
 	 */
-	public function getModalScripts(\App\Request $request)
+	public function getModalScripts(App\Request $request)
 	{
 		return array_merge($this->checkAndConvertJsScripts([
 			'~libraries/datatables.net/js/jquery.dataTables.js',

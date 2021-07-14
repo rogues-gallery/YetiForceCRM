@@ -1,11 +1,11 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Projects-Hierarchy modelContainer modal fade" tabindex="-1">
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 class="modal-title">
-						<span class="modCT_Project userIcon-Project mr-2"></span>
+						<span class="modCT_Project yfm-Project mr-2"></span>
 						{\App\Language::translate('LBL_SHOW_HIERARCHY', $MODULE_NAME)}
 					</h5>
 					<button type="button" class="close" data-dismiss="modal"
@@ -14,12 +14,12 @@
 					</button>
 				</div>
 				<div class="modal-body">
-					<div id="hierarchyScroll" class="table-responsive">
+					<div id="hierarchyScroll">
 						<table class="table table-bordered">
 							<thead>
 							<tr class="blockHeader">
 								{foreach item=HEADERNAME from=$HIERARCHY['header']}
-									<th>{\App\Language::translate($HEADERNAME, $MODULE_NAME)}</th>
+									<th class="text-center text-nowrap">{\App\Language::translate($HEADERNAME, $MODULE_NAME)}</th>
 								{/foreach}
 							</tr>
 							</thead>
@@ -27,7 +27,7 @@
 								<tbody>
 								<tr>
 									{foreach item=LISTFIELDS from=$ENTRIES}
-										<td>{$LISTFIELDS}</td>
+										<td class="text-nowrap">{$LISTFIELDS}</td>
 									{/foreach}
 								</tr>
 								</tbody>

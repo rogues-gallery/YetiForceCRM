@@ -1,28 +1,29 @@
 <?php
 /**
- * YetiForce test class.
+ * YetiForce test file.
  *
  * @package   Tests
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
 namespace Tests\App;
 
 /**
- * Class YetiForce tests.
+ * YetiForce test class.
  */
 class YetiForce extends \Tests\Base
 {
 	/**
-	 * Testing status getAll method.
+	 * Testing watchdog getAll method.
 	 *
 	 * @throws \App\Exceptions\AppException
 	 */
-	public function testStatusGetAll()
+	public function testWatchdogGetAll()
 	{
-		$this->assertCount(\count(\App\YetiForce\Status::$variables), \App\YetiForce\Status::getAll());
+		$this->assertCount(\count(\App\YetiForce\Watchdog::$variables), \App\YetiForce\Watchdog::getAll());
 	}
 }

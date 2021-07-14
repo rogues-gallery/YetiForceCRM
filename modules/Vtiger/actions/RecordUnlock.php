@@ -6,7 +6,7 @@
  * @package   Action
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
@@ -18,7 +18,7 @@ class Vtiger_RecordUnlock_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if ($request->isEmpty('record', true) || !Vtiger_Record_Model::getInstanceById($request->getInteger('record'))->isUnlockByFields()) {
 			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD2', 406);
@@ -28,7 +28,7 @@ class Vtiger_RecordUnlock_Action extends \App\Controller\Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$recordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('record'));
 		foreach ($recordModel->getUnlockFields() as $fieldName => $values) {

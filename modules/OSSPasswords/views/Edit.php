@@ -4,7 +4,7 @@
  * OSSPasswords edit view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSPasswords_Edit_View extends Vtiger_Edit_View
 {
@@ -15,7 +15,7 @@ class OSSPasswords_Edit_View extends Vtiger_Edit_View
 	 *
 	 * @return array - List of Vtiger_JsScript_Model instances
 	 */
-	public function getFooterScripts(\App\Request $request)
+	public function getFooterScripts(App\Request $request)
 	{
 		return array_merge($this->checkAndConvertJsScripts([
 			'modules.OSSPasswords.resources.gen_pass',
@@ -24,7 +24,7 @@ class OSSPasswords_Edit_View extends Vtiger_Edit_View
 		]), parent::getFooterScripts($request));
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		// check if passwords are encrypted

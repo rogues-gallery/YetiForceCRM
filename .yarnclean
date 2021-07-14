@@ -7,7 +7,6 @@ powered-test
 # Git and GitHub meta files
 .github
 .babelrc
-.bin
 *.d.ts
 test.js
 .DS_Store
@@ -102,10 +101,7 @@ respond.js/cross-domain
 select2-theme-bootstrap4/dist
 svg/svgBasic.html
 svg/lion.svg
-pnotify/lib
-pnotify/dist/es
-pnotify/dist/umd
-pnotify/dist/PNotifyBrightTheme.css
+
 hammerjs/.bowerrc
 hammerjs/.jscsrc
 html2canvas/dist/npm
@@ -115,10 +111,25 @@ updated-jqplot
 css-line-break
 delegate
 good-listener
-select
 tiny-emitter
 jquery-ui
 jquery-ui-dist/external
+asap
+core-js
+encoding
+fbemitter
+fbjs
+iconv-lite
+is-stream
+isomorphic-fetch
+js-tokens
+loose-envify
+node-fetch
+object-assign
+promise
+safer-buffer
+setimmediate
+ua-parser-js
 
 # examples
 example
@@ -191,7 +202,6 @@ MAINTAINING.md
 #source - manuall
 source
 build
-pnotify/src
 
 #source - automatically generated
 add/src
@@ -250,7 +260,6 @@ leaflet/dist/leaflet-src.js
 leaflet/dist/leaflet-src.esm.js
 leaflet.awesome-markers/src
 leaflet.markercluster/src
-lodash/src
 moment/src
 moment/moment.js
 moment/locale

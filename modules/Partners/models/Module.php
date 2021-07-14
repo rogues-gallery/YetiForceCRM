@@ -4,7 +4,7 @@
  * Partners module model Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Partners_Module_Model extends Vtiger_Module_Model
@@ -17,9 +17,9 @@ class Partners_Module_Model extends Vtiger_Module_Model
 	 * @param string              $record         parent id
 	 * @param \App\QueryGenerator $queryGenerator
 	 */
-	public function getQueryByModuleField($sourceModule, $field, $record, \App\QueryGenerator $queryGenerator)
+	public function getQueryByModuleField($sourceModule, $field, $record, App\QueryGenerator $queryGenerator)
 	{
-		if ($sourceModule == 'Campaigns') {
+		if ('Campaigns' == $sourceModule) {
 			$queryGenerator->addNativeCondition(['not in', 'u_#__partners.partnersid', (new App\Db\Query())->select(['crmid'])
 				->from('vtiger_campaign_records')
 				->where(['campaignid' => $record]),

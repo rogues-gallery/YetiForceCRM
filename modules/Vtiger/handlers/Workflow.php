@@ -5,8 +5,10 @@ Vtiger_Loader::includeOnce('~modules/com_vtiger_workflow/VTWorkflowManager.php')
 /**
  * Workflow handler.
  *
+ * @package		Handler
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Vtiger_Workflow_Handler
@@ -20,7 +22,7 @@ class Vtiger_Workflow_Handler
 	 */
 	public function entityChangeState(App\EventHandler $eventHandler)
 	{
-		if ($eventHandler->getRecordModel()->get('deleted') === 'Trash') {
+		if ('Trash' === $eventHandler->getRecordModel()->get('deleted')) {
 			$this->performTasks($eventHandler, [
 				VTWorkflowManager::$ON_DELETE
 			]);
@@ -85,7 +87,7 @@ class Vtiger_Workflow_Handler
 			$this->workflows[$moduleName] = $wfs->getWorkflowsForModule($moduleName);
 		}
 		foreach ($this->workflows[$moduleName] as &$workflow) {
-			if ($condition && !in_array($workflow->executionCondition, $condition)) {
+			if ($condition && !\in_array($workflow->executionCondition, $condition)) {
 				continue;
 			}
 			switch ($workflow->executionCondition) {
@@ -134,7 +136,6 @@ class Vtiger_Workflow_Handler
 				if (VTWorkflowManager::$ONCE == $workflow->executionCondition) {
 					$workflow->markAsCompletedForRecord($recordModel->getId());
 				}
-
 				$workflow->performTasks($recordModel);
 			}
 		}

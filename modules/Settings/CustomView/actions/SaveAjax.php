@@ -4,7 +4,7 @@
  * CustomView save class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -27,7 +27,7 @@ class Settings_CustomView_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function delete(\App\Request $request)
+	public function delete(App\Request $request)
 	{
 		Settings_CustomView_Module_Model::delete($request->getInteger('cvid'));
 		$response = new Vtiger_Response();
@@ -43,16 +43,13 @@ class Settings_CustomView_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function updateField(\App\Request $request)
+	public function updateField(App\Request $request)
 	{
-		$params = [
-			'cvid' => $request->getInteger('cvid'),
-			'mod' => $request->getByType('mod', 2),
-			'name' => $request->getByType('name', 2),
-			'value' => $request->getByType('value', 'Text')
-		];
-		Settings_CustomView_Module_Model::updateField($params);
-		Settings_CustomView_Module_Model::updateOrderAndSort($params);
+		$recordModel = CustomView_Record_Model::getInstanceById($request->getInteger('cvid'));
+		$recordModel->set('mode', 'edit');
+		$recordModel->setValueFromRequest($request, $request->getByType('name', \App\Purifier::STANDARD), 'value');
+		$recordModel->save();
+
 		$response = new Vtiger_Response();
 		$response->setResult([
 			'message' => \App\Language::translate('Saving CustomView', $request->getModule(false)),
@@ -65,7 +62,7 @@ class Settings_CustomView_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function upadteSequences(\App\Request $request)
+	public function upadteSequences(App\Request $request)
 	{
 		$params = $request->getArray('param', 'Integer');
 		Settings_CustomView_Module_Model::upadteSequences($params);
@@ -81,28 +78,30 @@ class Settings_CustomView_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function setFilterPermissions(\App\Request $request)
+	public function setFilterPermissions(App\Request $request)
 	{
-		$tabid = $request->getInteger('tabid');
-		$cvid = $request->getInteger('cvid');
 		$user = $request->getByType('user', 'Text');
-		$type = $request->getByType('type');
-		$operator = $request->getByType('operator');
-		if ($type === 'default') {
-			$result = Settings_CustomView_Module_Model::setDefaultUsersFilterView($tabid, $cvid, $user, $operator);
-		} elseif ($type === 'featured') {
-			$result = CustomView_Record_Model::setFeaturedFilterView($cvid, $user, $operator);
+		$add = $request->getBoolean('operator');
+
+		$recordModel = CustomView_Record_Model::getInstanceById($request->getInteger('cvid'));
+
+		switch ($request->getByType('type')) {
+			case 'default':
+				$result = $add ? $recordModel->setDefaultForMember($user) : $recordModel->removeDefaultForMember($user);
+				break;
+			case 'featured':
+				$result = $add ? $recordModel->setFeaturedForMember($user) : $recordModel->removeFeaturedForMember($user);
+				break;
+			case 'permissions':
+				$result = $add ? $recordModel->setPrivilegesForMember($user) : $recordModel->removePrivilegesForMember($user);
+				break;
+			default:
+				throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED');
+				break;
 		}
-		if (!empty($result)) {
-			$data = [
-				'message' => \App\Language::translate('LBL_EXISTS_PERMISSION_IN_CONFIG', $request->getModule(false), \App\Language::translate($result, $tabid)),
-				'success' => false,
-			];
-		} else {
-			$data = [
-				'message' => \App\Language::translate('LBL_SAVE_CONFIG', $request->getModule(false)),
-				'success' => true,
-			];
+		$data = ['success' => $result];
+		if ($result) {
+			$data['message'] = \App\Language::translate('LBL_SAVE_CONFIG', $request->getModule(false));
 		}
 		$response = new Vtiger_Response();
 		$response->setResult($data);

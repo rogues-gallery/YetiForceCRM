@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-inventoryfields-EditViewCurrency -->
 	{assign var=CURRENCIES value=\App\Fields\Currency::getAll(true)}
@@ -19,7 +19,7 @@
 	<select class="select2 js-currency" data-minimum-results-for-search="-1" data-old-value="{$SELECTED_CURRENCY}"
 			{if $ROW_NO} name="inventory[{$ROW_NO}][{$FIELD->getColumnName()}]" {/if}
 			title="{\App\Language::translate('LBL_CURRENCY', $MODULE_NAME)}"
-			{if $FIELD->get('displaytype') == 10}readonly="readonly"{/if}>
+			{if $FIELD->isReadOnly()}readonly="readonly"{/if}>
 		{foreach item=CURRENCY key=count from=$CURRENCIES}
 			{assign var=CURRENCY_PARAM value=$CURRENCY_PARAMS[$CURRENCY.id]}
 			<option value="{$CURRENCY.id}" class="textShadowNone" data-conversion-rate="{$CURRENCY_PARAM.conversion}"
@@ -34,7 +34,7 @@
 	<div class="modelContainer modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<div class="modal-header contentsBackground">
+				<div class="modal-header">
 					<h5 class="modal-title">
 						<span class="fas fa-euro-sign mr-1"></span>
 						{\App\Language::translate('LBL_CHANGE_CURRENCY', $MODULE_NAME)}

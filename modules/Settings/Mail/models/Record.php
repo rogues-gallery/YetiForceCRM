@@ -4,7 +4,7 @@
  * Mail record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Adrian Koń <a.kon@yetiforce.com>
  */
 class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
@@ -58,7 +58,7 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 	 *
 	 * @return string
 	 */
-	public function getDisplayValue($key)
+	public function getDisplayValue(string $key)
 	{
 		$value = $this->get($key);
 		switch ($key) {
@@ -69,13 +69,16 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 			case 'status':
 				if (isset(\App\Mailer::$statuses[$value])) {
 					$value = \App\Language::translate(\App\Mailer::$statuses[$value], 'Settings::Mail');
+					if (2 === (int) $this->get('status')) {
+						$value = '<span class="fas fa-exclamation-triangle js-popover-tooltip color-red-a200" data-content="' . $this->get('error') . '">&nbsp;' . $value . '</span>';
+					}
 				}
 				break;
 			case 'owner':
 				$value = \App\Fields\Owner::getUserLabel($value);
 				break;
 			case 'content':
-				$value = vtlib\Functions::getHtmlOrPlainText($value);
+				$value = \App\Layout::truncateHtml(vtlib\Functions::getHtmlOrPlainText($value), 'full');
 				break;
 			case 'date':
 				$value = DateTimeField::convertToUserFormat($value);
@@ -101,6 +104,9 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 						++$fileCounter;
 					}
 				}
+				break;
+			case 'error':
+				 $value = \App\Layout::truncateHtml($value, 'mini', 30);
 				break;
 			default:
 				break;
@@ -134,10 +140,12 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 
 	/**
 	 * Function to delete the current Record Model.
+	 *
+	 * @return bool
 	 */
-	public function delete()
+	public function delete(): bool
 	{
-		\App\Db::getInstance('admin')->createCommand()
+		return \App\Db::getInstance('admin')->createCommand()
 			->delete('s_#__mail_queue', ['id' => $this->getId()])
 			->execute();
 	}
@@ -150,7 +158,7 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 	public function getRecordLinks()
 	{
 		$links = [];
-		if ($this->get('status') === 0) {
+		if (0 === $this->get('status')) {
 			$recordLinks[] = [
 				'linktype' => 'LISTVIEWRECORD',
 				'linklabel' => 'LBL_ACCEPTANCE_RECORD',
@@ -186,7 +194,7 @@ class Settings_Mail_Record_Model extends Settings_Vtiger_Record_Model
 		$query = (new \App\Db\Query())->from('s_#__mail_queue')->where(['id' => $id]);
 		$row = $query->createCommand(\App\Db::getInstance('admin'))->queryOne();
 		$instance = false;
-		if ($row !== false) {
+		if (false !== $row) {
 			$instance = new self();
 			$instance->setData($row);
 		}

@@ -46,7 +46,7 @@ class Vtiger_ListView_Model extends \App\Base
 			$instance->set('viewId', $viewId);
 			$queryGenerator->initForCustomViewById($viewId);
 		} else {
-			if ($viewId = $queryGenerator->initForDefaultCustomView()) {
+			if ($viewId = $queryGenerator->initForDefaultCustomView(true, true)) {
 				$instance->set('viewId', $viewId);
 			} else {
 				$queryGenerator->loadListFields();
@@ -63,10 +63,11 @@ class Vtiger_ListView_Model extends \App\Base
 	 *
 	 * @param string $value        - Module Name
 	 * @param mixed  $sourceModule
+	 * @param int    $cvId
 	 *
 	 * @return Vtiger_ListView_Model instance
 	 */
-	public static function getInstanceForPopup($value, $sourceModule = false)
+	public static function getInstanceForPopup($value, $sourceModule = false, int $cvId = 0)
 	{
 		$modelClassName = Vtiger_Loader::getComponentClassName('Model', 'ListView', $value);
 		$instance = new $modelClassName();
@@ -75,7 +76,13 @@ class Vtiger_ListView_Model extends \App\Base
 		if (!$sourceModule && !empty($sourceModule)) {
 			$moduleModel->set('sourceModule', $sourceModule);
 		}
-		$moduleModel->getModalRecordsListFields($queryGenerator, $sourceModule);
+		if ($cvId) {
+			$instance->set('viewId', $cvId);
+			$queryGenerator->initForCustomViewById($cvId);
+		} else {
+			$moduleModel->getModalRecordsListFields($queryGenerator, $sourceModule);
+		}
+
 		return $instance->set('module', $moduleModel)->set('query_generator', $queryGenerator);
 	}
 
@@ -173,7 +180,7 @@ class Vtiger_ListView_Model extends \App\Base
 			$advancedLinks[] = [
 				'linktype' => 'LISTVIEW',
 				'linklabel' => 'LBL_MERGING',
-				'linkicon' => 'fa fa-code',
+				'linkicon' => 'yfi yfi-merging-records',
 				'linkdata' => ['url' => "index.php?module={$moduleModel->getName()}&view=MergeRecords"],
 				'linkclass' => 'js-mass-action--merge',
 			];
@@ -235,7 +242,7 @@ class Vtiger_ListView_Model extends \App\Base
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_MASS_EDIT',
 				'linkurl' => 'javascript:Vtiger_List_Js.triggerMassEdit("index.php?module=' . $moduleModel->getName() . '&view=MassActionAjax&mode=showMassEditForm");',
-				'linkicon' => 'fas fa-edit'
+				'linkicon' => 'yfi yfi-full-editing-view'
 			];
 		}
 		if ($moduleModel->isPermitted('MassActive')) {
@@ -283,11 +290,11 @@ class Vtiger_ListView_Model extends \App\Base
 			];
 		}
 		$modCommentsModel = Vtiger_Module_Model::getInstance('ModComments');
-		if ($moduleModel->isCommentEnabled() && $modCommentsModel->isPermitted('EditView') && $moduleModel->isPermitted('MassAddComment')) {
+		if ($moduleModel->isCommentEnabled() && $modCommentsModel->isPermitted('CreateView') && $moduleModel->isPermitted('MassAddComment')) {
 			$massActionLinks[] = [
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_MASS_ADD_COMMENT',
-				'linkurl' => 'javascript:Vtiger_List_Js.triggerMassAction("index.php?module=' . $moduleModel->getName() . '&view=MassActionAjax&mode=showAddCommentForm")',
+				'linkurl' => 'javascript:Vtiger_List_Js.triggerMassComment("index.php?module=' . $moduleModel->getName() . '&view=MassActionAjax&mode=showAddCommentForm")',
 				'linkicon' => 'fas fa-comments'
 			];
 		}
@@ -296,7 +303,7 @@ class Vtiger_ListView_Model extends \App\Base
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_TRANSFER_OWNERSHIP',
 				'linkurl' => 'javascript:Vtiger_List_Js.triggerTransferOwnership("index.php?module=' . $moduleModel->getName() . '&view=MassActionAjax&mode=transferOwnership")',
-				'linkicon' => 'fas fa-user'
+				'linkicon' => 'yfi yfi-change-of-owner'
 			];
 		}
 		if ($moduleModel->isTrackingEnabled() && App\Config::module('ModTracker', 'UNREVIEWED_COUNT') && $moduleModel->isPermitted('ReviewingUpdates') && $currentUser->getId() === $currentUser->getRealId()) {
@@ -311,7 +318,7 @@ class Vtiger_ListView_Model extends \App\Base
 			$massActionLinks[] = [
 				'linktype' => 'LISTVIEWMASSACTION',
 				'linklabel' => 'LBL_RECORD_CONVERTER',
-				'linkdata' => ['url' => "index.php?module={$moduleModel->getName()}&view=RecordConverter&sourceView=List"],
+				'linkdata' => ['url' => "index.php?module={$moduleModel->getName()}&view=RecordConverter&sourceView=List", 'type' => 'modal'],
 				'linkicon' => 'fas fa-exchange-alt',
 				'linkclass' => 'u-cursor-pointer js-mass-action'
 			];
@@ -429,6 +436,9 @@ class Vtiger_ListView_Model extends \App\Base
 				$fieldName = $fieldInfo['field_name'];
 				$fieldModel = Vtiger_Field_Model::getInstance($fieldName, Vtiger_Module_Model::getInstance($fieldInfo['module_name']));
 				if (!empty($fieldInfo['source_field_name'])) {
+					if (!$this->getModule()->getFieldByName($fieldInfo['source_field_name'])->isActiveField()) {
+						continue;
+					}
 					$fieldModel->set('source_field_name', $fieldInfo['source_field_name']);
 					$fieldModel->set('isCalculateField', false);
 				} else {
@@ -441,11 +451,12 @@ class Vtiger_ListView_Model extends \App\Base
 				$headerFields[] = $fieldModel;
 			}
 		}
-		foreach ($headerFields as $fieldsModel) {
-			if ($fieldsModel && (!$fieldsModel->isViewable() || !$fieldsModel->getPermissions())) {
+		foreach ($headerFields as $fieldModel) {
+			if ($fieldModel && (!$fieldModel->isViewable() || !$fieldModel->getPermissions())) {
 				continue;
 			}
-			$headerFieldModels[] = $fieldsModel;
+			$name = $fieldModel->get('source_field_name') ? "{$fieldModel->getName()}:{$fieldModel->getModuleName()}:{$fieldModel->get('source_field_name')}" : $fieldModel->getName();
+			$headerFieldModels[$name] = $fieldModel;
 		}
 		return $headerFieldModels;
 	}
@@ -455,18 +466,22 @@ class Vtiger_ListView_Model extends \App\Base
 	 */
 	public function loadListViewOrderBy()
 	{
-		$orderBy = $this->getForSql('orderby');
-		if (!empty($orderBy)) {
-			[$fieldName, $moduleName, $sourceFieldName] = array_pad(explode(':', $orderBy), 3, false);
-			if ($sourceFieldName) {
-				return $this->getQueryGenerator()->setRelatedOrder([
-					'sourceField' => $sourceFieldName,
-					'relatedModule' => $moduleName,
-					'relatedField' => $fieldName,
-					'relatedSortOrder' => $this->getForSql('sortorder')
-				]);
+		$orderBy = $this->get('orderby');
+		if (!empty($orderBy) && \is_array($orderBy)) {
+			$fields = $this->getModule()->getFields();
+			foreach ($orderBy as $fieldName => $sortFlag) {
+				[$fieldName, $moduleName, $sourceFieldName] = array_pad(explode(':', $fieldName), 3, false);
+				if ($sourceFieldName && isset($fields[$sourceFieldName])) {
+					$this->getQueryGenerator()->setRelatedOrder([
+						'sourceField' => $sourceFieldName,
+						'relatedModule' => $moduleName,
+						'relatedField' => $fieldName,
+						'relatedSortOrder' => $sortFlag
+					]);
+				} elseif (isset($fields[$fieldName])) {
+					$this->getQueryGenerator()->setOrder($fieldName, $sortFlag);
+				}
 			}
-			return $this->getQueryGenerator()->setOrder($orderBy, $this->getForSql('sortorder'));
 		}
 	}
 
@@ -492,7 +507,7 @@ class Vtiger_ListView_Model extends \App\Base
 			if ('s' === $operator && 1 === \strlen($searchValue)) {
 				$searchValue = [$searchValue, strtolower($searchValue)];
 			}
-			$queryGenerator->addBaseSearchConditions($searchKey, $searchValue, $operator);
+			$queryGenerator->addCondition($searchKey, $searchValue, $operator);
 		}
 		$searchResult = $this->get('searchResult');
 		if ($searchResult && \is_array($searchResult)) {
@@ -524,9 +539,7 @@ class Vtiger_ListView_Model extends \App\Base
 		$this->loadListViewOrderBy();
 		$pageLimit = $pagingModel->getPageLimit();
 		$query = $this->getQueryGenerator()->createQuery();
-		if (0 !== $pagingModel->get('limit')) {
-			$query->limit($pageLimit + 1)->offset($pagingModel->getStartIndex());
-		}
+		$query->limit($pageLimit + 1)->offset($pagingModel->getStartIndex());
 		$rows = $query->all();
 		$count = \count($rows);
 		$pagingModel->calculatePageRange($count);
@@ -540,6 +553,18 @@ class Vtiger_ListView_Model extends \App\Base
 		$listViewRecordModels = $this->getRecordsFromArray($rows);
 		unset($rows);
 		return $listViewRecordModels;
+	}
+
+	/**
+	 * Function to get the list view all entries.
+	 *
+	 * @return Vtiger_Record_Model[] - Associative array of record id mapped to Vtiger_Record_Model instance.
+	 */
+	public function getAllEntries()
+	{
+		$this->loadListViewCondition();
+		$this->loadListViewOrderBy();
+		return $this->getRecordsFromArray($this->getQueryGenerator()->createQuery()->all());
 	}
 
 	/**

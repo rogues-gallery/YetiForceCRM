@@ -3,7 +3,7 @@
 /**
  * PermissionInspector class module model.
  *
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author  Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class PermissionInspector_Module_Model extends Vtiger_Module_Model
@@ -44,17 +44,30 @@ class PermissionInspector_Module_Model extends Vtiger_Module_Model
 		$profileNames = [];
 		if ($userModel && ($profiles = $userModel->getProfiles())) {
 			foreach ($profiles as $profileId) {
-				$profile = Settings_Profiles_Record_Model::getInstanceById($profileId);
-				$profileNames[] = \App\Language::translate($profile->getName(), 'Settings::Profiles');
+				if ($profile = Settings_Profiles_Record_Model::getInstanceById($profileId)) {
+					$profileNames[] = \App\Language::translate($profile->getName(), 'Settings::Profiles');
+				} else {
+					$profileNames[] = \App\Language::translate('LBL_PROFILE_DOES_NOT_EXIST', 'Settings::Profiles') . ':' . $profileId;
+					\App\Log::error('LBL_PROFILE_DOES_NOT_EXIST: ' . $profileId);
+				}
 			}
 		}
 		$permissions = [];
 		foreach ($this->get('actions') as $action) {
-			$permissions[$action] = $this->getParameters([
-				'isPermitted' => \App\Privilege::isPermitted($this->get('sourceModule'), $action, $recordId, $userId),
-				'accessLog' => \App\Privilege::$isPermittedLevel,
-				'profiles' => implode(',', $profileNames),
-			]);
+			try {
+				$permissions[$action] = $this->getParameters([
+					'isPermitted' => \App\Privilege::isPermitted($this->get('sourceModule'), $action, $recordId, $userId),
+					'accessLog' => \App\Privilege::$isPermittedLevel,
+					'profiles' => implode(',', $profileNames),
+				]);
+			} catch (\Throwable $th) {
+				\App\Log::error($th->__toString(), 'PermissionInspector');
+				$permissions[$action] = [
+					'isPermitted' => false,
+					'param' => $th->getMessage(),
+					'profiles' => implode(',', $profileNames),
+				];
+			}
 		}
 		return $permissions;
 	}

@@ -1,11 +1,11 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-inventoryfields-EditViewReference -->
 	{assign var="REFERENCE_LIST" value=$FIELD->getReferenceModules()}
 	{assign var="FIELD_NAME" value="inventory[{$ROW_NO}][{$FIELD->getColumnName()}]"}
 	{assign var="FIELD_INFO" value=\App\Purifier::encodeHtml(\App\Json::encode(['mandatory'=>true]))}
 	{assign var="REFERENCE_LIST_COUNT" value=count($REFERENCE_LIST)}
-	<div class="input-group input-group-sm referenceGroup">
+	<div class="invUitype_{$MODULE}_{$FIELD_NAME} input-group input-group-sm referenceGroup">
 		{if $REFERENCE_LIST_COUNT eq 1}
 			{assign var="REFERENCED_MODULE_NAME" value=reset($REFERENCE_LIST)}
 			<input name="popupReferenceModule" type="hidden" data-multi-reference="0" title="{reset($REFERENCE_LIST)}"

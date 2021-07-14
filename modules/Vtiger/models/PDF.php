@@ -3,8 +3,10 @@
 /**
  * Basic PDF Model Class.
  *
+ * @package Model
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Maciej Stencel <m.stencel@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radoslaw Skrzypczak <r.skrzypczak@yetiforce.com>
@@ -53,7 +55,7 @@ class Vtiger_PDF_Model extends \App\Base
 	protected $variables = [];
 
 	/**
-	 * View to picklist assigment array.
+	 * View to picklist assignment array.
 	 *
 	 * @var array
 	 */
@@ -107,7 +109,7 @@ class Vtiger_PDF_Model extends \App\Base
 	 */
 	public function get($key)
 	{
-		if ('conditions' === $key && !is_array(parent::get($key))) {
+		if ('conditions' === $key && !\is_array(parent::get($key))) {
 			return json_decode(parent::get($key), true);
 		}
 		return parent::get($key);
@@ -174,7 +176,7 @@ class Vtiger_PDF_Model extends \App\Base
 	{
 		$templates = $this->getActiveTemplatesForRecord($recordId, $view, $moduleName);
 
-		if (count($templates) > 0) {
+		if (\count($templates) > 0) {
 			return true;
 		}
 		return false;
@@ -218,7 +220,7 @@ class Vtiger_PDF_Model extends \App\Base
 	public function getActiveTemplatesForModule($moduleName, $view)
 	{
 		$templates = $this->getTemplatesByModule($moduleName);
-		foreach ($templates as $id => &$template) {
+		foreach ($templates as $id => $template) {
 			if (!$template->isVisible($view) || !$template->checkUserPermissions()) {
 				unset($templates[$id]);
 			}
@@ -243,7 +245,7 @@ class Vtiger_PDF_Model extends \App\Base
 			$handlerClass = Vtiger_Loader::getComponentClassName('Model', 'PDF', $moduleName);
 			$pdf = new $handlerClass();
 			$pdf->setData($row);
-			$templates[] = $pdf;
+			$templates[$pdf->getId()] = $pdf;
 		}
 		return $templates;
 	}
@@ -270,7 +272,7 @@ class Vtiger_PDF_Model extends \App\Base
 			}
 			\App\Cache::save($cache, $recordId, $pdf);
 		}
-		return $pdf;
+		return $pdf ? clone $pdf : $pdf;
 	}
 
 	/**
@@ -283,7 +285,7 @@ class Vtiger_PDF_Model extends \App\Base
 	public function getFieldFilterValueType($fieldname)
 	{
 		$conditions = $this->get('conditions');
-		if (!empty($conditions) && is_array($conditions)) {
+		if (!empty($conditions) && \is_array($conditions)) {
 			foreach ($conditions as $filter) {
 				if ($fieldname == $filter['fieldname']) {
 					return $filter['valuetype'];
@@ -315,10 +317,7 @@ class Vtiger_PDF_Model extends \App\Base
 	public function isVisible($view)
 	{
 		$visibility = explode(',', $this->get('visibility'));
-		if (in_array($this->viewToPicklistValue[$view], $visibility)) {
-			return true;
-		}
-		return false;
+		return \in_array($this->viewToPicklistValue[$view], $visibility);
 	}
 
 	/**
@@ -334,11 +333,14 @@ class Vtiger_PDF_Model extends \App\Base
 		if (\App\Cache::staticHas(__METHOD__, $key)) {
 			return \App\Cache::staticGet(__METHOD__, $key);
 		}
-		Vtiger_Loader::includeOnce('~/modules/com_vtiger_workflow/VTJsonCondition.php');
-		$conditionStrategy = new VTJsonCondition();
-		$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
-		$conditions = htmlspecialchars_decode($this->getRaw('conditions'));
-		$test = $conditionStrategy->evaluate($conditions, $recordModel);
+		$test = \App\Json::isEmpty($this->getRaw('conditions'));
+		if (!$test) {
+			Vtiger_Loader::includeOnce('~/modules/com_vtiger_workflow/VTJsonCondition.php');
+			$conditionStrategy = new VTJsonCondition();
+			$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+			$conditions = htmlspecialchars_decode($this->getRaw('conditions'));
+			$test = $conditionStrategy->evaluate($conditions, $recordModel);
+		}
 		\App\Cache::staticSave(__METHOD__, $key, $test);
 
 		return $test;
@@ -362,20 +364,20 @@ class Vtiger_PDF_Model extends \App\Base
 			$valueType = explode(':', $name);
 			$getTypes[$valueType[0]][] = $valueType[1];
 		}
-		if (in_array('Users:' . $currentUser->getId(), $permissions)) { // check user id
+		if (\in_array('Users:' . $currentUser->getId(), $permissions)) { // check user id
 			return true;
 		}
-		if (in_array('Roles:' . $currentUser->getRole(), $permissions)) {
+		if (\in_array('Roles:' . $currentUser->getRole(), $permissions)) {
 			return true;
 		}
-		if (array_key_exists('Groups', $getTypes)) {
+		if (\array_key_exists('Groups', $getTypes)) {
 			$accessibleGroups = array_keys(\App\Fields\Owner::getInstance($this->get('module_name'), $currentUser)->getAccessibleGroupForModule());
 			$groups = array_intersect($getTypes['Groups'], $currentUser->getGroups());
 			if (array_intersect($groups, $accessibleGroups)) {
 				return true;
 			}
 		}
-		if (array_key_exists('RoleAndSubordinates', $getTypes)) {
+		if (\array_key_exists('RoleAndSubordinates', $getTypes)) {
 			$roles = $currentUser->getParentRoles();
 			$roles[] = $currentUser->getRole();
 			if (array_intersect($getTypes['RoleAndSubordinates'], array_filter($roles))) {
@@ -518,6 +520,7 @@ class Vtiger_PDF_Model extends \App\Base
 				$this->textParser->setLanguage($this->get('language'));
 			}
 			$this->textParser->setType('pdf');
+			$this->textParser->useExtension = true;
 			$this->textParser->setParams(['pdf' => $this]);
 		} elseif (($this->variables['recordId'] ?? null) !== $this->textParser->record) {
 			$this->textParser = null;
@@ -566,7 +569,7 @@ class Vtiger_PDF_Model extends \App\Base
 			$zip->addFile($file['path'], $file['name']);
 		}
 
-		$zip->download('PdfZipFile_' . time() . '.zip');
+		$zip->download('PdfZipFile_' . time());
 		foreach ($fileNames as $file) {
 			unlink($file['path']);
 		}
@@ -581,7 +584,7 @@ class Vtiger_PDF_Model extends \App\Base
 	 */
 	public function getPath(string $prefix = '')
 	{
-		$filePath = \ROOT_DIRECTORY . \DIRECTORY_SEPARATOR . 'cache' . \DIRECTORY_SEPARATOR . 'pdf' . \DIRECTORY_SEPARATOR;
+		$filePath = 'cache' . \DIRECTORY_SEPARATOR . 'pdf' . \DIRECTORY_SEPARATOR;
 		$tmpFileName = tempnam($filePath, 'PDF' . $prefix . time());
 		return $filePath .= basename($tmpFileName);
 	}

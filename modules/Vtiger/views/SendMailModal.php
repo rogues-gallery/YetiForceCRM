@@ -3,9 +3,12 @@
 /**
  * Send mail modal class.
  *
+ * @package View
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 {
@@ -19,60 +22,79 @@ class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 	 * @throws \App\Exceptions\NoPermitted
 	 * @throws \App\Exceptions\NoPermittedToRecord
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if (!$request->isEmpty('sourceRecord') && !\App\Privilege::isPermitted($request->getByType('sourceModule', 2), 'DetailView', $request->getInteger('sourceRecord'))) {
 			throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
 		}
 	}
 
+	/** {@inheritdoc} */
+	public function getSize(App\Request $request)
+	{
+		return 'modal-lg';
+	}
+
 	/**
-	 * Pocess function.
+	 * Process function.
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$this->preProcess($request);
 		$viewer = $this->getViewer($request);
 		$templateModule = $moduleName = $request->getModule();
 		$sourceModule = $request->getByType('sourceModule', 2);
-		if ($sourceModule && isset(\App\TextParser::$sourceModules[$sourceModule]) && in_array($moduleName, \App\TextParser::$sourceModules[$sourceModule])) {
+		if ($sourceModule && isset(\App\TextParser::$sourceModules[$sourceModule]) && \in_array($moduleName, \App\TextParser::$sourceModules[$sourceModule])) {
 			$templateModule = $sourceModule;
 		}
+		[$recordsNumber, $duplicates, $emailsByField, $emails] = $this->getStatistics($request);
 		$viewer->assign('TEMPLATE_MODULE', $templateModule);
-		$viewer->assign('RECORDS', $this->getRecordsListFromRequest($request));
+		$viewer->assign('RECORDS_NUMBER', $recordsNumber);
+		$viewer->assign('DUPLICATES', $duplicates);
+		$viewer->assign('EMAILS_BY_FIELD', $emailsByField);
+		$viewer->assign('EMAIL_LIST', $emails);
 		$viewer->assign('FIELDS', $this->fields);
-		$viewer->assign('MODULE', $moduleName);
-		$viewer->assign('USER_MODEL', Users_Record_Model::getCurrentUserModel());
+		$viewer->assign('TEMPLATE_LIST', $this->getTemplateList($templateModule, $request));
 		$viewer->view('SendMailModal.tpl', $moduleName);
 		$this->postProcess($request);
 	}
 
 	/**
-	 * Get records list from request.
+	 * Get statistics from request.
 	 *
 	 * @param \App\Request $request
 	 *
-	 * @return int[]
+	 * @return array
 	 */
-	public function getRecordsListFromRequest(\App\Request $request)
+	public function getStatistics(App\Request $request)
 	{
 		$dataReader = $this->getQuery($request)->createCommand()->query();
-		$count = ['all' => 0, 'emails' => 0];
-		foreach ($this->fields as $fieldName => $fieldModel) {
-			$count[$fieldName] = 0;
+		$records = $duplicates = 0;
+		$emails = $emailsByField = [];
+		$fieldsName = array_keys($this->fields);
+		foreach ($fieldsName as $fieldName) {
+			$emailsByField[$fieldName] = 0;
 		}
 		while ($row = $dataReader->read()) {
-			$count['all'] += 1;
-			foreach ($this->fields as $fieldName => $fieldModel) {
+			++$records;
+			foreach ($fieldsName as $fieldName) {
 				if (!empty($row[$fieldName])) {
-					$count[$fieldName] += 1;
-					$count['emails'] += 1;
+					if (isset($emails[$row[$fieldName]])) {
+						++$duplicates;
+					} else {
+						$emails[$row[$fieldName]] = 0;
+					}
+					++$emails[$row[$fieldName]];
+					++$emailsByField[$fieldName];
 				}
 			}
 		}
-		return $count;
+		if (!\App\Config::component('Mail', 'showEmailsInMassMail')) {
+			$emails = [];
+		}
+		return [$records, $duplicates, $emailsByField, $emails];
 	}
 
 	/**
@@ -82,13 +104,14 @@ class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 	 *
 	 * @return \App\Db\Query
 	 */
-	public function getQuery(\App\Request $request)
+	public function getQuery(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$sourceModule = $request->getByType('sourceModule', 2);
 		if ($sourceModule) {
+			$cvId = $request->isEmpty('cvId', true) ? 0 : $request->getByType('cvId', 'Alnum');
 			$parentRecordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('sourceRecord'), $sourceModule);
-			$listView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $moduleName);
+			$listView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $moduleName, $request->getInteger('relationId'), $cvId);
 		} else {
 			$listView = Vtiger_ListView_Model::getInstance($moduleName, $request->getByType('viewname', 2));
 		}
@@ -104,7 +127,7 @@ class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 			$listView->set('search_value', $searchValue);
 		}
 		$searchParams = App\Condition::validSearchParams($listView->getQueryGenerator()->getModule(), $request->getArray('search_params'));
-		if (!empty($searchParams) && is_array($searchParams)) {
+		if (!empty($searchParams) && \is_array($searchParams)) {
 			$transformedSearchParams = $listView->getQueryGenerator()->parseBaseSearchParamsToCondition($searchParams);
 			$listView->set('search_params', $transformedSearchParams);
 		}
@@ -124,7 +147,7 @@ class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 		}
 		$queryGenerator->setFields(array_merge(['id'], array_keys($this->fields)));
 		$selected = $request->getArray('selected_ids', 2);
-		if ($selected && $selected[0] !== 'all') {
+		if ($selected && 'all' !== $selected[0]) {
 			$queryGenerator->addNativeCondition(["$baseTableName.$baseTableId" => $selected]);
 		}
 		$excluded = $request->getArray('excluded_ids', 2);
@@ -132,5 +155,34 @@ class Vtiger_SendMailModal_View extends Vtiger_BasicModal_View
 			$queryGenerator->addNativeCondition(['not in', "$baseTableName.$baseTableId" => $excluded]);
 		}
 		return $queryGenerator->createQuery();
+	}
+
+	/**
+	 * Get template list.
+	 *
+	 * @param string       $templateModule
+	 * @param \App\Request $request
+	 *
+	 * @return array
+	 */
+	public function getTemplateList(string $templateModule, App\Request $request): array
+	{
+		$templateList = [];
+		if (!$request->isEmpty('sourceRecord', true)
+			&& \App\Record::isExists($request->getInteger('sourceRecord'))
+			&& ($relations = \App\Relation::getByModule($request->getByType('sourceModule', \App\Purifier::ALNUM), true, 'EmailTemplates'))
+		) {
+			$relations = reset($relations);
+			$parentRecordModel = Vtiger_Record_Model::getInstanceById($request->getInteger('sourceRecord'), $request->getByType('sourceModule', \App\Purifier::ALNUM));
+			if (!$parentRecordModel->isViewable()) {
+				throw new \App\Exceptions\NoPermittedToRecord('ERR_NO_PERMISSIONS_FOR_THE_RECORD', 406);
+			}
+			$recordListModel = Vtiger_RelationListView_Model::getInstance($parentRecordModel, '', $relations['relation_id']);
+			$recordListModel->setFields(['id', 'name']);
+			$templateList = $recordListModel->getRelationQuery()->all();
+		} else {
+			$templateList = App\Mail::getTemplateList($templateModule);
+		}
+		return $templateList;
 	}
 }

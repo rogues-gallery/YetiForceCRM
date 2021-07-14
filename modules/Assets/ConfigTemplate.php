@@ -3,7 +3,7 @@
  * Assets module config.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Arkadiusz Sołek <a.solek@yetiforce.com>
  */
 return [
@@ -32,7 +32,7 @@ return [
 			$moduleModel = Vtiger_Module_Model::getInstance('Assets');
 			$fields = $moduleModel->getFields();
 			foreach ($fields as $field => $key) {
-				return in_array($field, $args);
+				return \in_array($field, $args);
 			}
 		}
 	],

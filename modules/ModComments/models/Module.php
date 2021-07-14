@@ -6,6 +6,7 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
+ * Contributor(s): YetiForce Sp. z o.o
  * *********************************************************************************** */
 
 class ModComments_Module_Model extends Vtiger_Module_Model
@@ -38,11 +39,9 @@ class ModComments_Module_Model extends Vtiger_Module_Model
 	}
 
 	/**
-	 * Function to get Settings links.
-	 *
-	 * @return <Array>
+	 * {@inheritdoc}
 	 */
-	public function getSettingLinks()
+	public function getSettingLinks(): array
 	{
 		Vtiger_Loader::includeOnce('~~modules/com_vtiger_workflow/VTWorkflowUtils.php');
 		$settingsLinks = [];
@@ -51,19 +50,25 @@ class ModComments_Module_Model extends Vtiger_Module_Model
 				'linktype' => 'LISTVIEWSETTING',
 				'linklabel' => 'LBL_EDIT_WORKFLOWS',
 				'linkurl' => 'index.php?parent=Settings&module=Workflows&view=List&sourceModule=' . $this->getName(),
-				'linkicon' => 'adminIcon-triggers',
+				'linkicon' => 'yfi yfi-workflows-2',
 			];
 		}
 		return $settingsLinks;
 	}
 
 	/**
-	 * Delete coments associated with module.
+	 * Delete comments associated with record.
 	 *
-	 * @param vtlib\ModuleBasic Instnace of module to use
+	 * @param int $recordId
 	 */
-	public static function deleteForModule(vtlib\ModuleBasic $moduleInstance)
+	public static function deleteForRecord(int $recordId)
 	{
-		\App\Db::getInstance()->createCommand()->delete('vtiger_modcomments', ['related_to' => (new \App\Db\Query())->select(['crmid'])->from('vtiger_crmentity')->where(['setype' => $moduleInstance->name])])->execute();
+		$queryGenerator = new \App\QueryGenerator('ModComments');
+		$dataReader = $queryGenerator->setFields(['id'])->setStateCondition('All')->addNativeCondition(['related_to' => $recordId])->createQuery()->createCommand()->query();
+		while ($id = $dataReader->readColumn(0)) {
+			$recordModel = \Vtiger_Record_Model::getInstanceById($id, $queryGenerator->getModule());
+			$recordModel->delete();
+			unset($recordModel);
+		}
 	}
 }

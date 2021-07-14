@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="tpl-Import-ImportPreview modal" tabindex="-1" role="dialog">
 		<div class="modal-dialog modal-lg modal-full" role="document">
@@ -11,7 +11,7 @@
 				</div>
 				<div class="modal-body">
 					<div class="listViewContentDiv" id="listViewContents">
-						<div class="listViewEntriesDiv u-overflow-scroll-xsm-down">
+						<div class="listViewEntriesDiv u-overflow-scroll-non-desktop">
 							<table class="table table-bordered listViewEntriesTable">
 								<thead>
 									<tr class="listViewHeaders">

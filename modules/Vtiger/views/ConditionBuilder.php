@@ -3,8 +3,10 @@
 /**
  * View to display row with fields, operators and value.
  *
+ * @package View
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class Vtiger_ConditionBuilder_View extends Vtiger_IndexAjax_View
@@ -37,7 +39,7 @@ class Vtiger_ConditionBuilder_View extends Vtiger_IndexAjax_View
 			$fieldModel = current($sourceModuleModel->getFields());
 		} else {
 			$fieldInfo = $request->getForSql('fieldname', false);
-			[$fieldModuleName, $fieldName, $sourceFieldName] = array_pad(explode(':', $fieldInfo), 3, false);
+			[$fieldName, $fieldModuleName, $sourceFieldName] = array_pad(explode(':', $fieldInfo), 3, false);
 			if (!empty($sourceFieldName)) {
 				$fieldModel = Vtiger_Field_Model::getInstance($fieldName, Vtiger_Module_Model::getInstance($fieldModuleName));
 			} else {

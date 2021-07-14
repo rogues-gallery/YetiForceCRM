@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{assign var="FIELD_INFO" value=\App\Json::encode($FIELD_MODEL->getFieldInfo())}
 	{assign var="REFERENCE_LIST" value=$FIELD_MODEL->getReferenceList()}
@@ -6,7 +6,7 @@
 	{if isset($SEARCH_INFO['searchValue'])}
 		{assign var=SEARCH_VALUES value=explode('##', $SEARCH_INFO['searchValue'])}
 	{else}
-		{assign var=SEARCH_VALUE value=[]}
+		{assign var=SEARCH_VALUES value=[]}
 	{/if}
 	<div class="tpl-List-Field-Reference picklistSearchField">
 		<select class="select2noactive listSearchContributor {$FIELD_MODEL->getName()}" name="{$FIELD_MODEL->getName()}"

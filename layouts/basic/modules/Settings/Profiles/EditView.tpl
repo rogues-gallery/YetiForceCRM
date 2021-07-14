@@ -12,7 +12,7 @@
 {strip}
 	<div class="tpl-Settings-Profiles-EditView">
 		<form id="EditView" name="EditProfile" action="index.php" method="post" class="form-horizontal">
-			<div class="widget_header row">
+			<div class="o-breadcrumb widget_header row">
 				<div class="col-md-8">
 					{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 				</div>
@@ -190,7 +190,7 @@
 														<span class="mr-2">
 															{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE_NAME) }
 														</span>
-														<span class="text-muted align-text-top u-font-size-10px">
+														<span class="text-muted align-text-top u-fs-10px">
 															 ({\App\Language::translate($FIELD_MODEL->getBlockName(), $MODULE_NAME)})
 														 </span>
 													</div>

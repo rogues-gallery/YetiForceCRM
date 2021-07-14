@@ -1,13 +1,13 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 jQuery.Class(
 	'Vtiger_GenerateModal_Js',
 	{},
 	{
-		registerGenetateButton: function(container) {
+		registerGenetateButton: function (container) {
 			const thisInstance = this;
-			container.find('button.js-genetate-button').on('click', function(e) {
+			container.find('button.js-genetate-button').on('click', function (e) {
 				document.progressLoader = $.progressIndicator({
 					message: app.vtranslate('JS_LOADING_PLEASE_WAIT'),
 					position: 'html',
@@ -32,26 +32,26 @@ jQuery.Class(
 						},
 						dataType: 'json'
 					})
-						.done(function(data) {
+						.done(function (data) {
 							let response = data['result'];
 							if (data['success']) {
 								let records = response.ok;
 								thisInstance.summary(container, response);
 								document.progressLoader.progressIndicator({ mode: 'hide' });
-								if (1 === method.val()) {
+								if ('1' === method.val()) {
 									for (let i in records) {
 										window.open(actionUrl + records[i], '_blank');
 									}
 								}
 							}
 						})
-						.fail(function(data, err) {
+						.fail(function (data, err) {
 							app.errorLog(data, err);
 						});
 				}
 			});
 		},
-		summary: function(container, data) {
+		summary: function (container, data) {
 			container.find('.modal-title').text(app.vtranslate('JS_SUMMARY'));
 			container
 				.find('.modal-body')
@@ -71,14 +71,14 @@ jQuery.Class(
 						'</strong></div>'
 				);
 		},
-		registerEvents: function() {
+		registerEvents: function () {
 			var container = jQuery('.generateMappingModal');
 			this.registerGenetateButton(container);
 		}
 	}
 );
 
-jQuery(document).ready(function(e) {
+jQuery(document).ready(function (e) {
 	var instance = new Vtiger_GenerateModal_Js();
 	instance.registerEvents();
 });

@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 'use strict';
 
 jQuery.Class('Vtiger_RelatedCommentModal_Js', {
@@ -6,9 +6,9 @@ jQuery.Class('Vtiger_RelatedCommentModal_Js', {
 	/*
 	 * Function to register the click event for generate button
 	 */
-	registerSubmitEvent: function(container) {
+	registerSubmitEvent: function (container) {
 		const self = this;
-		container.find('[name="saveButton"]').on('click', function(e) {
+		container.find('[name="saveButton"]').on('click', function (e) {
 			var progressLoader = $.progressIndicator({
 				position: 'html',
 				blockInfo: {
@@ -26,24 +26,24 @@ jQuery.Class('Vtiger_RelatedCommentModal_Js', {
 				relmodule: container.find('.relatedModuleName').val()
 			};
 			AppConnector.request(params)
-				.done(function(data) {
+				.done(function (data) {
 					Vtiger_Helper_Js.showMessage({ text: data.result });
 					app.hideModalWindow();
 					progressLoader.progressIndicator({ mode: 'hide' });
 					self.windowParent.Vtiger_Detail_Js.getInstance().reloadTabContent();
 				})
-				.fail(function(error) {
+				.fail(function (error) {
 					progressLoader.progressIndicator({ mode: 'hide' });
 				});
 		});
 	},
-	registerEvents: function() {
+	registerEvents: function () {
 		var container = $('#modalRelatedCommentModal');
 		new App.Fields.Text.Completions(container.find('.js-completions'));
 		this.registerSubmitEvent(container);
 	}
 });
-$(function() {
+$(function () {
 	var instance = new Vtiger_RelatedCommentModal_Js();
 	instance.registerEvents();
 });

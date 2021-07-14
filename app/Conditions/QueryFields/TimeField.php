@@ -5,8 +5,10 @@ namespace App\Conditions\QueryFields;
 /**
  * Time Query Field Class.
  *
+ * @package UIType
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class TimeField extends BaseField
@@ -19,16 +21,6 @@ class TimeField extends BaseField
 	public function operatorG()
 	{
 		return ['>', $this->getColumnName(), $this->getValue()];
-	}
-
-	/**
-	 * Get value.
-	 *
-	 * @return mixed
-	 */
-	public function getValue()
-	{
-		return \App\Fields\Time::formatToDB($this->value);
 	}
 
 	/**

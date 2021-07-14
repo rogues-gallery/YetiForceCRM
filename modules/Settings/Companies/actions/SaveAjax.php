@@ -4,7 +4,7 @@
  * Companies SaveAjax action model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Adrian Koń <a.kon@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -26,7 +26,7 @@ class Settings_Companies_SaveAjax_Action extends Settings_Vtiger_Basic_Action
 	 *
 	 * @return array
 	 */
-	public function updateCompany(\App\Request $request)
+	public function updateCompany(App\Request $request)
 	{
 		if (!$request->isEmpty('record')) {
 			$recordModel = Settings_Companies_Record_Model::getInstance($request->getInteger('record'));

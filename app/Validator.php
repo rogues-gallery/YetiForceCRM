@@ -4,7 +4,7 @@
  *
  * @package   App
  *
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @copyright YetiForce Sp. z o.o
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -53,6 +53,18 @@ class Validator
 	}
 
 	/**
+	 * Function verifies if given value contains only words, digits  or space.
+	 *
+	 * @param int|string $input
+	 *
+	 * @return bool
+	 */
+	public static function alnumSpace($input): bool
+	{
+		return preg_match('/^[[:alnum:]_ ]+$/', $input);
+	}
+
+	/**
 	 * Function verifies if given value is compatible with default data format.
 	 *
 	 * @param string $input
@@ -61,8 +73,7 @@ class Validator
 	 */
 	public static function date(string $input): bool
 	{
-		[$y, $m, $d] = Fields\Date::explode($input);
-		return checkdate($m, $d, $y) && is_numeric($y) && is_numeric($m) && is_numeric($d);
+		return Fields\Date::isValid($input);
 	}
 
 	/**
@@ -78,8 +89,20 @@ class Validator
 		if (null === $userId) {
 			$userId = User::getCurrentUserId();
 		}
-		[$y, $m, $d] = Fields\Date::explode($input, User::getUserModel($userId)->getDetail('date_format'));
-		return checkdate($m, $d, $y) && is_numeric($y) && is_numeric($m) && is_numeric($d);
+		return Fields\Date::isValid($input, User::getUserModel($userId)->getDetail('date_format'));
+	}
+
+	/**
+	 * Function verifies if given value is compatible with date time in ISO format.
+	 *
+	 * @param string   $input
+	 * @param int|null $userId
+	 *
+	 * @return bool
+	 */
+	public static function dateTimeInIsoFormat(string $input): bool
+	{
+		return preg_match('/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(.[0-9]+)?(Z)?$/', $input);
 	}
 
 	/**
@@ -128,8 +151,8 @@ class Validator
 		if (($arrInput = \explode(' ', $input)) && 2 === \count($arrInput)) {
 			[$dateInput, $timeInput] = $arrInput;
 			[$y, $m, $d] = Fields\Date::explode($dateInput);
-			$result = checkdate($m, $d, $y) && is_numeric($y) && is_numeric($m) && is_numeric($d) &&
-				preg_match('/(2[0-3]|[0][0-9]|1[0-9]):([0-5][0-9]):([0-5][0-9])/', $timeInput);
+			$result = checkdate($m, $d, $y) && is_numeric($y) && is_numeric($m) && is_numeric($d)
+				&& preg_match('/(2[0-3]|[0][0-9]|1[0-9]):([0-5][0-9]):([0-5][0-9])/', $timeInput);
 		}
 		return $result;
 	}
@@ -145,7 +168,7 @@ class Validator
 	public static function dateTimeInUserFormat(string $input, ?int $userId = null): bool
 	{
 		$result = false;
-		if (($arrInput = \explode(' ', $input)) && 2 === \count($arrInput)) {
+		if (($arrInput = \explode(' ', $input, 2)) && 2 === \count($arrInput)) {
 			$userModel = User::getUserModel($userId ?? User::getCurrentUserId());
 			[$dateInput, $timeInput] = $arrInput;
 			[$y, $m, $d] = Fields\Date::explode($dateInput, $userModel->getDetail('date_format'));
@@ -191,12 +214,17 @@ class Validator
 	 * @param float $value1
 	 * @param float $value2
 	 * @param int   $precision
+	 * @param mixed $rounding
 	 *
 	 * @return bool
 	 */
-	public static function floatIsEqual(float $value1, float $value2, int $precision = 2): bool
+	public static function floatIsEqual(float $value1, float $value2, int $precision = 2, $rounding = true): bool
 	{
-		return abs(round(round($value1, $precision) - round($value2, $precision))) < (1 / pow(10, $precision));
+		if ($rounding) {
+			$value1 = round($value1, $precision);
+			$value2 = round($value2, $precision);
+		}
+		return 0 === bccomp($value1, $value2, $precision);
 	}
 
 	/**
@@ -257,7 +285,40 @@ class Validator
 	 */
 	public static function email(string $email): bool
 	{
-		return false !== filter_var($email, FILTER_VALIDATE_EMAIL) && $email === filter_var($email, FILTER_SANITIZE_EMAIL);
+		return false !== filter_var($email, FILTER_VALIDATE_EMAIL, FILTER_FLAG_EMAIL_UNICODE) && $email === filter_var($email, FILTER_SANITIZE_EMAIL);
+	}
+
+	/**
+	 *  Function checks if given value is email.
+	 *
+	 * @param string|array $emails
+	 *
+	 * @return bool
+	 */
+	public static function emails($emails): bool
+	{
+		$emails = \is_string($emails) ? explode(',', $emails) : $emails;
+		foreach ($emails as $email) {
+			if ($email && !self::email($email)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Function checks if given value is url or domain.
+	 *
+	 * @param string $url
+	 *
+	 * @return bool
+	 */
+	public static function urlDomain(string $url): bool
+	{
+		if (false === strpos($url, '://')) {
+			return static::domain($url);
+		}
+		return static::url($url);
 	}
 
 	/**
@@ -269,6 +330,11 @@ class Validator
 	 */
 	public static function url(string $url): bool
 	{
+		if (mb_strlen($url) != \strlen($url) && \function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+			$url = preg_replace_callback('/:\/\/([^\/]+)/', function ($matches) {
+				return '://' . idn_to_ascii($matches[1], IDNA_NONTRANSITIONAL_TO_ASCII, INTL_IDNA_VARIANT_UTS46);
+			}, $url);
+		}
 		return false !== filter_var($url, FILTER_VALIDATE_URL);
 	}
 
@@ -281,6 +347,9 @@ class Validator
 	 */
 	public static function domain(string $input): bool
 	{
+		if (mb_strlen($input) != \strlen($input) && \function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+			$input = idn_to_ascii($input, IDNA_NONTRANSITIONAL_TO_ASCII, INTL_IDNA_VARIANT_UTS46);
+		}
 		return false !== filter_var($input, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
 	}
 
@@ -306,6 +375,18 @@ class Validator
 	public static function dbName(string $input): bool
 	{
 		return preg_match('/^[^\\/?%*:|\\\"<>.\s]{1,64}$/', $input);
+	}
+
+	/**
+	 * Function checks if given value is valid db user name.
+	 *
+	 * @param int|string $input
+	 *
+	 * @return bool
+	 */
+	public static function dbUserName($input): bool
+	{
+		return preg_match('/^[_a-zA-Z0-9.,:-]+$/', $input);
 	}
 
 	/**
@@ -342,5 +423,37 @@ class Validator
 	public static function timePeriod($input): bool
 	{
 		return preg_match('/^[0-9]{1,18}\:(d|H|i){1}$/', $input);
+	}
+
+	/**
+	 * Check if input is an ip value.
+	 *
+	 * @param string|string[] $input
+	 *
+	 * @return bool
+	 */
+	public static function ip($input): bool
+	{
+		$input = \is_array($input) ? $input : [$input];
+		$result = true;
+		foreach ($input as $ipAddress) {
+			if (false === filter_var($ipAddress, FILTER_VALIDATE_IP)) {
+				$result = false;
+				break;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Function verifies if given value is text.
+	 *
+	 * @param string $input
+	 *
+	 * @return bool
+	 */
+	public static function text(string $input): bool
+	{
+		return Purifier::decodeHtml(Purifier::purify($input)) === $input;
 	}
 }

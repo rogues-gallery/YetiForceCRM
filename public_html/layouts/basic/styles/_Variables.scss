@@ -1,4 +1,4 @@
-/* {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
+/* {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} */
 @import "../../../libraries/sass-material-colors/sass/_sass-material-colors.scss";
 @import "../../../libraries/bootstrap/scss/_functions";
 @import "../../../libraries/bootstrap/scss/_mixins";
@@ -13,6 +13,8 @@ $yeti: #406a95;
 $secondary: #5e666c;
 $blue: #337ab7;
 $navy: #202c40;
+$yf-gray: #f3f3f3;
+$yf-dark-gray: #b3b3b3;
 $pagination-color: $link-color;
 $grid-breakpoints: (
 	xs: 0,
@@ -46,6 +48,8 @@ $h-dashboard-tabs: calculate-rem(58px);
 $w-header-search: 500px;
 $h-main-viewport: calc(100vh - (#{$h-footer} + #{$h-header}));
 $h-main-viewport-limited-footer: calc(100vh - (#{$h-footer-limited} + #{$h-header}));
+$h-register-panel: calculate-rem(32px);
+$h-edit-offset: calculate-rem(128px);
 
 $h-date-list: calculate-rem(95px);
 $h-filter-tabs: calculate-rem(43px);

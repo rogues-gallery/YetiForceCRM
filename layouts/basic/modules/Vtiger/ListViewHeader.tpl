@@ -36,16 +36,17 @@
 								<optgroup
 										label='{\App\Language::translate('LBL_CV_GROUP_'|cat:strtoupper($GROUP_LABEL))}'>
 									{foreach item="CUSTOM_VIEW" from=$GROUP_CUSTOM_VIEWS}
-										<option data-orderby="{$CUSTOM_VIEW->getSortOrderBy('orderBy')}"
-												data-sortorder="{$CUSTOM_VIEW->getSortOrderBy('sortOrder')}"
-												data-editurl="{$CUSTOM_VIEW->getEditUrl()}"
-												data-deleteurl="{$CUSTOM_VIEW->getDeleteUrl()}"
+										<option
+												data-editurl="{$CUSTOM_VIEW->getEditUrl($MID)}"
+												data-deleteurl="{$CUSTOM_VIEW->getDeleteUrl($MID)}"
 												data-approveurl="{$CUSTOM_VIEW->getApproveUrl()}"
 												data-denyurl="{$CUSTOM_VIEW->getDenyUrl()}"
 												data-duplicateurl="{$CUSTOM_VIEW->getDuplicateUrl()}" {' '}
 												data-editable="{$CUSTOM_VIEW->isEditable()}"
 												data-deletable="{$CUSTOM_VIEW->privilegeToDelete()}" {' '}
-												data-featured="{$CUSTOM_VIEW->isFeatured()}"
+												{if $CUSTOM_VIEW->isFeaturedEditable()}
+													data-featured="{$CUSTOM_VIEW->isFeatured()}"
+												{/if}
 												data-pending="{$CUSTOM_VIEW->isPending()}" {' '}
 												data-public="{$CUSTOM_VIEW->isPublic() && $USER_MODEL->isAdminUser()}"
 												{if $GROUP_LABEL neq 'Mine' && $GROUP_LABEL neq 'System'}
@@ -73,7 +74,7 @@
 								</optgroup>
 							{/if}
 						</select>
-						{if \App\Privilege::isPermitted($MODULE, 'CreateCustomFilter')}
+						{if (!$MID || !\App\CustomView::getModuleFiltersByMenuId($MID, $MODULE)) && \App\Privilege::isPermitted($MODULE, 'CreateCustomFilter')}
 							<div class="filterActionsDiv d-none">
 								<hr>
 								<ul class="filterActions list-unstyled m-2">
@@ -89,7 +90,7 @@
 						<input type="hidden" value="0" id="customFilter"/>
 					{/if}
 				</div>
-				<div class="c-list__right-container d-flex flex-nowrap u-overflow-scroll-xsm-down">
+				<div class="c-list__right-container d-flex flex-nowrap u-overflow-scroll-non-desktop">
 					{include file=\App\Layout::getTemplatePath('ListViewActions.tpl')}
 				</div>
 			</div>

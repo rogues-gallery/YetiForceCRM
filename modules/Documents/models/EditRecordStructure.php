@@ -10,11 +10,7 @@
 
 class Documents_EditRecordStructure_Model extends Vtiger_EditRecordStructure_Model
 {
-	/**
-	 * Function to get the values in stuctured format.
-	 *
-	 * @return <array> - values in structure array('block'=>array(fieldinfo));
-	 */
+	/** {@inheritdoc} */
 	public function getStructure()
 	{
 		if (!empty($this->structuredValues)) {
@@ -24,32 +20,40 @@ class Documents_EditRecordStructure_Model extends Vtiger_EditRecordStructure_Mod
 		$values = [];
 		$recordModel = $this->getRecord();
 		$recordId = $recordModel->getId();
-		$moduleModel = $this->getModule();
-		$blockModelList = $moduleModel->getBlocks();
+		$fieldsDependency = \App\FieldsDependency::getByRecordModel($recordModel->isNew() ? 'Create' : 'Edit', $recordModel);
+		$blockModelList = $this->getModule()->getBlocks();
 		foreach ($blockModelList as $blockLabel => $blockModel) {
 			$fieldModelList = $blockModel->getFields();
 			if (!empty($fieldModelList)) {
 				$values[$blockLabel] = [];
 				foreach ($fieldModelList as $fieldName => $fieldModel) {
-					if ($fieldModel->isEditable()) {
+					if ($fieldModel->isEditable() && (!$fieldsDependency['hide']['backend'] || !\in_array($fieldName, $fieldsDependency['hide']['backend']))) {
 						$fieldValue = $recordModel->get($fieldName);
 						if (!$fieldValue && !$recordId) {
 							$fieldValue = $fieldModel->getDefaultFieldValue();
 						}
 						//By default the file status should be active while creating a Document record
-						if ($fieldName === 'filestatus' && !$recordId) {
+						if ('filestatus' === $fieldName && !$recordId) {
 							$fieldValue = true;
 						}
 						if ($fieldValue) {
 							$fieldModel->set('fieldvalue', $fieldValue);
 						}
+						if ($fieldsDependency['hide']['frontend'] && \in_array($fieldName, $fieldsDependency['hide']['frontend'])) {
+							$fieldModel->set('hideField', true);
+						}
+						if ($fieldsDependency['mandatory'] && \in_array($fieldName, $fieldsDependency['mandatory'])) {
+							$fieldModel->set('isMandatory', true);
+						}
 						$values[$blockLabel][$fieldName] = $fieldModel;
+						if ($fieldModel->get('tabindex') > Vtiger_Field_Model::$tabIndexLastSeq) {
+							Vtiger_Field_Model::$tabIndexLastSeq = $fieldModel->get('tabindex');
+						}
 					}
 				}
 			}
 		}
-		$this->structuredValues = $values;
-
-		return $values;
+		++Vtiger_Field_Model::$tabIndexLastSeq;
+		return $this->structuredValues = $values;
 	}
 }

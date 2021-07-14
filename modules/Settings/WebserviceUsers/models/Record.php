@@ -3,19 +3,73 @@
 /**
  * Record Model.
  *
+ * @package Settings.Model
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 {
+	/**
+	 * Changes.
+	 *
+	 * @var array
+	 */
+	public $changes = [];
+	/**
+	 * Table name.
+	 *
+	 * @var string
+	 */
+	public $baseTable = '';
+
+	/**
+	 * Table name.
+	 *
+	 * @var string
+	 */
+	public $baseIndex = '';
+
+	/**
+	 * Module Name.
+	 *
+	 * @var string
+	 */
+	public $name = 'WebserviceUsers';
+
 	/**
 	 * Edit fields.
 	 *
 	 * @var string[]
 	 */
-	private $editFields = ['Portal' => [
-		'server_id' => 'FL_SERVER', 'status' => 'FL_STATUS', 'user_name' => 'FL_LOGIN', 'password_t' => 'FL_PASSWORD', 'type' => 'FL_TYPE', 'language' => 'FL_LANGUAGE', 'crmid' => 'FL_RECORD_NAME', 'user_id' => 'FL_USER', 'istorage' => 'FL_STORAGE'],
+	public $editFields = [];
+
+	/**
+	 * List of fields displayed in list view.
+	 *
+	 * @var string[]
+	 */
+	public $listFields = [];
+
+	/** @var array List of fields in param column. */
+	public $paramsFields = [];
+
+	/** @var array List of custom params labels. */
+	public static $customParamsLabels = [
+		'language' => 'FL_LANGUAGE',
+		'ip' => 'FL_LAST_IP',
+		'invalid_login_time' => 'FL_DATETIME_LAST_INVALID_LOGIN',
+		'invalid_login' => 'FL_LAST_INVALID_LOGIN',
+		'logout_time' => 'FL_LOGOUT_TIME',
+		'last_error' => 'FL_LAST_ERROR',
+		'error_time' => 'FL_LAST_ERROR_DATE',
+		'error_method' => 'FL_LAST_ERROR_METHOD',
+		'version' => 'FL_VERSION',
+		'fromUrl' => 'FL_FROM_URL',
+		'agent' => 'LBL_USER_AGENT',
+		'deviceId' => 'LBL_DEVICE_ID',
 	];
 
 	/**
@@ -29,13 +83,13 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	}
 
 	/**
-	 * Record name.
+	 * Check if record is new.
 	 *
-	 * @return string
+	 * @return int
 	 */
-	public function getName()
+	public function isNew()
 	{
-		return $this->get('name');
+		return !$this->getId() || $this->getId() && \array_key_exists('id', $this->changes) && empty($this->changes['id']);
 	}
 
 	/**
@@ -61,7 +115,29 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	public function setModule($moduleModel)
 	{
 		$this->module = $moduleModel;
+		return $this;
+	}
 
+	/** {@inheritdoc} */
+	public function getName()
+	{
+		return $this->get('name');
+	}
+
+	/** {@inheritdoc} */
+	public function init(array $data)
+	{
+		$this->setData($data);
+		return $this;
+	}
+
+	/** {@inheritdoc} */
+	public function set($key, $value)
+	{
+		if (($prev = $this->value[$key] ?? null) !== $value) {
+			$this->changes[$key] = $prev;
+		}
+		parent::set($key, $value);
 		return $this;
 	}
 
@@ -72,64 +148,136 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	 */
 	public function getEditFields()
 	{
-		return $this->editFields[$this->getModule()->typeApi];
+		return $this->editFields;
 	}
 
 	/**
-	 * Function determines fields available in edition view.
+	 * Get user session.
 	 *
-	 * @param mixed $name
+	 * @param string $container
 	 *
-	 * @return string[]
+	 * @return array
 	 */
-	public function getFieldInstanceByName($name)
+	public function getUserSession(string $container): array
 	{
-		$moduleName = $this->getModule()->getName(true);
-		$fieldsLabel = $this->getEditFields();
-		$params = ['uitype' => 1, 'column' => $name, 'name' => $name, 'label' => $fieldsLabel[$name], 'displaytype' => 1, 'typeofdata' => 'V~M', 'presence' => 0, 'isEditableReadOnly' => false];
-		switch ($name) {
-			case 'crmid':
-				$params['uitype'] = 10;
-				$params['referenceList'] = ['Contacts'];
-				break;
-			case 'istorage':
-				$params['uitype'] = 10;
-				$params['referenceList'] = ['IStorages'];
-				break;
-			case 'status':
-				$params['uitype'] = 16;
-				$params['picklistValues'] = [1 => \App\Language::translate('PLL_ACTIVE', $moduleName), 0 => \App\Language::translate('PLL_INACTIVE', $moduleName)];
-				break;
-			case 'server_id':
-				$servers = Settings_WebserviceApps_Module_Model::getActiveServers($this->getModule()->typeApi);
-				$params['uitype'] = 16;
-				foreach ($servers as $key => $value) {
-					$params['picklistValues'][$key] = $value['name'];
-				}
-				break;
-			case 'type':
-				$params['uitype'] = 16;
-				$params['picklistValues'] = [];
-				foreach ($this->getTypeValues() as $key => $value) {
-					$params['picklistValues'][$key] = \App\Language::translate($value, $moduleName);
-				}
-				break;
-			case 'language':
-				$params['typeofdata'] = 'V~O';
-				$params['uitype'] = 32;
-				$params['picklistValues'] = \App\Language::getAll();
-				break;
-			case 'user_id':
-				$params['uitype'] = 16;
-				$params['picklistValues'] = \App\Fields\Owner::getInstance($moduleName)->getAccessibleUsers('', 'owner');
-				break;
-			case 'password_t':
-				$params['typeofdata'] = 'P~M';
-				break;
-			default:
-				break;
+		$dataReader = (new \App\Db\Query())->from(\Api\Core\Containers::$listTables[$container]['session'])
+			->where(['user_id' => $this->getId()])
+			->orderBy(['changed' => SORT_DESC])
+			->limit(30)
+			->createCommand()->query();
+		$data = [];
+		while ($row = $dataReader->read()) {
+			$data[] = $this->getFormatDataSession($row);
 		}
-		return Settings_Vtiger_Field_Model::init($moduleName, $params);
+		return $data;
+	}
+
+	/**
+	 * Get user session.
+	 *
+	 * @param string $container
+	 *
+	 * @return array
+	 */
+	public function getUserHistoryAccessActivity(string $container): array
+	{
+		$dataReader = (new \App\Db\Query())->from(\Api\Core\Containers::$listTables[$container]['loginHistory'])
+			->where(['user_id' => $this->getId()])
+			->orderBy(['id' => SORT_DESC])
+			->limit(30)
+			->createCommand()->query();
+		$data = [];
+		while ($row = $dataReader->read()) {
+			$data[] = $this->getFormatLoginHistory($row);
+		}
+		return $data;
+	}
+
+	/**
+	 * Get format data session.
+	 *
+	 * @param array $row
+	 *
+	 * @return array
+	 */
+	public function getFormatDataSession(array $row): array
+	{
+		foreach ($row as $key => $value) {
+			switch ($key) {
+				case 'language':
+					$row[$key] = $value ? \App\Language::getLanguageLabel($value) : '';
+					break;
+				case 'created':
+				case 'changed':
+					$row[$key] = \App\Fields\DateTime::formatToDisplay($value);
+					break;
+				case 'params':
+					if ($value) {
+						$params = \App\Json::decode($value);
+						$value = '';
+						foreach ($params as $paramsKey => $paramsValue) {
+							$value .= \App\Language::translate(self::$customParamsLabels[$paramsKey] ?? $paramsKey, 'Settings.WebserviceUsers') . ": $paramsValue \n";
+						}
+						$row[$key] = \App\Layout::truncateText($value, 50, true);
+					}
+					break;
+					case 'agent':
+						$row[$key] = \App\Layout::truncateText($value, 50, true);
+						break;
+				default:
+					break;
+			}
+			if (!\in_array($key, ['params', 'agent'])) {
+				$row[$key] = App\Purifier::encodeHtml($row[$key]);
+			}
+		}
+		return $row;
+	}
+
+	/**
+	 * Get format data session.
+	 *
+	 * @param array $row
+	 *
+	 * @return array
+	 */
+	public function getFormatLoginHistory(array $row): array
+	{
+		foreach ($row as $key => $value) {
+			switch ($key) {
+				case 'time':
+					$row[$key] = \App\Fields\DateTime::formatToDisplay($value);
+					break;
+				case 'status':
+						$row[$key] = \App\Language::translate($value, 'Settings::' . $this->getModule()->getName());
+					break;
+				case 'agent':
+					$row[$key] = \App\Layout::truncateText($value, 50, true);
+					break;
+				case 'device_id':
+					$row[$key] = "<div class=\"js-popover-tooltip ml-2 mr-2 d-inline mt-2\" data-js=\"popover\" data-content=\"$value\">" . \App\TextParser::textTruncate($value, 8) . '</div>';
+					break;
+				default:
+					break;
+			}
+			if (!\in_array($key, ['device_id', 'agent'])) {
+				$row[$key] = App\Purifier::encodeHtml($row[$key]);
+			}
+		}
+		return $row;
+	}
+
+	/** {@inheritdoc} */
+	public function getListFields(): array
+	{
+		if (!isset($this->listFieldModels)) {
+			$fieldObjects = [];
+			foreach ($this->listFields as $fieldName => $fieldLabel) {
+				$fieldObjects[$fieldName] = new \App\Base(['name' => $fieldName, 'label' => $fieldLabel]);
+			}
+			$this->listFieldModels = $fieldObjects;
+		}
+		return $this->listFieldModels;
 	}
 
 	/**
@@ -148,13 +296,23 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 		}
 		$instance = self::getCleanInstance($type);
 		$data = (new App\Db\Query())
-			->from($instance->getModule()->getBaseTable())
-			->where([$instance->getModule()->getTableIndex() => $id])
+			->from($instance->baseTable)
+			->where([$instance->baseIndex => $id])
 			->one(App\Db::getInstance('webservice'));
-		$data['password_t'] = App\Encryption::getInstance()->decrypt($data['password_t']);
-		$instance->setData($data);
+		if (!empty($data['custom_params']) && !App\Json::isEmpty($data['custom_params'])) {
+			$data['custom_params'] = \App\Json::decode($data['custom_params']);
+			$data = array_merge($data, $data['custom_params']);
+		} else {
+			$data['custom_params'] = [];
+		}
+		if (!empty($data['auth'])) {
+			$data['auth'] = \App\Json::decode(\App\Encryption::getInstance()->decrypt($data['auth']));
+		} else {
+			$data['auth'] = [];
+		}
+		$data['authy_methods'] = $data['auth']['authy_methods'] ?? '';
+		$instance->init($data);
 		\App\Cache::staticSave($cacheName, $id, $instance);
-
 		return $instance;
 	}
 
@@ -169,10 +327,59 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	{
 		$moduleInstance = Settings_Vtiger_Module_Model::getInstance('Settings:WebserviceUsers');
 		$moduleInstance->typeApi = $type;
-		$instance = new self();
+		$instance = $moduleInstance->getService();
 		$instance->module = $moduleInstance;
-
 		return $instance;
+	}
+
+	/**
+	 * Function gives list fields for save.
+	 *
+	 * @return array
+	 */
+	public function getFieldsForSave()
+	{
+		return array_intersect_key($this->getEditFields(), $this->changes);
+	}
+
+	/**
+	 * Function gives data for save.
+	 *
+	 * @return array
+	 */
+	public function getDataForSave()
+	{
+		if (empty($this->getId())) {
+			$fields = $this->getEditFields();
+		} else {
+			$fields = $this->getFieldsForSave();
+		}
+		return array_intersect_key($this->getData(), $fields);
+	}
+
+	/**
+	 * Check if the data is correct.
+	 *
+	 * @return bool|string false - if everything is ok
+	 */
+	public function checkData()
+	{
+		if (empty($this->listFields['user_name'])) {
+			return false;
+		}
+		if ($this->isEmpty('user_name')) {
+			$userName = $this->getUserName();
+			if (empty($userName)) {
+				return 'LBL_EMAIL_ADDRESS_NOT_FOUND';
+			}
+			if ((new App\Db\Query())
+				->from($this->baseTable)
+				->where(['user_name' => $userName])
+				->exists(App\Db::getInstance('webservice'))) {
+				return 'LBL_DUPLICATE_EMAIL_ADDRESS';
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -182,20 +389,31 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	 */
 	public function save()
 	{
-		$this->validate();
 		$db = App\Db::getInstance('webservice');
-		$table = $this->getModule()->getBaseTable();
-		$index = $this->getModule()->getTableIndex();
-		$fields = $this->getEditFields();
-		$data = $this->getData();
-		foreach ($data as $key => $value) {
-			if (isset($fields[$key])) {
-				$data[$key] = $this->getValueToSave($key, $value);
-			} else {
-				unset($data[$key]);
+		$table = $this->baseTable;
+		$index = $this->baseIndex;
+		$data = $this->getDataForSave();
+		$params = $this->get('custom_params');
+		foreach ($this->paramsFields as $name) {
+			if (!isset($data[$name])) {
+				continue;
 			}
+			if ('' !== $data[$name]) {
+				$params[$name] = $data[$name];
+			}
+			unset($data[$name]);
 		}
+		$data['custom_params'] = $params ? \App\Json::encode($params) : null;
+		if (empty($data['authy_methods']) || '-' === $data['authy_methods']) {
+			$data['auth'] = '';
+		} else {
+			$auth = $this->get('auth') ?: [];
+			$auth['authy_methods'] = $data['authy_methods'] ?? '';
+			$data['auth'] = \App\Encryption::getInstance()->encrypt(\App\Json::encode($auth));
+		}
+		unset($data['authy_methods']);
 		if (empty($this->getId())) {
+			$data['user_name'] = $this->getUserName();
 			$success = $db->createCommand()->insert($table, $data)->execute();
 			if ($success) {
 				$this->set('id', $db->getLastInsertID("{$table}_{$index}_seq"));
@@ -207,137 +425,26 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	}
 
 	/**
-	 * Function to validate.
-	 *
-	 * @return bool
-	 */
-	public function validate()
-	{
-		$query = (new \App\Db\Query())->from($this->getModule()->getBaseTable())->where(['server_id' => $this->get('server_id'), 'user_name' => $this->get('user_name')]);
-		if ($this->getId()) {
-			$query->andWhere(['<>', 'id', $this->getId()]);
-		}
-		if ($query->exists()) {
-			throw new \App\Exceptions\IllegalValue('ERR_DUPLICATE_LOGIN', 406);
-		}
-	}
-
-	/**
-	 * Function formats data for saving.
-	 *
-	 * @param string $key
-	 * @param mixed  $value
-	 *
-	 * @return int|string
-	 */
-	private function getValueToSave($key, $value)
-	{
-		switch ($key) {
-			case 'server_id':
-			case 'status':
-			case 'type':
-			case 'crmid':
-			case 'user_id':
-				$value = (int) $value;
-				break;
-			case 'password_t':
-				$value = App\Encryption::getInstance()->encrypt($value);
-				break;
-			default:
-				break;
-		}
-		return $value;
-	}
-
-	/**
-	 * Function to get the Display Value, for the current field type with given DB Insert Value.
-	 *
-	 * @param string $name
+	 * Get user name.
 	 *
 	 * @return string
 	 */
-	public function getDisplayValue($name)
+	public function getUserName(): string
 	{
-		switch ($name) {
-			case 'server_id':
-				$servers = Settings_WebserviceApps_Record_Model::getInstanceById($this->get($name));
-
-				return $servers ? $servers->getName() : '<span class="redColor">ERROR</span>';
-			case 'crmid':
-				return $this->get($name) ? \App\Record::getLabel($this->get($name)) : '';
-			case 'status':
-				return empty($this->get($name)) ? 'PLL_INACTIVE' : 'PLL_ACTIVE';
-			case 'user_id':
-				return \App\Fields\Owner::getLabel($this->get($name));
-			case 'language':
-				return $this->get($name) ? \App\Language::getLanguageLabel($this->get($name)) : '';
-			case 'type':
-				$label = \App\Language::translate($this->getTypeValues($this->get($name)), $this->getModule()->getName(true));
-
-				return \App\TextParser::textTruncate($label);
-			default:
-				break;
+		if (!$this->isEmpty('user_name')) {
+			return $this->get('user_name');
 		}
-		return $this->get($name);
-	}
-
-	/**
-	 * Function to get the list view actions for the record.
-	 *
-	 * @return Vtiger_Link_Model[] - Associate array of Vtiger_Link_Model instances
-	 */
-	public function getRecordLinks()
-	{
-		$links = [];
-		$recordLinks = [
-			[
-				'linktype' => 'LISTVIEWRECORD',
-				'linklabel' => 'FL_PASSWORD',
-				'linkicon' => 'fas fa-copy',
-				'linkclass' => 'btn btn-sm btn-primary clipboard',
-				'linkdata' => ['copy-attribute' => 'clipboard-text', 'clipboard-text' => \App\Purifier::encodeHtml(App\Encryption::getInstance()->decrypt($this->get('password_t')))]
-			],
-			[
-				'linktype' => 'LISTVIEWRECORD',
-				'linklabel' => 'LBL_EDIT_RECORD',
-				'linkurl' => $this->getModule()->getEditViewUrl() . '&record=' . $this->getId(),
-				'linkicon' => 'fas fa-edit',
-				'linkclass' => 'btn btn-sm btn-primary',
-				'modalView' => true,
-			],
-			[
-				'linktype' => 'LISTVIEWRECORD',
-				'linklabel' => 'LBL_DELETE_RECORD',
-				'linkurl' => 'javascript:Settings_WebserviceUsers_List_Js.deleteById(' . $this->getId() . ');',
-				'linkicon' => 'fas fa-trash-alt',
-				'linkclass' => 'btn btn-sm btn-danger',
-			],
-		];
-		foreach ($recordLinks as $recordLink) {
-			$links[] = Vtiger_Link_Model::getInstanceFromValues($recordLink);
+		$email = '';
+		if (1 !== (int) $this->get('type')) {
+			try {
+				$email = Vtiger_Record_Model::getInstanceById($this->get('crmid'), 'Contacts')->get('email');
+			} catch (\Throwable $th) {
+			}
+		} else {
+			$email = \App\User::getUserModel($this->get('user_id'))->getDetail('email1');
 		}
-		return $links;
-	}
-
-	/**
-	 * Type field values.
-	 *
-	 * @param type $value
-	 *
-	 * @return string
-	 */
-	public function getTypeValues($value = false)
-	{
-		$data = [
-			\Api\Portal\Privilege::USER_PERMISSIONS => 'PLL_USER_PERMISSIONS',
-			\Api\Portal\Privilege::ACCOUNTS_RELATED_RECORDS => 'PLL_ACCOUNTS_RELATED_RECORDS',
-			\Api\Portal\Privilege::ACCOUNTS_RELATED_RECORDS_AND_LOWER_IN_HIERARCHY => 'PLL_ACCOUNTS_RELATED_RECORDS_AND_LOWER_IN_HIERARCHY',
-			\Api\Portal\Privilege::ACCOUNTS_RELATED_RECORDS_IN_HIERARCHY => 'PLL_ACCOUNTS_RELATED_RECORDS_IN_HIERARCHY',
-		];
-		if ($value) {
-			return $data[$value];
-		}
-		return $data;
+		$this->set('user_name', $email);
+		return $email;
 	}
 
 	/**
@@ -348,47 +455,10 @@ class Settings_WebserviceUsers_Record_Model extends Settings_Vtiger_Record_Model
 	public function delete()
 	{
 		$db = App\Db::getInstance('webservice');
-		$recordId = $this->getId();
-		if ($recordId) {
-			$table = $this->getModule()->getBaseTable();
-			$index = $this->getModule()->getTableIndex();
-			$result = $db->createCommand()->delete($table, [$index => $recordId])->execute();
+		$result = false;
+		if ($recordId = $this->getId()) {
+			$result = (bool) $db->createCommand()->delete($this->baseTable, [$this->baseIndex => $recordId])->execute();
 		}
-		return !empty($result);
-	}
-
-	/**
-	 * Send mails with access.
-	 *
-	 * @return void
-	 */
-	public function sendEmail()
-	{
-		if (empty($this->get('crmid'))) {
-			return;
-		}
-		$moduleName = 'Contacts';
-		$recordModel = Vtiger_Record_Model::getInstanceById($this->get('crmid'), $moduleName);
-		if ($recordModel->get('emailoptout')) {
-			$emailsFields = $recordModel->getModule()->getFieldsByType('email');
-			$addressEmail = '';
-			foreach ($emailsFields as $fieldModel) {
-				if (!$recordModel->isEmpty($fieldModel->getFieldName())) {
-					$addressEmail = $recordModel->get($fieldModel->getFieldName());
-					break;
-				}
-			}
-			if (!empty($addressEmail)) {
-				\App\Mailer::sendFromTemplate([
-					'template' => 'YetiPortalRegister',
-					'moduleName' => $moduleName,
-					'recordId' => $this->get('crmid'),
-					'to' => $addressEmail,
-					'password' => $this->get('password_t'),
-					'login' => $this->get('user_name'),
-					'acceptable_url' => Settings_WebserviceApps_Record_Model::getInstanceById($this->get('server_id'))->get('acceptable_url')
-				]);
-			}
-		}
+		return $result;
 	}
 }

@@ -6,7 +6,7 @@
  * @package   Handler
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class API_CalDAV_Handler
@@ -29,7 +29,7 @@ class API_CalDAV_Handler
 	 *
 	 * @param \App\EventHandler $eventHandler
 	 */
-	public function entityAfterDelete(\App\EventHandler $eventHandler)
+	public function entityAfterDelete(App\EventHandler $eventHandler)
 	{
 		\App\Integrations\Dav\Calendar::deleteByCrmId($eventHandler->getRecordModel()->getId());
 	}
@@ -39,7 +39,7 @@ class API_CalDAV_Handler
 	 *
 	 * @param \App\EventHandler $eventHandler
 	 */
-	public function entityChangeState(\App\EventHandler $eventHandler)
+	public function entityChangeState(App\EventHandler $eventHandler)
 	{
 		\App\Db::getInstance()->createCommand()
 			->update('vtiger_activity', ['dav_status' => 1], ['activityid' => $eventHandler->getRecordModel()->getId()])

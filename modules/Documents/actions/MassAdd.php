@@ -4,7 +4,7 @@
  * Action to mass upload files.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class Documents_MassAdd_Action extends Vtiger_Mass_Action
@@ -12,7 +12,7 @@ class Documents_MassAdd_Action extends Vtiger_Mass_Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if (!\App\Privilege::isPermitted($request->getModule(), 'CreateView')) {
 			throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
@@ -22,12 +22,12 @@ class Documents_MassAdd_Action extends Vtiger_Mass_Action
 	/**
 	 * {@inheritdoc}
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$nameFiles = $request->getArray('nameFile', 'Text');
 		foreach ($_FILES as $file) {
-			$countFiles = count($file['name']);
+			$countFiles = \count($file['name']);
 			for ($i = 0; $i < $countFiles; ++$i) {
 				$recordeModel = Vtiger_Record_Model::getCleanInstance($moduleName);
 				$fieldModel = $recordeModel->getModule()->getField('notes_title')->getUITypeModel();

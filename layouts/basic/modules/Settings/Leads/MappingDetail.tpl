@@ -19,7 +19,7 @@
 				{foreach item=LINK_MODEL from=$MODULE_MODEL->getDetailViewLinks()}
 					<button type="button" class="btn btn-info" onclick={$LINK_MODEL->getUrl()}>
 						<strong>
-							<span class="fas fa-edit u-mr-5px"></span>{\App\Language::translate($LINK_MODEL->getLabel(), $QUALIFIED_MODULE)}
+							<span class="yfi yfi-full-editing-view u-mr-5px"></span>{\App\Language::translate($LINK_MODEL->getLabel(), $QUALIFIED_MODULE)}
 						</strong>
 					</button>
 				{/foreach}
@@ -52,7 +52,7 @@
 				<tr class="listViewEntries" data-cfmid="{$MAPPING_ID}">
 					<td>{\App\Language::translate({$MAPPING['Leads']['label']}, 'Leads')}</td>
 					<td>{\App\Language::translate($MAPPING['Leads']['fieldDataType'], $QUALIFIED_MODULE)}</td>
-					<td>{\App\Language::translate({$MAPPING['Accounts']['label']}, 'Accounts')}</td>
+					<td>{if isset($MAPPING['Accounts']['label'])}{\App\Language::translate($MAPPING['Accounts']['label'], 'Accounts')}{/if}</td>
 				</tr>
 			{/foreach}
 			</tbody>

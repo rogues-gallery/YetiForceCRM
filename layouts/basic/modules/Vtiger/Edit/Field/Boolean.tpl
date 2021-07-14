@@ -20,13 +20,13 @@
 				<input type="hidden" name="{$FIELD_MODEL->getFieldName()}" value="0"/>
 			{/if}
 			<input name="{$FIELD_MODEL->getFieldName()}" {if $FIELD_MODEL->isEditableReadOnly()}readonly="readonly"{' '}
-				   disabled="disabled" {/if}
-				   title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE)}"{' '}
-				   id="{$MODULE}_editView_fieldName_{$FIELD_NAME}" type="checkbox"{' '}
+				   disabled="disabled" {/if} tabindex="{$FIELD_MODEL->getTabIndex()}"
+				   title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE_NAME)}"{' '}
+				   id="{$MODULE_NAME}_editView_fieldName_{$FIELD_NAME}" type="checkbox"{' '}
 				   data-validation-engine="validate[funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"{' '}
 					{if $FIELD_MODEL->getEditViewDisplayValue($FIELD_MODEL->get('fieldvalue'),$RECORD)}checked="checked" {/if}
 				   value="1" data-fieldinfo='{$FIELD_INFO}'{' '}
-					{if !empty($SPECIAL_VALIDATOR)}data-validator={\App\Json::encode($SPECIAL_VALIDATOR)}{/if}/>
+					{if !empty($SPECIAL_VALIDATOR)}data-validator='{\App\Purifier::encodeHtml(\App\Json::encode($SPECIAL_VALIDATOR))}'{/if}/>
 		</label>
 	</div>
 	<!-- /tpl-Base-Edit-Field-Boolean -->

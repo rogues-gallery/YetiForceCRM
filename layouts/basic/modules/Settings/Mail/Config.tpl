@@ -1,7 +1,7 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="configContainer tpl-Settings-Mail-Config">
-		<div class="widget_header row">
+		<div class="o-breadcrumb widget_header row">
 			<div class="col-12">
 				{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 			</div>
@@ -20,14 +20,6 @@
 					</div>
 					<div class="ml-1">
 						<label for="showMailIcon">{\App\Language::translate('LBL_SHOW_MAIL_ICON', $QUALIFIED_MODULE)}</label>
-					</div>
-				</div>
-				<div class="d-flex">
-					<div class="float-left pagination-centered">
-						<input class="configCheckbox" type="checkbox" name="showMailAccounts" id="showMailAccounts" data-type="mailIcon" value="1" {if $CONFIG['showMailAccounts']=='true'}checked=""{/if}>
-					</div>
-					<div class="ml-1">
-						<label for="showMailAccounts">{\App\Language::translate('LBL_SHOW_MAIL_ACCOUNTS', $QUALIFIED_MODULE)}</label>
 					</div>
 				</div>
 				<div class="d-flex">

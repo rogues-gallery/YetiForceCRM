@@ -1,9 +1,11 @@
 <?php
 /**
- * Colors stylesheet generator class.
+ * Colors stylesheet generator file.
+ *
+ * @package App
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Sławomir Kłos <s.klos@yetiforce.com>
  */
@@ -11,7 +13,7 @@
 namespace App;
 
 /**
- * Custom colors stylesheet file generator.
+ * Colors stylesheet generator class.
  */
 class Colors
 {
@@ -36,10 +38,14 @@ class Colors
 			case 'picklist':
 				static::generatePicklists();
 				break;
+				case 'field':
+				static::generateFields();
+				break;
 			default:
 				static::generateOwners();
 				static::generateModules();
 				static::generatePicklists();
+				static::generateFields();
 				break;
 		}
 	}
@@ -67,8 +73,8 @@ class Colors
 				$colors[$item['id']] = $item['color'];
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/owners.css', $css);
-		file_put_contents(ROOT_DIRECTORY . '/app_data/owners_colors.php', '<?php return ' . Utils::varExport($colors) . ';');
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/owners.css', $css, LOCK_EX);
+		file_put_contents(ROOT_DIRECTORY . '/app_data/owners_colors.php', '<?php return ' . Utils::varExport($colors) . ';', LOCK_EX);
 	}
 
 	/**
@@ -84,7 +90,7 @@ class Colors
 				$css .= '.modCT_' . $item['module'] . ' { color: ' . $item['color'] . '; }' . PHP_EOL;
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/modules.css', $css);
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/modules.css', $css, LOCK_EX);
 	}
 
 	/**
@@ -116,7 +122,7 @@ class Colors
 				}
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/picklists.css', $css);
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/picklists.css', $css, LOCK_EX);
 	}
 
 	/**
@@ -146,7 +152,10 @@ class Colors
 	 */
 	public static function sanitizeValue($value)
 	{
-		return str_replace([' ', '-', '=', '+', '@', '*', '!', '#', '$', '%', '^', '&', '(', ')', '[', ']', '{', '}', ';', ':', "\\'", '"', ',', '<', '.', '>', '/', '?', '\\', '|'], '_', $value);
+		if (empty($value)) {
+			return $value;
+		}
+		return str_replace([' ', '-', '=', '+', '@', '*', '!', '#', '$', '%', '^', '&', '(', ')', '[', ']', '{', '}', ';', ':', "\\'", '"', ',', '<', '.', '>', '/', '?', '\\', '|'], '_', \App\Utils::sanitizeSpecialChars($value));
 	}
 
 	/**
@@ -204,20 +213,8 @@ class Colors
 	 */
 	public static function getPicklistFieldsByModule($moduleName)
 	{
-		$moduleModel = \Vtiger_Module_Model::getInstance($moduleName);
-		$moduleBlockFields = \Vtiger_Field_Model::getAllForModule($moduleModel);
-		$type = ['picklist', 'multipicklist'];
-		$fieldList = [];
-		foreach ($moduleBlockFields as $moduleFields) {
-			foreach ($moduleFields as $moduleField) {
-				$block = $moduleField->get('block');
-				if (!$block || !\in_array($moduleField->getFieldDataType(), $type)) {
-					continue;
-				}
-				$fieldList[$moduleField->get('name')] = $moduleField;
-			}
-		}
-		return $fieldList;
+		$types = ['picklist', 'multipicklist'];
+		return \Vtiger_Module_Model::getInstance($moduleName)->getFieldsByType($types, true);
 	}
 
 	/**
@@ -335,7 +332,7 @@ class Colors
 		$filterColors = [];
 		$by = $byFilterValue ? 'viewname' : 'cvid';
 		foreach ($customViews as $viewData) {
-			$filterColors[$viewData[$by]] = $viewData['color'] ? $viewData['color'] : static::getRandomColor($viewData[$by]);
+			$filterColors[$viewData[$by]] = $viewData['color'] ?: static::getRandomColor($viewData[$by]);
 		}
 		Cache::save('getAllFilterColors', $byFilterValue, $filterColors);
 		return $filterColors;
@@ -344,13 +341,47 @@ class Colors
 	/**
 	 * Get contrast color.
 	 *
-	 * @param $hexcolor
+	 * @param mixed $hexColor
 	 *
 	 * @return string
 	 */
-	public static function getContrast($hexcolor)
+	public static function getContrast($hexColor)
 	{
-		$contrastRatio = 1.9; // higher number = more black color
-		return hexdec($hexcolor) > 0xffffff / $contrastRatio ? 'black' : 'white';
+		$hexColor = ltrim(ltrim($hexColor), '#');
+		return ((((hexdec(substr($hexColor, 0, 2)) * 299) + (hexdec(substr($hexColor, 2, 2)) * 587) + (hexdec(substr($hexColor, 4, 2)) * 114)) / 1000) >= 128) ? 'black' : 'white';
+	}
+
+	/**
+	 * Update field color code and generate stylesheet file.
+	 *
+	 * @param int    $fieldId
+	 * @param string $color
+	 *
+	 * @return bool
+	 */
+	public static function updateFieldColor($fieldId, $color): bool
+	{
+		$result = Db::getInstance()->createCommand()->update('vtiger_field', ['color' => $color], ['fieldid' => $fieldId])->execute();
+		static::generate('field');
+		if (!$result) {
+			$result = $color === (new \App\Db\Query())->select(['color'])->from('vtiger_field')->where(['fieldid' => $fieldId])->scalar();
+		}
+		return $result;
+	}
+
+	/**
+	 * Generate fields colors stylesheet.
+	 */
+	public static function generateFields()
+	{
+		$css = '';
+		$query = (new \App\Db\Query())->select(['tabid', 'fieldname', 'color'])->from('vtiger_field')->where(['presence' => [0, 2]])->andWhere(['<>', 'color', '']);
+		$dataReader = $query->createCommand()->query();
+		while ($row = $dataReader->read()) {
+			if (ltrim($row['color'], '#')) {
+				$css .= '.flCT_' . Module::getModuleName($row['tabid']) . '_' . $row['fieldname'] . '{ color: ' . $row['color'] . '; }' . PHP_EOL;
+			}
+		}
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/fields.css', $css, LOCK_EX);
 	}
 }

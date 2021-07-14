@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{assign var=ACCESSIBLE_USERS value=\App\Fields\Owner::getInstance()->getAccessibleUsers()}
 	{assign var=ACCESSIBLE_GROUPS value=\App\Fields\Owner::getInstance()->getAccessibleGroups()}
@@ -47,14 +47,14 @@
 						{assign var=HISTORY_STATUS value=Calendar_Module_Model::getComponentActivityStateLabel('history')}
 						<div class="btn-group btn-group-toggle" data-toggle="buttons">
 							<label class="btn btn-sm btn-outline-primary active">
-								<input class="js-switch--calendar" type="radio" name="options" id="option1"
+								<input class="js-switch--calendar" type="radio" name="options" id="options-option1"
 									   data-js="change"
 									   data-on-text="{\App\Language::translate('LBL_TO_REALIZE')}" autocomplete="
 							   off" checked
 								> {\App\Language::translate('LBL_TO_REALIZE')}
 							</label>
 							<label class="btn btn-sm btn-outline-primary">
-								<input class="js-switch--calendar" type="radio" name="options" id="option2"
+								<input class="js-switch--calendar" type="radio" name="options" id="options-option2"
 									   data-js="change"
 									   data-off-text="{\App\Language::translate('History')}" autocomplete="
 							   off"

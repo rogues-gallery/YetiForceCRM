@@ -1,6 +1,6 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 <div class="tpl-Settings-Menu-Index menuConfigContainer">
-	<div class="widget_header row">
+	<div class="o-breadcrumb widget_header row">
 		<div class="col-md-7">
 			{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $QUALIFIED_MODULE)}
 		</div>
@@ -23,7 +23,7 @@
 							</option>
 						{/foreach}
 					</optgroup>
-					<optgroup label="{\App\Language::translate('CustomerPortal', $QUALIFIED_MODULE)}">
+					<optgroup label="{\App\Language::translate('WebserviceApps', 'Settings.WebserviceApps')}">
 						{foreach item=SERVER key=KEY from=Settings_WebserviceApps_Module_Model::getServers()}
 							<option value="{$KEY}" {if $ROLEID eq $KEY} selected="" {/if}>
 								{App\Purifier::encodeHtml($SERVER['name'])}

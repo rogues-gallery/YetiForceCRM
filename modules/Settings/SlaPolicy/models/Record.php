@@ -5,7 +5,7 @@
  * @package   Model
  *
  * @copyright YetiForce Sp. z o.o.
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Rafal Pospiech <r.pospiech@yetiforce.com>
  */
 class Settings_SlaPolicy_Record_Model extends Settings_Vtiger_Record_Model
@@ -137,13 +137,16 @@ class Settings_SlaPolicy_Record_Model extends Settings_Vtiger_Record_Model
 
 	/**
 	 * Function to delete the current Record Model.
+	 *
+	 * @return int
 	 */
 	public function delete()
 	{
-		\App\Db::getInstance('admin')->createCommand()
+		$result = \App\Db::getInstance('admin')->createCommand()
 			->delete('s_#__sla_policy', ['id' => $this->getId()])
 			->execute();
 		\App\Cache::clear();
+		return $result;
 	}
 
 	/**
@@ -182,7 +185,7 @@ class Settings_SlaPolicy_Record_Model extends Settings_Vtiger_Record_Model
 				'linktype' => 'LISTVIEWRECORD',
 				'linklabel' => 'LBL_EDIT_RECORD',
 				'linkurl' => $this->getModule()->getEditRecordUrl($this->getId()),
-				'linkicon' => 'fas fa-edit',
+				'linkicon' => 'yfi yfi-full-editing-view',
 				'linkclass' => 'btn btn-primary btn-sm'
 			],
 			[

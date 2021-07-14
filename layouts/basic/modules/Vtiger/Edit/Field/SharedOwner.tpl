@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<!-- tpl-Base-Edit-Field-SharedOwner -->
 	{assign var="FIELD_INFO" value=\App\Purifier::encodeHtml(\App\Json::encode($FIELD_MODEL->getFieldInfo()))}
@@ -22,7 +22,7 @@
 			{if $OWNERS}
 				<optgroup label="{\App\Language::translate($BLOCK_NAME)}">
 					{foreach key=OWNER_ID item=OWNER_NAME from=$OWNERS}
-						<option id="{\App\Layout::getUniqueId('shared-owner')}" value="{$OWNER_ID}" data-picklistvalue="{$OWNER_NAME}"
+						<option value="{$OWNER_ID}" data-picklistvalue="{$OWNER_NAME}"
 								{foreach item=ELEMENT from=$FIELD_VALUE}
 									{if $ELEMENT eq $OWNER_ID } selected {/if}
 								{/foreach}
@@ -39,7 +39,7 @@
 		<div>
 			<input type="hidden" name="{$FIELD_MODEL->getFieldName()}" value=""/>
 			<select class="select2 form-control {if !empty($NOT_DISPLAY_LIST)}hideSelected{/if} {$FIELD_NAME}"
-					title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE)}"
+					title="{\App\Language::translate($FIELD_MODEL->getFieldLabel(), $MODULE)}" tabindex="{$FIELD_MODEL->getTabIndex()}"
 					data-validation-engine="validate[{if $FIELD_MODEL->isMandatory() eq true} required,{/if}funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"
 					data-name="{$FIELD_NAME}" name="{$FIELD_NAME}[]" data-fieldinfo='{$FIELD_INFO}'
 					multiple="multiple" {if !empty($SPECIAL_VALIDATOR)} data-validator="{\App\Purifier::encodeHtml(\App\Json::encode($SPECIAL_VALIDATOR))}"{/if}

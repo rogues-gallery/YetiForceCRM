@@ -5,9 +5,12 @@ namespace App;
 /**
  * Modules hierarchy basic class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class ModuleHierarchy
 {
@@ -19,7 +22,7 @@ class ModuleHierarchy
 		if (isset(static::$hierarchy)) {
 			return true;
 		}
-		static::$hierarchy = require 'app_data/moduleHierarchy.php';
+		static::$hierarchy = require ROOT_DIRECTORY . '/app_data/moduleHierarchy.php';
 		foreach (static::$hierarchy['modulesHierarchy'] as $module => $details) {
 			if (Module::isModuleActive($module) && Privilege::isPermitted($module)) {
 				static::$modulesByLevels[$details['level']][$module] = $details;
@@ -61,23 +64,11 @@ class ModuleHierarchy
 		return false;
 	}
 
-	/**
-	 * Get records list filters.
-	 *
-	 * @param string $moduleName
-	 *
-	 * @return array|bool
-	 */
-	public static function getRecordsListFilter(string $moduleName)
+	public static function getModulesByLevel($level = null)
 	{
-		if (isset(static::$hierarchy['recordsListFilter'][$moduleName])) {
-			return static::$hierarchy['recordsListFilter'][$moduleName];
+		if (null === $level) {
+			return static::$modulesByLevels;
 		}
-		return false;
-	}
-
-	public static function getModulesByLevel($level = 0)
-	{
 		if (isset(static::$modulesByLevels[$level])) {
 			return static::$modulesByLevels[$level];
 		}
@@ -142,20 +133,20 @@ class ModuleHierarchy
 	public static function getMappingRelatedField($moduleName)
 	{
 		$return = false;
-		switch (static::getModuleLevel($moduleName)) {
-			case 0:
+		switch ((string) static::getModuleLevel($moduleName)) {
+			case '0':
 				$return = 'link';
 				break;
-			case 1:
+			case '1':
 				$return = 'process';
 				break;
-			case 2:
+			case '2':
 				$return = 'subprocess';
 				break;
-			case 3:
+			case '3':
 				$return = 'subprocess_sl';
 				break;
-			case 4:
+			case '4':
 				$return = 'linkextend';
 				break;
 			default:
@@ -375,6 +366,58 @@ class ModuleHierarchy
 			$subQuery->union($query);
 		}
 		return $subQuery;
+	}
+
+	/**
+	 * Get fields for list filter.
+	 *
+	 * @param string $moduleName
+	 *
+	 * @return array
+	 */
+	public static function getFieldsForListFilter(string $moduleName): array
+	{
+		$fields = [];
+		$moduleId = \App\Module::getModuleId($moduleName);
+		foreach (static::getHierarchyByRelation() as $relations) {
+			foreach ($relations as $relation) {
+				if ($relation['related_tabid'] === $moduleId && !empty($relation['rel_field_name'])) {
+					$fields[$relation['field_name']][\App\Module::getModuleName($relation['tabid'])] = [$relation['rel_field_name'] => \App\Module::getModuleName($relation['rel_tabid'])];
+				}
+			}
+		}
+		return $fields;
+	}
+
+	/**
+	 * Get hierarchy info by relation.
+	 *
+	 * @param int|null $relationId
+	 *
+	 * @return array
+	 */
+	public static function getHierarchyByRelation(int $relationId = null): array
+	{
+		if (Cache::has('HierarchyByRelation', '')) {
+			$data = Cache::get('HierarchyByRelation', '');
+		} else {
+			$data = [];
+			$dataReader = (new \App\Db\Query())
+				->select(['SR.tabid', 'SR.field_name', 'SR.related_tabid', 'rel_field_name' => 'RR.field_name', 'rel_tabid' => 'RR.tabid', 'a_yf_record_list_filter.*'])
+				->from('a_yf_record_list_filter')
+				->leftJoin(['SR' => 'vtiger_relatedlists'], 'SR.relation_id=a_yf_record_list_filter.relationid')
+				->leftJoin(['RR' => 'vtiger_relatedlists'], 'RR.relation_id=a_yf_record_list_filter.rel_relationid')
+				->createCommand()->query();
+			while ($row = $dataReader->read()) {
+				$data[$row['relationid']][] = $row;
+			}
+			Cache::save('HierarchyByRelation', '', $data, Cache::LONG);
+		}
+		if (null === $relationId) {
+			return $data;
+		}
+
+		return $data[$relationId] ?? [];
 	}
 }
 

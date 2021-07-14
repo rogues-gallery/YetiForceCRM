@@ -4,7 +4,7 @@
  * ListUpdatedRecord class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class ListUpdatedRecord
 {
@@ -21,10 +21,10 @@ class ListUpdatedRecord
 		} else {
 			$moduleList[] = $module;
 		}
-		if (!in_array('smownerid', $columnList)) {
+		if (!\in_array('smownerid', $columnList)) {
 			$columnList[] = 'smownerid';
 		}
-		if ($limit == 'all') {
+		if ('all' == $limit) {
 			$limit = 200;
 		}
 		$select = array_values($columnList);

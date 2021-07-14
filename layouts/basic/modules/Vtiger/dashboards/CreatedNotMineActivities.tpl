@@ -1,4 +1,4 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	{assign var=ACCESSIBLE_USERS value=\App\Fields\Owner::getInstance()->getAccessibleUsers()}
 	{assign var=ACCESSIBLE_GROUPS value=\App\Fields\Owner::getInstance()->getAccessibleGroups()}
@@ -16,7 +16,7 @@
 				{/if}
 				<button class="btn btn-light btn-sm ml-1 changeRecordSort"
 						title="{\App\Language::translate('LBL_SORT_DESCENDING', $MODULE_NAME)}"
-						data-sort="{if $DATA['sortorder'] eq 'desc'}asc{else}desc{/if}"
+						data-sort="{if isset($DATA['sortorder']) && $DATA['sortorder'] eq 'desc'}asc{else}desc{/if}"
 						data-asc="{\App\Language::translate('LBL_SORT_ASCENDING', $MODULE_NAME)}"
 						data-desc="{\App\Language::translate('LBL_SORT_DESCENDING', $MODULE_NAME)}">
 					<span class="fas fa-sort-amount-down"></span>

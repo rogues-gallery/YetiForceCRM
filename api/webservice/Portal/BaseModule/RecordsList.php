@@ -1,143 +1,108 @@
 <?php
+/**
+ * Portal container - Get record list file.
+ *
+ * @package API
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ */
 
 namespace Api\Portal\BaseModule;
 
+use OpenApi\Annotations as OA;
+
 /**
- * Get record list class.
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * Portal container - Get record list class.
  */
-class RecordsList extends \Api\Core\BaseAction
+class RecordsList extends \Api\RestApi\BaseModule\RecordsList
 {
-	/** @var string[] Allowed request methods */
-	public $allowedMethod = ['GET'];
-
 	/**
-	 * Get method.
+	 * Get record list method.
 	 *
 	 * @return array
+	 *
+	 * @OA\Get(
+	 *		path="/webservice/Portal/{moduleName}/RecordsList",
+	 *		summary="List of records",
+	 *		description="Gets a list of records",
+	 *		tags={"BaseModule"},
+	 *		security={{"basicAuth" : {}, "ApiKeyAuth" : {}, "token" : {}}},
+	 *		@OA\Parameter(name="moduleName", in="path", @OA\Schema(type="string"), description="Module name", required=true, example="Contacts"),
+	 *		@OA\Parameter(name="x-raw-data", in="header", @OA\Schema(type="integer", enum={0, 1}), description="Gets raw data", required=false, example=1),
+	 *		@OA\Parameter(name="x-row-limit", in="header", @OA\Schema(type="integer"), description="Get rows limit, default: 100", required=false, example=50),
+	 *		@OA\Parameter(name="x-row-offset", in="header", @OA\Schema(type="integer"), description="Offset, default: 0", required=false, example=0),
+	 *		@OA\Parameter(name="x-fields", in="header", description="JSON array in the list of fields to be returned in response", required=false,
+	 *			@OA\JsonContent(type="array", example={"field_name_1", "field_name_2"}, @OA\Items(type="string")),
+	 *		),
+	 *		@OA\Parameter(name="x-condition", in="header", description="Conditions [Json format]", required=false,
+	 *			@OA\JsonContent(ref="#/components/schemas/Conditions-Mix-For-Query-Generator"),
+	 *		),
+	 *		@OA\Parameter(name="x-only-column", in="header", @OA\Schema(type="integer", enum={0, 1}), description="Return only column names", required=false, example=1),
+	 *		@OA\Parameter(name="x-parent-id", in="header", @OA\Schema(type="integer"), description="Parent record id", required=false, example=5),
+	 *		@OA\Parameter(name="x-cv-id", in="header", @OA\Schema(type="integer"), description="Custom view ID", required=false, example=5),
+	 *		@OA\Parameter(name="x-order-by", in="header", description="Set the sorted results by columns [Json format]", required=false,
+	 * 			@OA\JsonContent(type="object", title="Sort conditions", description="Multiple or one condition for a query generator",
+	 * 				example={"field_name_1" : "ASC", "field_name_2" : "DESC"},
+	 * 				@OA\AdditionalProperties(type="string", title="Sort Direction", enum={"ASC", "DESC"}),
+	 * 			),
+	 *		),
+	 *		@OA\Response(response=200, description="List of entries",
+	 *			@OA\JsonContent(ref="#/components/schemas/BaseModule_Get_RecordsList_Response"),
+	 *			@OA\XmlContent(ref="#/components/schemas/BaseModule_Get_RecordsList_Response"),
+	 *		),
+	 *		@OA\Response(response=400, description="Incorrect json syntax: x-fields",
+	 *			@OA\JsonContent(ref="#/components/schemas/Exception"),
+	 *			@OA\XmlContent(ref="#/components/schemas/Exception"),
+	 *		),
+	 *		@OA\Response(response=401, description="No sent token, Invalid token, Token has expired",
+	 *			@OA\JsonContent(ref="#/components/schemas/Exception"),
+	 *			@OA\XmlContent(ref="#/components/schemas/Exception"),
+	 *		),
+	 *		@OA\Response(response=403, description="`No permissions for module` OR `No permissions for custom view: x-cv-id`",
+	 *			@OA\JsonContent(ref="#/components/schemas/Exception"),
+	 *			@OA\XmlContent(ref="#/components/schemas/Exception"),
+	 *		),
+	 *		@OA\Response(response=405, description="Invalid method",
+	 *			@OA\JsonContent(ref="#/components/schemas/Exception"),
+	 *			@OA\XmlContent(ref="#/components/schemas/Exception"),
+	 *		),
+	 *),
+	 * @OA\Schema(
+	 *		schema="BaseModule_Get_RecordsList_Response",
+	 *		title="Base module - Response action record list",
+	 *		description="Module action record list response body",
+	 *		type="object",
+	 *		required={"status", "result"},
+	 *		@OA\Property(property="status", type="integer", enum={0, 1}, description="A numeric value of 0 or 1 that indicates whether the communication is valid. 1 - success , 0 - error"),
+	 *		@OA\Property(property="result", type="object", title="List of records",
+	 *			required={"headers", "records", "permissions", "numberOfRecords", "isMorePages"},
+	 *			@OA\Property(property="headers", type="object", title="Fields names", example={"field_name_1" : "Field label 1", "field_name_2" : "Field label 2", "assigned_user_id" : "Assigned user", "createdtime" : "Created time"},
+	 * 				@OA\AdditionalProperties(type="string", description="Field name"),
+	 *			),
+	 *			@OA\Property(property="records", type="object", title="Records display details",
+	 *				@OA\AdditionalProperties(type="object", ref="#/components/schemas/Record_Display_Details"),
+	 *			),
+	 *			@OA\Property(property="permissions", type="object", title="Records action permissions",
+	 *				@OA\AdditionalProperties(type="object", title="Record action permissions",
+	 *					required={"isEditable", "moveToTrash"},
+	 *					@OA\Property(property="isEditable", type="boolean", example=true),
+	 *					@OA\Property(property="moveToTrash", type="boolean", example=true),
+	 *				),
+	 *			),
+	 *			@OA\Property(property="rawData", type="object", title="Records raw details, dependent on the header `x-raw-data`",
+	 *				@OA\AdditionalProperties(type="object", ref="#/components/schemas/Record_Raw_Details"),
+	 *			),
+	 * 			@OA\Property(property="numberOfRecords", type="integer", description="Number of records on the page", example=20),
+	 * 			@OA\Property(property="isMorePages", type="boolean", description="There are more pages", example=true),
+	 * 			@OA\Property(property="numberOfAllRecords", type="integer", description="Number of all records, dependent on the header `x-row-count`", example=54),
+	 * 		),
+	 *	),
 	 */
-	public function get()
+	public function get(): array
 	{
-		$rawData = $records = $headers = [];
-		$queryGenerator = $this->getQuery();
-		$fieldsModel = $queryGenerator->getListViewFields();
-		$limit = $queryGenerator->getLimit();
-		$dataReader = $queryGenerator->createQuery()->createCommand()->query();
-		while ($row = $dataReader->read()) {
-			$records[$row['id']] = $this->getRecordFromRow($row, $fieldsModel);
-			if ($this->isRawData()) {
-				$rawData[$row['id']] = $this->getRawDataFromRow($row);
-			}
-		}
-		$dataReader->close();
-		$headers = $this->getColumnNames($fieldsModel);
-		$rowsCount = count($records);
-		return [
-			'headers' => $headers,
-			'records' => $records,
-			'rawData' => $rawData,
-			'count' => $rowsCount,
-			'isMorePages' => $rowsCount === $limit,
-		];
-	}
-
-	/**
-	 * Get query record list.
-	 *
-	 * @throws \Api\Core\Exception
-	 *
-	 * @return \App\QueryGenerator
-	 */
-	public function getQuery()
-	{
-		$queryGenerator = new \App\QueryGenerator($this->controller->request->getModule());
-		$queryGenerator->initForDefaultCustomView();
-		$limit = 1000;
-		if ($requestLimit = $this->controller->request->getHeader('x-row-limit')) {
-			$limit = (int) $requestLimit;
-		}
-		$offset = 0;
-		if ($requestOffset = $this->controller->request->getHeader('x-row-offset')) {
-			$offset = (int) $requestOffset;
-		}
-		$queryGenerator->setLimit($limit);
-		$queryGenerator->setOffset($offset);
-		if ($requestFields = $this->controller->request->getHeader('x-fields')) {
-			$queryGenerator->setFields(\App\Json::decode($requestFields));
-			$queryGenerator->setField('id');
-		}
-		if ($conditions = $this->controller->request->getHeader('x-condition')) {
-			$conditions = \App\Json::decode($conditions);
-			if (isset($conditions['fieldName'])) {
-				$queryGenerator->addCondition($conditions['fieldName'], $conditions['value'], $conditions['operator'], $conditions['group'] ?? true);
-			} else {
-				foreach ($conditions as $condition) {
-					$queryGenerator->addCondition($condition['fieldName'], $condition['value'], $condition['operator'], $condition['group'] ?? true);
-				}
-			}
-		}
-		return $queryGenerator;
-	}
-
-	/**
-	 * Check if you send raw data.
-	 *
-	 * @return bool
-	 */
-	protected function isRawData(): bool
-	{
-		return 1 === (int) $this->controller->headers['x-raw-data'];
-	}
-
-	/**
-	 * Get record from row.
-	 *
-	 * @param array                 $row
-	 * @param \Vtiger_Field_Model[] $fieldsModel
-	 *
-	 * @return array
-	 */
-	protected function getRecordFromRow(array $row, array $fieldsModel): array
-	{
-		$record = ['recordLabel' => \App\Record::getLabel($row['id'])];
-		$recordModel = \Vtiger_Record_Model::getCleanInstance($this->controller->request->getModule());
-		foreach ($fieldsModel as $fieldName => &$fieldModel) {
-			if (isset($row[$fieldName])) {
-				$recordModel->set($fieldName, $row[$fieldName]);
-				$record[$fieldName] = $recordModel->getDisplayValue($fieldName, $row['id'], true);
-			}
-		}
-		return $record;
-	}
-
-	/**
-	 * Get column names.
-	 *
-	 * @param array $fieldsModel
-	 *
-	 * @return array
-	 */
-	protected function getColumnNames(array $fieldsModel): array
-	{
-		$headers = [];
-		foreach ($fieldsModel as $fieldName => $fieldModel) {
-			$headers[$fieldName] = \App\Language::translate($fieldModel->getFieldLabel(), $fieldModel->getModuleName());
-		}
-		return $headers;
-	}
-
-	/**
-	 * Get raw data from row.
-	 *
-	 * @param array $row
-	 *
-	 * @return array
-	 */
-	protected function getRawDataFromRow(array $row): array
-	{
-		return $row;
+		return parent::get();
 	}
 }

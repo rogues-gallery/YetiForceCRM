@@ -5,6 +5,7 @@
 * The Initial Developer of the Original Code is vtiger.
 * Portions created by vtiger are Copyright (C) vtiger.
 * All Rights Reserved.
+* Contributor(s): YetiForce Sp. z o.o.
 *************************************************************************************}
 {strip}
 	<br />
@@ -25,11 +26,17 @@
 						<td>{$TASK->getName()}
 							<div class="float-right actions">
 								<span class="actionImages">
-									<a data-url="{$TASK->getEditViewUrl()}">
-										<span class="fas fa-edit alignMiddle" title="{\App\Language::translate('LBL_EDIT',$QUALIFIED_MODULE)}"></span>
-									</a>&nbsp;&nbsp;
+									{if $TASK->isEditable()}
+										<a data-url="{$TASK->getEditViewUrl()}">
+											<span class="yfi yfi-full-editing-view" title="{\App\Language::translate('LBL_EDIT',$QUALIFIED_MODULE)}"></span>
+										</a>&nbsp;&nbsp;
+									{else}
+										<div class="js-popover-tooltip mr-2 d-inline text-danger" data-js="popover" data-content="{\App\Purifier::encodeHtml(App\Language::translate('LBL_ERROR_DELETE_ENTRY', $QUALIFIED_MODULE))}">
+											<span class="fas fa-info-circle"></span>
+										</div>
+									{/if}
 									<a class="deleteTask" data-deleteurl="{$TASK->getDeleteActionUrl()}">
-										<span class="fas fa-trash-alt alignMiddle" title="{\App\Language::translate('LBL_DELETE',$QUALIFIED_MODULE)}"></span>
+										<span class="fas fa-trash-alt" title="{\App\Language::translate('LBL_DELETE',$QUALIFIED_MODULE)}"></span>
 									</a>
 								</span>
 							</div>

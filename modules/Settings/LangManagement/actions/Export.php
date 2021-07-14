@@ -3,7 +3,7 @@
  * Settings LangManagement export action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 
 /**
@@ -16,7 +16,7 @@ class Settings_LangManagement_Export_Action extends Settings_Vtiger_IndexAjax_Vi
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$lang = $request->getByType('lang', 1);
 

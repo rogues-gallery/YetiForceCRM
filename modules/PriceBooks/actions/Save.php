@@ -11,32 +11,33 @@
 class PriceBooks_Save_Action extends Vtiger_Save_Action
 {
 	/**
-	 * Function to save record.
-	 *
-	 * @param \App\Request $request - values of the record
-	 *
-	 * @return Vtiger_Record_Model - record Model of saved record
+	 * {@inheritdoc}
 	 */
-	public function saveRecord(\App\Request $request)
+	public function saveRecord(App\Request $request)
 	{
-		$recordModel = $this->getRecordModelFromRequest($request);
-		$recordModel->save();
-		if ($request->getBoolean('relationOperation')) {
-			$parentModuleName = $request->getByType('sourceModule', 2);
-			$parentModuleModel = Vtiger_Module_Model::getInstance($parentModuleName);
-			$parentRecordId = $request->getInteger('sourceRecord');
-			$relatedModule = $recordModel->getModule();
-			$relatedRecordId = $recordModel->getId();
-
-			$relationModel = Vtiger_Relation_Model::getInstance($parentModuleModel, $relatedModule);
-			$relationModel->addRelation($parentRecordId, $relatedRecordId);
-
-			//To store the relationship between Products/Services and PriceBooks
-			if ($parentRecordId && ($parentModuleName === 'Products' || $parentModuleName === 'Services')) {
-				$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentRecordId, $parentModuleName);
-				$recordModel->updateListPrice($parentRecordId, $parentRecordModel->get('unit_price'));
+		$this->getRecordModelFromRequest($request);
+		$eventHandler = $this->record->getEventHandler();
+		foreach ($eventHandler->getHandlers(\App\EventHandler::EDIT_VIEW_PRE_SAVE) as $handler) {
+			if (!(($response = $eventHandler->triggerHandler($handler))['result'] ?? null)) {
+				throw new \App\Exceptions\NoPermittedToRecord($response['message'], 406);
 			}
 		}
-		return $recordModel;
+		$this->record->save();
+		if ($request->getBoolean('relationOperation')) {
+			$parentModuleName = $request->getByType('sourceModule', 2);
+			$parentRecordId = $request->getInteger('sourceRecord');
+
+			$relationId = $request->isEmpty('relationId') ? false : $request->getInteger('relationId');
+			if ($relationModel = Vtiger_Relation_Model::getInstance(Vtiger_Module_Model::getInstance($parentModuleName), $this->record->getModule(), $relationId)) {
+				$relationModel->addRelation($parentRecordId, $this->record->getId());
+			}
+			//To store the relationship between Products/Services and PriceBooks
+			if ($parentRecordId && ('Products' === $parentModuleName || 'Services' === $parentModuleName)) {
+				$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentRecordId, $parentModuleName);
+				$this->record->updateListPrice($parentRecordId, $parentRecordModel->getField('unit_price')->getUITypeModel()->getValueForCurrency(
+					$parentRecordModel->get('unit_price'), $this->record->get('currency_id'))
+				);
+			}
+		}
 	}
 }

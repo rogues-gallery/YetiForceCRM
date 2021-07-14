@@ -7,24 +7,24 @@
  * @package Config
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 
 namespace Config;
 
 /**
- * Configuration Class.
+ * Configuration file: Config\Debug.
  */
 class Debug
 {
 	/** Enable saving logs to file. Values: false/true */
 	public static $LOG_TO_FILE = false;
 
-	/** Enable displaying logs in debug console. Values: false/true */
-	public static $LOG_TO_CONSOLE = false;
-
-	/** Enable saving logs profiling.  Values: false/true */
+	/** Enable saving logs profiling. Values: false/true */
 	public static $LOG_TO_PROFILE = false;
+
+	/** Categories to be registered in profiling, an empty value means all categories. ex. "yii\db\Command::query", "Integrations/MagentoApi" */
+	public static $LOG_PROFILE_CATEGORIES = [];
 
 	/** Level of saved/displayed logs. Values: false = All / 3 = error and warning / ["error", "warning", "info", "trace", "profile"] */
 	public static $LOG_LEVELS = false;
@@ -32,29 +32,11 @@ class Debug
 	/** Level of saved/displayed tracerts. // Values: int */
 	public static $LOG_TRACE_LEVEL = 0;
 
-	/** Display main debug console */
-	public static $DISPLAY_DEBUG_CONSOLE = false;
-
-	/** List of IP addresses allowed to display debug console. Values: false = All IPS / "192.168.1.10" / ["192.168.1.10","192.168.1.11"] */
-	public static $DEBUG_CONSOLE_ALLOWED_IPS = false;
-
-	/** Stop the running process of the system if there is and error in sql query */
+	/** Stop the running process of the system if there is an error in sql query */
 	public static $SQL_DIE_ON_ERROR = false;
 
-	/** Debug cron => cache/logs/cron/ */
-	public static $DEBUG_CRON = false;
-
-	/** Debug Viewer => cache/logs/viewer-debug.log */
-	public static $DEBUG_VIEWER = false;
-
-	/** Display Smarty Debug Console */
-	public static $DISPLAY_DEBUG_VIEWER = false;
-
-	/** Do not show Smarty Notice in phpError.log */
-	public static $SMARTY_ERROR_REPORTING = E_ALL & ~E_NOTICE;
-
-	/** Turn on/off debug errors javascript */
-	public static $JS_DEBUG = true;
+	/** Display errors */
+	public static $EXCEPTION_ERROR_TO_SHOW = false;
 
 	/** Displays information about the tracking code when an error occurs. Available only with the active SQL_DIE_ON_ERROR = true */
 	public static $DISPLAY_EXCEPTION_BACKTRACE = false;
@@ -68,8 +50,32 @@ class Debug
 	/** Save logs to file (cache/logs/errors.log) */
 	public static $EXCEPTION_ERROR_TO_FILE = false;
 
-	/** Display errors */
-	public static $EXCEPTION_ERROR_TO_SHOW = false;
+	/** Display main debug console */
+	public static $DISPLAY_DEBUG_CONSOLE = false;
+
+	/** Enable displaying logs in debug console. Values: false/true */
+	public static $DISPLAY_LOGS_IN_CONSOLE = false;
+
+	/** Enable displaying logs in debug console. Values: false/true */
+	public static $DISPLAY_CONFIG_IN_CONSOLE = false;
+
+	/** List of IP addresses allowed to display debug console. Values: false = All IPS / "192.168.1.10" / ["192.168.1.10","192.168.1.11"] */
+	public static $DEBUG_CONSOLE_ALLOWED_IPS = false;
+
+	/** List of user IDs allowed to display debug console. */
+	public static $DEBUG_CONSOLE_ALLOWED_USERS = [];
+
+	/** Debug cron => cache/logs/cron/ */
+	public static $DEBUG_CRON = false;
+
+	/** Debug Viewer => cache/logs/viewer-debug.log */
+	public static $DEBUG_VIEWER = false;
+
+	/** Display Smarty Debug Console */
+	public static $DISPLAY_DEBUG_VIEWER = false;
+
+	/** Do not show Smarty Notice in phpError.log */
+	public static $SMARTY_ERROR_REPORTING = E_ALL & ~E_NOTICE;
 
 	/**
 	 * Set the error reporting level. The parameter is either an integer representing a bit field, or named constants.
@@ -78,17 +84,29 @@ class Debug
 	 */
 	public static $EXCEPTION_ERROR_LEVEL = E_ALL & ~E_NOTICE;
 
-	/** API - Sabre dav - This is a flag that allow or not showing file, line and code of the exception in the returned XML */
+	/** Turn on/off error debugging in javascript */
+	public static $JS_DEBUG = true;
+
+	/** [WebServices/API] Show exception messages in response body */
+	public static $apiShowExceptionMessages = false;
+
+	/** [WebServices/API] Show exception reason phrase in response header */
+	public static $apiShowExceptionReasonPhrase = false;
+
+	/** [WebServices/API] Show exception backtrace in response body */
+	public static $apiShowExceptionBacktrace = false;
+
+	/** [WebServices/API] Log to file only exception errors in the logs */
+	public static $apiLogException = false;
+
+	/** [WebServices/API] Log to file all communications data (request + response) */
+	public static $apiLogAllRequests = false;
+
+	/** API - Sabre dav - This is a flag that allows (or not) showing file, line, and code of the exception in the returned XML */
 	public static $DAV_DEBUG_EXCEPTIONS = false;
 
 	/** Activate the plugin recording log in DAV */
 	public static $DAV_DEBUG_PLUGIN = false;
-
-	/** Show errors messages in web service */
-	public static $WEBSERVICE_SHOW_ERROR = false;
-
-	/** Web service logs */
-	public static $WEBSERVICE_DEBUG = false;
 
 	/** Mailer debug */
 	public static $MAILER_DEBUG = false;
@@ -101,7 +119,7 @@ class Debug
 
 	/**
 	 * Activate this option if logs should be written to per-user directories.
-	 * Data will only be logged if a directry cache/logs/<username>/ exists and is writable.
+	 * Data will only be logged if a directory cache/logs/<username>/ exists and is writable.
 	 */
 	public static $ROUNDCUBE_PER_USER_LOGGING = false;
 

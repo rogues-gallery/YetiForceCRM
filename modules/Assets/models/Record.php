@@ -4,7 +4,7 @@
  * Record Class for Assets.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
@@ -21,7 +21,7 @@ class Assets_Record_Model extends Vtiger_Record_Model
 
 	public function getRenewalValue()
 	{
-		if ($this->isEmpty('product')) {
+		if ($this->isEmpty('product') || !\App\Record::isExists($this->get('product'), 'Products')) {
 			return 'PLL_NOT_APPLICABLE_VERIFICATION';
 		}
 		$productsRecordModel = Vtiger_Record_Model::getInstanceById($this->get('product'), 'Products');

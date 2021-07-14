@@ -1,4 +1,13 @@
 <?php
+/**
+ * Base file for database import.
+ *
+ * @package App
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ */
 
 namespace App\Db\Importers;
 
@@ -6,10 +15,6 @@ use yii\db\Schema;
 
 /**
  * Base class for database import.
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Base
 {
@@ -25,21 +30,35 @@ class Base
 	 *
 	 * @var array
 	 */
-	public $tables;
+	public $tables = [];
+
+	/**
+	 * Drop tables.
+	 *
+	 * @var array
+	 */
+	public $dropTables = [];
+
+	/**
+	 * Drop columns.
+	 *
+	 * @var array
+	 */
+	public $dropColumns = [];
 
 	/**
 	 * Foreign keys.
 	 *
 	 * @var array
 	 */
-	public $foreignKey;
+	public $foreignKey = [];
 
 	/**
 	 * Data to import.
 	 *
 	 * @var array
 	 */
-	public $data;
+	public $data = [];
 
 	/**
 	 * Db.
@@ -97,7 +116,7 @@ class Base
 	 */
 	public function primaryKeyUnsigned($length = null)
 	{
-		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_UPK, $length)->notNull();
+		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_UPK, $length)->notNull()->unsigned()->autoIncrement();
 	}
 
 	/**
@@ -110,7 +129,7 @@ class Base
 	 */
 	public function bigPrimaryKey($length = null)
 	{
-		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_BIGPK, $length)->notNull();
+		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_BIGPK, $length)->notNull()->autoIncrement();
 	}
 
 	/**
@@ -123,7 +142,7 @@ class Base
 	 */
 	public function bigPrimaryKeyUnsigned($length = null)
 	{
-		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_UBIGPK, $length)->notNull();
+		return $this->schema->createColumnSchemaBuilder(Schema::TYPE_UBIGPK, $length)->notNull()->unsigned()->autoIncrement();
 	}
 
 	/**
@@ -184,11 +203,11 @@ class Base
 	 */
 	public function mediumText($length = null)
 	{
-		return $this->schema->createColumnSchemaBuilder('meduimtext', $length);
+		return $this->schema->createColumnSchemaBuilder('MEDIUMTEXT', $length);
 	}
 
 	/**
-	 * Creates a tinyint column. Available only in MySql.
+	 * Creates a tiny int column. Available only in MySql.
 	 *
 	 * @param int $length column size or precision definition
 	 *

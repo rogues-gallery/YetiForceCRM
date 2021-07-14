@@ -18,22 +18,22 @@ abstract class Vtiger_Mass_Action extends \App\Controller\Action
 	 *
 	 * @return \App\QueryGenerator|bool
 	 */
-	public static function getQuery(\App\Request $request)
+	public static function getQuery(App\Request $request)
 	{
 		$cvId = $request->isEmpty('viewname') ? '' : $request->getByType('viewname', 2);
-		$moduleName = $request->getByType('module');
-		if (!empty($cvId) && $cvId === 'undefined' && $request->getByType('source_module', 2) !== 'Users') {
+		$moduleName = $request->getByType('module', 'Alnum');
+		if (!empty($cvId) && 'undefined' === $cvId && 'Users' !== $request->getByType('source_module', 2)) {
 			$sourceModule = $request->getByType('sourceModule', 2);
 			$cvId = CustomView_Record_Model::getAllFilterByModule($sourceModule)->getId();
 		}
-		$customViewModel = CustomView_Record_Model::getInstanceById($cvId);
+		$customViewModel = CustomView_Record_Model::getInstanceById((int) $cvId);
 		if (!$customViewModel) {
 			return false;
 		}
 		$selectedIds = $request->getArray('selected_ids', 2);
-		if ($selectedIds && $selectedIds[0] !== 'all') {
+		if ($selectedIds && 'all' !== $selectedIds[0]) {
 			$queryGenerator = new App\QueryGenerator($moduleName);
-			$queryGenerator->setFields(['id']);
+			$queryGenerator->initForCustomViewById($cvId);
 			$queryGenerator->addCondition('id', $selectedIds, 'e');
 			$queryGenerator->setStateCondition($request->getByType('entityState'));
 			return $queryGenerator;
@@ -45,6 +45,9 @@ abstract class Vtiger_Mass_Action extends \App\Controller\Action
 			$customViewModel->set('search_key', $searchKey);
 			$customViewModel->set('search_value', App\Condition::validSearchValue($request->getByType('search_value', 'Text'), $moduleName, $searchKey, $operator));
 		}
+		if ($request->getBoolean('isSortActive') && !$request->isEmpty('orderby')) {
+			$customViewModel->set('orderby', $request->getArray('orderby', \App\Purifier::STANDARD, [], \App\Purifier::SQL));
+		}
 		$customViewModel->set('search_params', App\Condition::validSearchParams($moduleName, $request->getArray('search_params')));
 		$customViewModel->set('entityState', $request->getByType('entityState'));
 		return $customViewModel->getRecordsListQuery($request->getArray('excluded_ids', 2), $moduleName);
@@ -55,16 +58,15 @@ abstract class Vtiger_Mass_Action extends \App\Controller\Action
 	 *
 	 * @param \App\Request $request
 	 *
-	 * @return array
+	 * @return int[]
 	 */
-	public static function getRecordsListFromRequest(\App\Request $request)
+	public static function getRecordsListFromRequest(App\Request $request)
 	{
 		$selectedIds = $request->getArray('selected_ids', 2);
-		if ($selectedIds && $selectedIds[0] !== 'all') {
+		if ($selectedIds && 'all' !== $selectedIds[0]) {
 			return $selectedIds;
 		}
 		$queryGenerator = static::getQuery($request);
-
-		return $queryGenerator ? $queryGenerator->createQuery()->column() : [];
+		return $queryGenerator ? $queryGenerator->clearFields()->createQuery()->column() : [];
 	}
 }

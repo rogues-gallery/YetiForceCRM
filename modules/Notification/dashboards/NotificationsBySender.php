@@ -4,7 +4,7 @@
  * Notifications Dashboard Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class Notification_NotificationsBySender_Dashboard extends Vtiger_IndexAjax_View
@@ -82,7 +82,7 @@ class Notification_NotificationsBySender_Dashboard extends Vtiger_IndexAjax_View
 		return $chartData;
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();

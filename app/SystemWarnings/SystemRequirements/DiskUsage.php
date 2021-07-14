@@ -5,8 +5,10 @@ namespace App\SystemWarnings\SystemRequirements;
 /**
  * Disk usage system warnings class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class DiskUsage extends \App\SystemWarnings\Template
@@ -31,7 +33,7 @@ class DiskUsage extends \App\SystemWarnings\Template
 	{
 		$this->status = 1;
 		$envInfo = \App\Utils\ConfReport::get('environment');
-		if (!$envInfo['spaceRoot']['status'] || !$envInfo['spaceStorage']['status'] || !$envInfo['spaceTemp']['status']) {
+		if (!$envInfo['spaceRoot']['status'] || !$envInfo['spaceStorage']['status'] || !$envInfo['spaceTemp']['status'] || !$envInfo['spaceBackup']['status']) {
 			$this->status = 0;
 		}
 		if (!$this->status) {

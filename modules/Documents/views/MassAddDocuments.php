@@ -4,7 +4,7 @@
  * Action to mass upload files.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 class Documents_MassAddDocuments_View extends Vtiger_BasicModal_View
@@ -16,7 +16,7 @@ class Documents_MassAddDocuments_View extends Vtiger_BasicModal_View
 	 *
 	 * @throws \App\Exceptions\NoPermitted
 	 */
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		if (!\App\Privilege::isPermitted($request->getModule(), 'CreateView')) {
 			throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
@@ -28,7 +28,7 @@ class Documents_MassAddDocuments_View extends Vtiger_BasicModal_View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		parent::preProcess($request);
 		$moduleName = $request->getModule();

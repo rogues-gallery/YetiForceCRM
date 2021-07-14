@@ -12,7 +12,7 @@
 $.Class(
 	'Settings_Vtiger_Index_Js',
 	{
-		showMessage: function(customParams) {
+		showMessage: function (customParams) {
 			let params = {
 				type: 'success',
 				title: app.vtranslate('JS_MESSAGE')
@@ -20,64 +20,16 @@ $.Class(
 			if (typeof customParams !== 'undefined') {
 				params = $.extend(params, customParams);
 			}
-			Vtiger_Helper_Js.showPnotify(params);
+			app.showNotify(params);
 		},
-		selectIcon: function() {
+		selectIcon: function () {
 			var aDeferred = $.Deferred();
 			app.showModalWindow({
 				id: 'iconsModal',
 				url: 'index.php?module=Vtiger&view=IconsModal&parent=Settings',
-				cb: function(container) {
-					App.Fields.Picklist.showSelect2ElementView(container.find('#iconsList'), {
-						templateSelection: function(data) {
-							if (!data.id) {
-								return data.text;
-							}
-							var type = $(data.element).data('type');
-							container.find('.iconName').text(data.id);
-							container.find('#iconName').val(data.id);
-							container.find('#iconType').val(type);
-							if (type === 'icon') {
-								container
-									.find('.iconExample')
-									.html('<span class="' + data.element.value + '" aria-hidden="true"></span>');
-							} else if (type === 'image') {
-								container.find('.iconName').text(data.text);
-								container.find('#iconName').val(data.element.value);
-								container.find('.iconExample').html('<img width="24px" src="' + data.element.value + '"/>');
-							}
-							return data.text;
-						},
-						templateResult: function(data) {
-							if (!data.id) {
-								return data.text;
-							}
-							var type = $(data.element).data('type');
-							var option;
-							if (type === 'icon') {
-								option = $(
-									'<span class="' +
-										data.element.value +
-										'" aria-hidden="true"></span><span> - ' +
-										$(data.element).data('class') +
-										'</span>'
-								);
-							} else if (type === 'image') {
-								option = $(
-									'<img width="24px" src="' +
-										data.element.value +
-										'" title="' +
-										data.text +
-										'" /><span> - ' +
-										data.text +
-										'</span>'
-								);
-							}
-							return option;
-						},
-						closeOnSelect: true
-					});
-					container.find('[name="saveButton"]').on('click', function(e) {
+				cb: (container) => {
+					this.registerIconsSelect(container);
+					container.find('[name="saveButton"]').on('click', function (e) {
 						aDeferred.resolve({
 							type: container.find('#iconType').val(),
 							name: container.find('#iconName').val()
@@ -88,19 +40,67 @@ $.Class(
 			});
 			return aDeferred.promise();
 		},
-		showWarnings: function() {
+		registerIconsSelect(container) {
+			const params = {
+				module: app.getModuleName(),
+				parent: app.getParentModuleName(),
+				action: 'Icons'
+			};
+			AppConnector.request(params).done(({ result }) => {
+				let id = 0;
+				const data = Object.keys(result).map((key) => {
+					let resultData = result[id];
+					return { id: id++, text: resultData.name, type: resultData.type, url: resultData.path };
+				});
+				const selectParams = {
+					templateSelection: function (data) {
+						if (!data.id) {
+							return data.text;
+						}
+						container.find('.iconName').text(data.text);
+						container.find('#iconName').val(data.text);
+						container.find('#iconType').val(data.type);
+						if (data.type === 'icon') {
+							container.find('.iconExample').html(`<span class="${data.text}" aria-hidden="true"></span>`);
+							return $(`<span class="${data.text}" aria-hidden="true"></span><span> - ${data.text}</span>`);
+						} else if (data.type === 'image') {
+							container.find('.iconName').text(data.text);
+							container.find('#iconName').val(data.url);
+							container.find('.iconExample').html(`<img width="24px" src="${data.url}"/>`);
+						}
+						return data.text;
+					},
+					templateResult: function (data) {
+						if (data.loading) {
+							return data.text;
+						}
+						let option;
+						if (data.type === 'icon') {
+							option = $(`<span class="${data.text}" aria-hidden="true"></span><span> - ${data.text}</span>`);
+						} else if (data.type === 'image') {
+							option = $(`<img width="24px" src="${data.url}" title="${data.text}" /><span> - ${data.text}</span>`);
+						}
+						return option;
+					},
+					closeOnSelect: true
+				};
+				const params = { lazyElements: 50, data, selectParams };
+				App.Fields.Picklist.showLazySelect(container.find('#iconsList'), params);
+			});
+		},
+		showWarnings: function () {
 			$('li[data-mode="systemWarnings"] a').click();
 		},
-		showSecurity: function() {
+		showSecurity: function () {
 			app.openUrl('index.php?module=Log&parent=' + app.getParentModuleName() + '&view=Index&type=access_for_admin');
 		}
 	},
 	{
-		registerDeleteShortCutEvent: function(shortcutsContainer = $('#settingsShortCutsContainer')) {
-			shortcutsContainer.on('click', '.unpin', e => {
+		registerDeleteShortCutEvent: function (shortcutsContainer = $('.js-shortcuts')) {
+			shortcutsContainer.on('click', '.unpin', (e) => {
 				e.preventDefault();
 				var actionEle = $(e.currentTarget);
-				var closestBlock = actionEle.closest('.moduleBlock');
+				var closestBlock = actionEle.closest('.js-shortcut');
 				var fieldId = actionEle.data('id');
 				var shortcutBlockActionUrl = closestBlock.data('actionurl');
 				var actionUrl = shortcutBlockActionUrl + '&pin=false';
@@ -109,7 +109,7 @@ $.Class(
 						enabled: true
 					}
 				});
-				AppConnector.request(actionUrl).done(data => {
+				AppConnector.request(actionUrl).done((data) => {
 					if (data.result.SUCCESS == 'OK') {
 						closestBlock.remove();
 						var menuItemId = '#' + fieldId + '_menuItem';
@@ -125,12 +125,12 @@ $.Class(
 							text: app.vtranslate('JS_SUCCESSFULLY_UNPINNED'),
 							type: 'info'
 						};
-						Vtiger_Helper_Js.showPnotify(params);
+						app.showNotify(params);
 					}
 				});
 			});
 		},
-		registerPinShortCutEvent: function(element) {
+		registerPinShortCutEvent: function (element) {
 			const id = element.data('id');
 			const url =
 				'index.php?module=Vtiger&parent=Settings&action=Basic&mode=updateFieldPinnedStatus&pin=true&fieldid=' + id;
@@ -139,7 +139,7 @@ $.Class(
 					enabled: true
 				}
 			});
-			AppConnector.request(url).done(data => {
+			AppConnector.request(url).done((data) => {
 				if (data.result.SUCCESS == 'OK') {
 					AppConnector.request({
 						fieldid: id,
@@ -147,8 +147,8 @@ $.Class(
 						module: 'Vtiger',
 						parent: 'Settings',
 						view: 'IndexAjax'
-					}).done(data => {
-						const shortcutsContainer = $('#settingsShortCutsContainer');
+					}).done((data) => {
+						const shortcutsContainer = $('.js-shortcuts');
 						$(data).appendTo(shortcutsContainer);
 						this.updateShortcutsStorage(shortcutsContainer);
 						progressIndicatorElement.progressIndicator({
@@ -161,16 +161,16 @@ $.Class(
 				}
 			});
 		},
-		registerWidgetsEvents: function() {
+		registerWidgetsEvents: function () {
 			var widgets = $('div.widgetContainer');
-			widgets.on('shown.bs.collapse', function(e) {
+			widgets.on('shown.bs.collapse', function (e) {
 				var widgetContainer = $(e.currentTarget);
 				var quickWidgetHeader = widgetContainer.closest('.quickWidget').find('.quickWidgetHeader');
 				var imageEle = quickWidgetHeader.find('.imageElement');
 				var imagePath = imageEle.data('downimage');
 				imageEle.attr('src', imagePath);
 			});
-			widgets.on('hidden.bs.collapse', function(e) {
+			widgets.on('hidden.bs.collapse', function (e) {
 				var widgetContainer = $(e.currentTarget);
 				var quickWidgetHeader = widgetContainer.closest('.quickWidget').find('.quickWidgetHeader');
 				var imageEle = quickWidgetHeader.find('.imageElement');
@@ -178,7 +178,7 @@ $.Class(
 				imageEle.attr('src', imagePath);
 			});
 		},
-		registerAddShortcutDragDropEvent: function() {
+		registerAddShortcutDragDropEvent: function () {
 			var elements = $('.js-menu__item .js-menu__link--draggable');
 			var self = this;
 			var classes = 'ui-draggable-menuShortcut bg-warning';
@@ -186,20 +186,20 @@ $.Class(
 				containment: '#page',
 				appendTo: 'body',
 				helper: 'clone',
-				start: function(e, ui) {
+				start: function (e, ui) {
 					$(ui.helper).addClass(classes);
 				},
 				zIndex: 99999
 			});
-			const shortcutsContainer = $('#settingsShortCutsContainer');
+			const shortcutsContainer = $('.js-shortcuts');
 			shortcutsContainer.droppable({
 				activeClass: 'ui-state-default',
 				hoverClass: 'ui-state-hover',
 				accept: '.js-menu__item .js-menu__link--draggable',
-				drop: function(event, ui) {
+				drop: function (event, ui) {
 					var url = ui.draggable.attr('href');
 					var isExist = false;
-					$('#settingsShortCutsContainer [id^="shortcut"]').each(function() {
+					$('.js-shortcuts [id^="shortcut"]').each(function () {
 						var shortCutUrl = $(this).data('url');
 						if (shortCutUrl == url) {
 							isExist = true;
@@ -212,7 +212,7 @@ $.Class(
 							text: app.vtranslate('JS_SHORTCUT_ALREADY_ADDED'),
 							type: 'info'
 						};
-						Vtiger_Helper_Js.showPnotify(params);
+						app.showNotify(params);
 					} else {
 						self.registerPinShortCutEvent(ui.draggable.parent());
 					}
@@ -236,67 +236,53 @@ $.Class(
 		updateShortcutsStorage(container) {
 			Quasar.plugins.LocalStorage.set('yf-settings-shortcuts', container.sortable('toArray'));
 		},
-		loadEditorElement: function() {
-			new App.Fields.Text.Editor($('.js-editor'), {});
-		},
-		registerSaveIssues: function() {
-			var container = $('.addIssuesModal');
-			container.validationEngine(app.validationEngineOptions);
-			var title = $('#titleIssues');
-			var CKEditorInstance = CKEDITOR.instances['bodyIssues'];
-			var thisInstance = this;
-			var saveBtn = container.find('.saveIssues');
-			saveBtn.on('click', function() {
-				if (container.validationEngine('validate')) {
-					var body = CKEditorInstance.document.getBody().getHtml();
-					var params = {
-						module: 'Github',
-						parent: app.getParentModuleName(),
-						action: 'SaveIssuesAjax',
-						title: title.val(),
-						body: body
-					};
-					AppConnector.request(params).done(function(data) {
-						app.hideModalWindow();
-						thisInstance.reloadContent();
-						if (data.result.success == true) {
-							var params = {
-								title: app.vtranslate('JS_LBL_PERMISSION'),
-								text: app.vtranslate('JS_ADDED_ISSUE_COMPLETE'),
-								type: 'success'
-							};
-							Vtiger_Helper_Js.showMessage(params);
-						}
-					});
-				}
+		registerCollapsiblePanels() {
+			const panels = this.container.find('.js-collapse');
+			if (Quasar.plugins.LocalStorage.has('yf-settings-panels')) {
+				this.setPanels(panels);
+			} else {
+				panels.collapse('show');
+				Quasar.plugins.LocalStorage.set('yf-settings-panels', {
+					'marketplace-collapse': 'shown',
+					'system-monitoring-collapse': 'shown',
+					'my-shortcuts-collapse': 'shown'
+				});
+			}
+			panels.on('hidden.bs.collapse shown.bs.collapse', (e) => {
+				this.updatePanelsStorage(e.target.id, e.type);
 			});
-			$('[name="confirmRegulations"]').on('click', function() {
-				var currentTarget = $(this);
-				if (currentTarget.is(':checked')) {
-					saveBtn.removeAttr('disabled');
-				} else {
-					saveBtn.attr('disabled', 'disabled');
+		},
+		updatePanelsStorage(id, type) {
+			const panelsStorage = Quasar.plugins.LocalStorage.getItem('yf-settings-panels');
+			panelsStorage[id] = type;
+			Quasar.plugins.LocalStorage.set('yf-settings-panels', panelsStorage);
+		},
+		setPanels(panels) {
+			const panelsStorage = Quasar.plugins.LocalStorage.getItem('yf-settings-panels');
+			panels.each((i, item) => {
+				if (panelsStorage[item.id] === 'shown') {
+					$(item).collapse('show');
 				}
 			});
 		},
-		reloadContent: function() {
+		loadEditorElement: function () {
+			App.Fields.Text.Editor.register($('.js-editor'), {});
+		},
+		reloadContent: function () {
 			$('.js-tabs li .active').trigger('click');
 		},
-		registerTabEvents: function() {
+		registerTabEvents: function () {
 			var thisInstance = this;
-			$('.js-tabs li').on('click', function() {
+			$('.js-tabs li').on('click', function () {
 				thisInstance.loadContent($(this).data('mode'), false, $(this).data('params'));
 			});
 		},
-		registerWarningsAlert: function() {
+		registerWarningsAlert: function () {
 			const alertsContainer = $('#systemWarningAletrs');
 			if (alertsContainer.length) {
-				app.showModalWindow(alertsContainer, function() {
-					alertsContainer
-						.find('.warning')
-						.first()
-						.removeClass('d-none');
-					alertsContainer.find('.warning .btn').on('click', function(e) {
+				app.showModalWindow(alertsContainer, function () {
+					alertsContainer.find('.warning').first().removeClass('d-none');
+					alertsContainer.find('.warning .btn').on('click', function (e) {
 						let btn = $(this),
 							save = true,
 							params;
@@ -309,7 +295,7 @@ $.Class(
 								params = btn
 									.closest('form')
 									.serializeArray()
-									.reduce(function(obj, item) {
+									.reduce(function (obj, item) {
 										obj[item.name] = item.value;
 										return obj;
 									}, {});
@@ -324,7 +310,7 @@ $.Class(
 									mode: 'update',
 									id: btn.closest('.warning').data('id'),
 									params: params
-								}).done(function(data) {
+								}).done(function (data) {
 									if (data.result.result) {
 										Vtiger_Helper_Js.showMessage({ text: data.result.message, type: 'success' });
 									} else {
@@ -342,21 +328,15 @@ $.Class(
 							});
 						}
 						if (save) {
-							alertsContainer
-								.find('.warning')
-								.first()
-								.remove();
+							alertsContainer.find('.warning').first().remove();
 							if (alertsContainer.find('.warning').length) {
-								alertsContainer
-									.find('.warning')
-									.first()
-									.removeClass('d-none');
+								alertsContainer.find('.warning').first().removeClass('d-none');
 							} else {
 								app.hideModalWindow(alertsContainer);
 							}
 						}
 					});
-					alertsContainer.find('.input-group-addon input[type="checkbox"]').on('click', function(e) {
+					alertsContainer.find('.input-group-append input[type="checkbox"]').on('click', function (e) {
 						let btn = $(this),
 							group = btn.closest('.input-group');
 						if (this.checked) {
@@ -368,14 +348,14 @@ $.Class(
 				});
 			}
 		},
-		getSelectedFolders: function() {
+		getSelectedFolders: function () {
 			var selected = [];
-			$.each($('#jstreeContainer').jstree('get_selected', true), function(index, value) {
+			$.each($('#jstreeContainer').jstree('get_selected', true), function (index, value) {
 				selected.push(value.original.subPath);
 			});
 			return selected;
 		},
-		loadContent: function(mode, page, modeParams) {
+		loadContent: function (mode, page, modeParams) {
 			const thisInstance = this;
 			let container = $('.indexContainer');
 			let state = container.find('.js-switch--state');
@@ -405,13 +385,13 @@ $.Class(
 					elementToBlock: container
 				}
 			});
-			AppConnector.request(params).done(function(data) {
+			AppConnector.request(params).done(function (data) {
 				progressIndicatorElement.progressIndicator({ mode: 'hide' });
 				container.html(data);
 				thisInstance.registerEventsLoadContent(thisInstance, mode, container);
 			});
 		},
-		registerEventsLoadContent: function(thisInstance, mode, container) {
+		registerEventsLoadContent: function (thisInstance, mode, container) {
 			if (mode == 'index') {
 				thisInstance.registerWidgetsEvents();
 				thisInstance.registerDeleteShortCutEvent();
@@ -419,12 +399,14 @@ $.Class(
 				thisInstance.registerWarningsAlert();
 			}
 		},
-		registerEvents: function() {
+		registerEvents: function () {
+			this.container = $('.js-dashboard-container');
 			this.registerTabEvents();
 			this.reloadContent();
 			this.registerWarningsAlert();
 			this.registerDeleteShortCutEvent();
 			this.registerAddShortcutDragDropEvent();
+			this.registerCollapsiblePanels();
 			new window.Settings_YetiForce_Shop_Js().registerEvents();
 		}
 	}

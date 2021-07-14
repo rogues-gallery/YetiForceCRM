@@ -5,8 +5,10 @@ namespace App;
 /**
  * Language basic class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Adrian Koń <a.kon@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
@@ -33,19 +35,12 @@ class Language
 	 * @var string
 	 */
 	public static $customDirectory = 'custom';
-	/**
-	 * Current language.
-	 *
-	 * @var bool|string
-	 */
-	private static $language = false;
 
-	/**
-	 * Temporary language.
-	 *
-	 * @var bool|string
-	 */
-	private static $temporaryLanguage = false;
+	/** @var string Current language. */
+	private static $language = '';
+
+	/** @var string Temporary language. */
+	private static $temporaryLanguage = '';
 
 	/**
 	 * Short current language.
@@ -108,7 +103,7 @@ class Language
 	 *
 	 * @param string $language
 	 */
-	public static function setTemporaryLanguage($language)
+	public static function setTemporaryLanguage(string $language)
 	{
 		static::$temporaryLanguage = $language;
 	}
@@ -135,6 +130,21 @@ class Language
 		}
 		preg_match('/^[a-z]+/i', static::getLanguage(), $match);
 		return static::$shortLanguage = (empty($match[0])) ? \Locale::getPrimaryLanguage(self::DEFAULT_LANG) : $match[0];
+	}
+
+	/**
+	 * Function that returns region for language prefix.
+	 *
+	 * @param string|null $lang
+	 *
+	 * @return string
+	 */
+	public static function getLanguageRegion(?string $lang = null): string
+	{
+		if (!$lang) {
+			$lang = static::getLanguage();
+		}
+		return \Locale::parseLocale($lang)['region'] ?? substr($lang, -2);
 	}
 
 	/**
@@ -292,6 +302,9 @@ class Language
 		if (isset(static::$languageContainer[$language][$moduleName]['php'][$key])) {
 			return Purifier::encodeHtml(static::$languageContainer[$language][$moduleName]['php'][$key]);
 		}
+		if (\App\Config::performance('recursiveTranslate') && static::DEFAULT_LANG !== $language) {
+			return static::translateSingleMod($key, $moduleName, static::DEFAULT_LANG);
+		}
 		return $key;
 	}
 
@@ -417,8 +430,8 @@ class Language
 	private static function getPluralized($count)
 	{
 		//Extract language code from locale with special cases
-		if (0 === strcasecmp(static::getLanguage(), 'pt_br')) {
-			$lang = 'pt_br';
+		if (0 === strcasecmp(static::getLanguage(), 'pt-BR')) {
+			$lang = 'pt-BR';
 		} else {
 			$lang = static::getShortLanguageName();
 		}
@@ -427,7 +440,7 @@ class Language
 			return '_0';
 		}
 		//Two plural forms
-		if (\in_array($lang, ['ach', 'ak', 'am', 'arn', 'br', 'fa', 'fil', 'fr', 'gun', 'ln', 'mfe', 'mg', 'mi', 'oc', 'pt_br', 'tg', 'ti', 'tr', 'uz', 'wa'])) {
+		if (\in_array($lang, ['ach', 'ak', 'am', 'arn', 'br', 'fa', 'fil', 'fr', 'gun', 'ln', 'mfe', 'mg', 'mi', 'oc', 'pt-BR', 'tg', 'ti', 'tr', 'uz', 'wa'])) {
 			return ($count > 1) ? '_1' : '_0';
 		}
 		if (\in_array($lang, [
@@ -770,7 +783,7 @@ class Language
 	 */
 	public static function getDisplayName(string $prefix)
 	{
-		return \ucfirst(locale_get_region($prefix) === strtoupper(locale_get_primary_language($prefix)) ? locale_get_display_language($prefix, $prefix) : locale_get_display_name($prefix, $prefix));
+		return Utils::mbUcfirst(locale_get_region($prefix) === strtoupper(locale_get_primary_language($prefix)) ? locale_get_display_language($prefix, $prefix) : locale_get_display_name($prefix, $prefix));
 	}
 
 	/**

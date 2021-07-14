@@ -2,7 +2,7 @@
  * KnowledgeBase components initializations
  *
  * @description KnowledgeBase views' instances
- * @license YetiForce Public License 3.0
+ * @license YetiForce Public License 4.0
  * @author Tomasz Poradzewski <t.poradzewski@yetiforce.com>
  */
 
@@ -12,6 +12,8 @@ import ArticlePreviewComponent from './ArticlePreviewModal.vue'
 import store from 'store'
 import moduleStore from './store'
 import { createNamespacedHelpers } from 'vuex'
+Vue.config.productionTip = false
+
 const { mapActions } = createNamespacedHelpers('KnowledgeBase')
 store.registerModule('KnowledgeBase', moduleStore)
 
@@ -32,8 +34,8 @@ window.KnowledgeBase = {
 			methods: {
 				...mapActions(['fetchCategories', 'initState'])
 			},
-			async created() {
-				await this.initState(config.state)
+			created() {
+				this.initState(config.state)
 			}
 		}).$mount(config.el)
 	}

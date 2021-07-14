@@ -2,9 +2,12 @@
 /**
  * Tools for datetime class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
 namespace App\Fields;
@@ -26,6 +29,20 @@ class Date
 		'yyyy/mm/dd' => 'Y/m/d',
 	];
 
+	/**
+	 * Numeric representation of the day of the week.
+	 *
+	 * @var array
+	 */
+	public static $dayOfWeekForJS = [
+		'Monday' => 1,
+		'Tuesday' => 2,
+		'Wednesday' => 3,
+		'Thursday' => 4,
+		'Friday' => 5,
+		'Saturday' => 6,
+		'Sunday' => 0,
+	];
 	/**
 	 * ISO-8601 numeric representation of the day of the week.
 	 *
@@ -109,7 +126,7 @@ class Date
 			if (!empty($range[0]) && !empty($range[1])) {
 				return [
 					static::formatToDisplay($range[0]),
-					static::formatToDisplay($range[1])
+					static::formatToDisplay($range[1]),
 				];
 			}
 			return false;
@@ -267,5 +284,118 @@ class Date
 		$dataReader->close();
 		\App\Cache::save('Date::getHolidays', $start . $end, $holidays);
 		return $holidays;
+	}
+
+	/**
+	 * Get closest working day from given data.
+	 *
+	 * @param \DateTime $date
+	 * @param string    $modify
+	 * @param int       $id
+	 *
+	 * @return string
+	 */
+	public static function getWorkingDayFromDate(\DateTime $date, string $modify, int $id = \App\Utils\BusinessHours::DEFAULT_BUSINESS_HOURS_ID): string
+	{
+		$value = $date->modify($modify)->format('Y-m-d');
+		$businessHours = \App\Utils\BusinessHours::getBusinessHoursById($id);
+		$workingDays = explode(',', $businessHours['working_days'] ?? '1,2,3,4,5');
+		$holidays = [];
+		if ($businessHours['holidays'] ?? 1) {
+			$holidays = self::getHolidays();
+		}
+		$iterator = 31;
+		while (isset($holidays[$value]) || !\in_array($date->format('N'), $workingDays)) {
+			$value = $date->modify($modify[0] . '1 day')->format('Y-m-d');
+			if (0 === --$iterator) {
+				throw new \App\Exceptions\AppException('Exceeded the recursive limit, a loop might have been created.');
+			}
+		}
+		return $value;
+	}
+
+	/**
+	 * Method to return date counted only using working days.
+	 *
+	 * @param \DateTime $date
+	 * @param int       $counter
+	 * @param bool      $increase
+	 * @param int       $id
+	 *
+	 * @return string
+	 */
+	public static function getOnlyWorkingDayFromDate(\DateTime $date, int $counter, bool $increase = true, int $id = \App\Utils\BusinessHours::DEFAULT_BUSINESS_HOURS_ID): string
+	{
+		$value = $date->format('Y-m-d');
+		while ($counter-- > 0) {
+			$value = self::getWorkingDayFromDate($date, ($increase ? '+' : '-') . '1 day', $id);
+		}
+		return $value;
+	}
+
+	/**
+	 * Function changes the date format to the database format without changing the time zone.
+	 *
+	 * @param string $date
+	 * @param string $fromFormat
+	 *
+	 * @return string
+	 */
+	public static function sanitizeDbFormat(string $date, string $fromFormat)
+	{
+		$dbDate = '';
+		if ($date) {
+			[$y, $m, $d] = self::explode($date, $fromFormat);
+			if (!$y || !$m || !$d) {
+				if (false !== strpos($date, '-')) {
+					$separator = '-';
+				} elseif (false !== strpos($date, '.')) {
+					$separator = '.';
+				} elseif (false !== strpos($date, '/')) {
+					$separator = '/';
+				}
+				$formatToConvert = str_replace(['/', '.'], '-', $fromFormat);
+				$dateToConvert = str_replace($separator, '-', $date);
+				switch ($formatToConvert) {
+				case 'dd-mm-yyyy':
+					[$d, $m, $y] = explode('-', $dateToConvert, 3);
+					break;
+				case 'mm-dd-yyyy':
+					[$m, $d, $y] = explode('-', $dateToConvert, 3);
+					break;
+				case 'yyyy-mm-dd':
+					[$y, $m, $d] = explode('-', $dateToConvert, 3);
+					break;
+				default:
+					break;
+			}
+				$dbDate = $y . '-' . $m . '-' . $d;
+			} else {
+				$dbDate = $y . '-' . $m . '-' . $d;
+			}
+		}
+
+		return $dbDate;
+	}
+
+	/**
+	 * Check if the date is correct.
+	 *
+	 * @param string      $date
+	 * @param string|null $format
+	 *
+	 * @return bool
+	 */
+	public static function isValid(string $date, ?string $format = null): bool
+	{
+		if (!strtotime($date) || !(false !== strpos($date, '-') || false !== strpos($date, '.') || false !== strpos($date, '/'))) {
+			return false;
+		}
+		if ($format) {
+			[$y, $m, $d] = self::explode($date, $format);
+		} else {
+			[$y, $m, $d] = explode('-', $date);
+		}
+		return is_numeric($m) && is_numeric($d) && is_numeric($y) && checkdate($m, $d, $y);
 	}
 }

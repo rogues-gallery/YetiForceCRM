@@ -48,7 +48,7 @@
 								<input type="text" maxlength="50" name="fieldLabel" value=""
 									   data-validation-engine="validate[required, funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"
 									   class="form-control"
-									   data-validator={\App\Json::encode([['name'=>'FieldLabel']])}/>
+									   data-validator='{\App\Purifier::encodeHtml(\App\Json::encode([['name'=>'FieldLabel']]))}'/>
 							</div>
 						</div>
 						<div class="form-group row align-items-center">
@@ -70,10 +70,14 @@
 							</div>
 							<div class="col-md-8 controls">
 								<select class="marginLeftZero form-control" name="fieldTypeList">
-									<option value="0">{App\Language::translate('LBL_FIELD_TYPE0', $QUALIFIED_MODULE)}</option>
-									{if !empty($SELECTED_MODULE_MODEL->getEntityInstance()->customFieldTable)}
-										<option value="1">{App\Language::translate('LBL_FIELD_TYPE1', $QUALIFIED_MODULE)}</option>
-									{/if}
+									{foreach item=TABLE from=$SELECTED_MODULE_MODEL->getEntityInstance()->tab_name}
+										{if in_array($TABLE, ['vtiger_crmentity', 'vtiger_entity_stats'])}
+											{continue}
+										{/if}
+										<option value="{$TABLE}" {if $TABLE == $SELECTED_MODULE_MODEL->getEntityInstance()->table_name}selected{/if}>
+											{$TABLE}
+										</option>
+									{/foreach}
 								</select>
 							</div>
 						</div>
@@ -109,7 +113,7 @@
 										tabindex="-1" aria-hidden="true"
 										placeholder="{App\Language::translate('LBL_ENTER_PICKLIST_VALUES', $QUALIFIED_MODULE)}"
 										data-validation-engine="validate[required, funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"
-										data-validator={\App\Json::encode([['name'=>'PicklistFieldValues']])}>
+										data-validator='{\App\Purifier::encodeHtml(\App\Json::encode([['name'=>'PicklistFieldValues']]))}'>
 								</select>
 							</div>
 						</div>
@@ -206,11 +210,9 @@
 								{App\Language::translate('LBL_TREE_TEMPLATE', $QUALIFIED_MODULE)}
 							</div>
 							<div class="col-md-8 controls">
-								<select class="TreeList form-control" name="tree">
+								<select class="TreeList form-control" name="tree" data-validation-engine="validate[required, funcCall[Vtiger_Base_Validator_Js.invokeValidation]]">
 									{foreach key=key item=item from=$SELECTED_MODULE_MODEL->getTreeTemplates($SELECTED_MODULE_NAME)}
 										<option value="{$key}">{App\Language::translate($item, $SELECTED_MODULE_NAME)}</option>
-										{foreachelse}
-										<option value="-">{App\Language::translate('LBL_NONE')}</option>
 									{/foreach}
 								</select>
 							</div>
@@ -218,14 +220,12 @@
 						<div class="form-group row align-items-center supportedType js-server-access-list d-none" data-js="removeClass:d-none">
 							<div class="col-md-3 col-form-label text-right">
 								<span class="redColor">*</span>&nbsp;
-								{App\Language::translate('CustomerPortal', $QUALIFIED_MODULE)}
+								{App\Language::translate('WebserviceApps', 'Settings.WebserviceApps')}
 							</div>
 							<div class="col-md-8 controls">
-								<select class="form-control" name="server">
+								<select class="form-control" name="server" data-validation-engine="validate[required, funcCall[Vtiger_Base_Validator_Js.invokeValidation]]">
 									{foreach key=key item=SERVER from=Settings_WebserviceApps_Module_Model::getServers()}
 										<option value="{$key}">{App\Purifier::encodeHtml($SERVER['name'])}</option>
-									{foreachelse}
-										<option value="-">{App\Language::translate('LBL_NONE')}</option>
 									{/foreach}
 								</select>
 							</div>

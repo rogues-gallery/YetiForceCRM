@@ -4,11 +4,11 @@
  * OSSPasswords GetPass action class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSPasswords_GetPass_Action extends \App\Controller\Action
 {
-	public function checkPermission(\App\Request $request)
+	public function checkPermission(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
@@ -26,7 +26,7 @@ class OSSPasswords_GetPass_Action extends \App\Controller\Action
 		}
 	}
 
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$record = $request->getInteger('record');
@@ -38,12 +38,15 @@ class OSSPasswords_GetPass_Action extends \App\Controller\Action
 		}
 
 		$pass = $recordModel->getPassword($record);
-		if ($pass === false) {
+		if (false === $pass) {
 			$result = ['success' => false];
 		} else {
 			$result = ['success' => true, 'password' => $pass];
 		}
-
+		$eventHandler = new App\EventHandler();
+		$eventHandler->setRecordModel($recordModel);
+		$eventHandler->setModuleName($moduleName);
+		$eventHandler->trigger('EntityAfterShowHiddenData');
 		$response = new Vtiger_Response();
 		$response->setResult($result);
 		$response->emit();

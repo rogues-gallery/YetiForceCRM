@@ -3,7 +3,7 @@
  * Login history.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mriusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -43,7 +43,6 @@ class Settings_LoginHistory_Record_Model extends Settings_Vtiger_Record_Model
 			$usersListArray[$userName] = $userName;
 		}
 		$dataReader->close();
-
 		return $usersListArray;
 	}
 
@@ -51,25 +50,26 @@ class Settings_LoginHistory_Record_Model extends Settings_Vtiger_Record_Model
 	 * Function to retieve display value for a field.
 	 *
 	 * @param string $fieldName - field name for which values need to get
+	 * @param mixed  $recordId
 	 *
 	 * @return string
 	 */
-	public function getDisplayValue($fieldName, $recordId = false)
+	public function getDisplayValue(string $fieldName, $recordId = false)
 	{
 		switch ($fieldName) {
 			case 'login_time':
 			case 'logout_time':
 				$value = $this->get($fieldName);
-				if ($value && $value !== '0000-00-00 00:00:00') {
+				if ($value && '0000-00-00 00:00:00' !== $value) {
 					return App\Fields\DateTime::formatToDisplay($value);
-				} else {
-					return '--';
 				}
-			// no break
+					return '--';
 			case 'user_name':
 				return $this->getForHtml($fieldName);
+			case 'agent':
+				return \App\Layout::truncateText($this->get($fieldName) ?: '', 70, true);
 			case 'status':
-				return App\Language::translate($this->get($fieldName), 'Settings::Vtiger');
+				return App\Language::translate($this->get($fieldName), 'Users');
 			default:
 				return $this->get($fieldName);
 		}

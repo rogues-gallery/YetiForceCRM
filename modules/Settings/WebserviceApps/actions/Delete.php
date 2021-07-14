@@ -3,9 +3,12 @@
 /**
  * Delete Application.
  *
+ * @package Settings.Action
+ *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
+ * @author Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class Settings_WebserviceApps_Delete_Action extends Settings_Vtiger_Index_Action
 {
@@ -14,7 +17,7 @@ class Settings_WebserviceApps_Delete_Action extends Settings_Vtiger_Index_Action
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		Settings_WebserviceApps_Record_Model::getInstanceById($request->getInteger('id'))->delete();
 		$responceToEmit = new Vtiger_Response();

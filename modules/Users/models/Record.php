@@ -1,4 +1,5 @@
 <?php
+
  /* +***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
@@ -6,6 +7,7 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
+ * Contributor(s): YetiForce Sp. z o.o
  * *********************************************************************************** */
 
 class Users_Record_Model extends Vtiger_Record_Model
@@ -16,19 +18,6 @@ class Users_Record_Model extends Vtiger_Record_Model
 			return App\Session::get('baseUserId');
 		}
 		return $this->getId();
-	}
-
-	/**
-	 * Function to get the Module to which the record belongs.
-	 *
-	 * @return Vtiger_Module_Model
-	 */
-	public function getModule()
-	{
-		if (empty($this->module)) {
-			$this->module = Vtiger_Module_Model::getInstance('Users');
-		}
-		return $this->module;
 	}
 
 	/**
@@ -138,10 +127,9 @@ class Users_Record_Model extends Vtiger_Record_Model
 	 *
 	 * @return string Module Name
 	 */
-	public function getModuleName()
+	public function getModuleName(): string
 	{
-		$module = $this->getModule();
-		if ($module) {
+		if ($this->getModule()) {
 			return parent::getModuleName();
 		}
 		//get from the class propety module_name
@@ -163,6 +151,9 @@ class Users_Record_Model extends Vtiger_Record_Model
 		}
 		if ($this->getPreviousValue('user_password')) {
 			$this->set('date_password_change', date('Y-m-d H:i:s'));
+			if ($this->isNew() || App\User::getCurrentUserRealId() !== $this->getId()) {
+				$this->set('force_password_change', 1);
+			}
 		}
 		$eventHandler = new App\EventHandler();
 		$eventHandler->setRecordModel($this);
@@ -203,8 +194,11 @@ class Users_Record_Model extends Vtiger_Record_Model
 			}
 		}
 		if (App\Config::module('Users', 'CHECK_LAST_USERNAME') && isset($valuesForSave['vtiger_users']['user_name'])) {
-			$db = \App\Db::getInstance('log');
-			$db->createCommand()->insert('l_#__username_history', ['user_name' => $valuesForSave['vtiger_users']['user_name'], 'user_id' => $this->getId()])->execute();
+			\App\Db::getInstance('log')->createCommand()->insert('l_#__username_history', [
+				'user_name' => $valuesForSave['vtiger_users']['user_name'],
+				'user_id' => $this->getId(),
+				'date' => date('Y-m-d H:i:s'),
+			])->execute();
 		}
 	}
 
@@ -229,6 +223,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 		}
 		if ($this->has('changeUserPassword') || $this->isNew()) {
 			$saveFields[] = 'user_password';
+			$saveFields[] = 'force_password_change';
 		}
 		foreach ($saveFields as $fieldName) {
 			$fieldModel = $moduleModel->getFieldByName($fieldName);
@@ -294,18 +289,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 	 */
 	public function validate()
 	{
-		$checkUserExist = false;
-		if ($this->isNew()) {
-			$checkUserExist = true;
-		} else {
-			if (false !== $this->getPreviousValue('is_admin')) {
-				\App\Privilege::setAllUpdater();
-			}
-			if (false !== $this->getPreviousValue('roleid')) {
-				$checkUserExist = true;
-			}
-		}
-		if ($checkUserExist) {
+		if ($this->isNew() || false !== $this->getPreviousValue('roleid') || false !== $this->getPreviousValue('user_name')) {
 			$query = (new App\Db\Query())->from('vtiger_users')
 				->leftJoin('vtiger_user2role', 'vtiger_user2role.userid = vtiger_users.id')
 				->where(['vtiger_users.user_name' => $this->get('user_name'), 'vtiger_user2role.roleid' => $this->get('roleid')]);
@@ -315,15 +299,16 @@ class Users_Record_Model extends Vtiger_Record_Model
 			if ($query->exists()) {
 				throw new \App\Exceptions\SaveRecord('ERR_USER_EXISTS||' . $this->get('user_name'), 406);
 			}
-			if ($this->getId()) {
-				\App\Db::getInstance()->createCommand()->delete('vtiger_module_dashboard_widgets', ['userid' => $this->getId()])->execute();
-			}
-			\App\Privilege::setAllUpdater();
 		}
 		if (!$this->isNew() && false !== $this->getPreviousValue('user_password') && App\User::getCurrentUserId() === $this->getId()) {
-			$isExists = (new \App\Db\Query())->from('l_#__userpass_history')->where(['user_id' => $this->getId(), 'pass' => \App\Encryption::createHash($this->get('user_password'))])->exists();
-			if ($isExists) {
+			if (App\User::checkPreviousPassword($this->getId(), $this->get('user_password'))) {
 				throw new \App\Exceptions\SaveRecord('ERR_PASSWORD_HAS_ALREADY_BEEN_USED', 406);
+			}
+		}
+		if (!$this->isNew() && 'on' === $this->getPreviousValue('is_admin')) {
+			$isExists = (new App\Db\Query())->from('vtiger_users')->where(['is_admin' => 'on'])->andWhere(['<>', 'id', $this->getId()])->exists();
+			if (!$isExists) {
+				throw new \App\Exceptions\SaveRecord('ERR_REMOVING_LAST_ADMIN', 406);
 			}
 		}
 	}
@@ -334,12 +319,20 @@ class Users_Record_Model extends Vtiger_Record_Model
 	public function afterSaveToDb()
 	{
 		$dbCommand = \App\Db::getInstance()->createCommand();
+		$this->cleanAttachments();
+		if ($this->isNew() || false !== $this->getPreviousValue('roleid') || false !== $this->getPreviousValue('is_admin')) {
+			\App\Privilege::setAllUpdater();
+			if (!$this->isNew() && false !== $this->getPreviousValue('roleid')) {
+				$dbCommand->delete('vtiger_module_dashboard_widgets', ['userid' => $this->getId()])->execute();
+			}
+		}
 		if (false !== $this->getPreviousValue('user_password') && ($this->isNew() || App\User::getCurrentUserId() === $this->getId())) {
-			$dbCommand->insert('l_#__userpass_history', [
+			\App\Db::getInstance('log')->createCommand()->insert('l_#__userpass_history', [
 				'pass' => \App\Encryption::createHash($this->get('user_password')),
 				'user_id' => $this->getId(),
 				'date' => date('Y-m-d H:i:s'),
 			])->execute();
+			$this->getModule()->saveLoginHistory(strtolower($this->get('user_name')), 'LBL_PASSWORD_CHANGED');
 		}
 		if (false !== $this->getPreviousValue('language') && App\User::getCurrentUserRealId() === $this->getId()) {
 			App\Session::set('language', $this->get('language'));
@@ -355,6 +348,45 @@ class Users_Record_Model extends Vtiger_Record_Model
 		if ($this->getPreviousValue('sync_carddav') || $this->isNew()) {
 			$dbCommand->update('vtiger_contactdetails', ['dav_status' => 1])->execute();
 			$dbCommand->update('vtiger_ossemployees', ['dav_status' => 1])->execute();
+		}
+		self::cleanCache($this->getId());
+		$this->updateLabel();
+	}
+
+	/**
+	 * Clear user cache.
+	 *
+	 * @param int $userId
+	 */
+	public static function cleanCache(int $userId = 0)
+	{
+		\App\Cache::delete('UserImageById', $userId);
+		\App\Cache::delete('UserIsExists', $userId);
+		\App\Cache::delete('UserIsExistsInactive', $userId);
+		\App\Cache::delete('NumberOfUsers', '');
+		\App\Cache::delete('ActiveAdminId', '');
+	}
+
+	/**
+	 * Clear temporary attachments.
+	 */
+	public function cleanAttachments()
+	{
+		foreach ($this->getModule()->getFieldsByType(['image', 'multiImage'], true) as $fieldName => $fieldModel) {
+			$currentData = [];
+			if ($this->get($fieldName) && ($this->isNew() || false !== $this->getPreviousValue($fieldName))) {
+				$currentData = \App\Fields\File::parse(\App\Json::decode($this->get($fieldName)));
+				\App\Fields\File::cleanTemp(array_keys($currentData));
+			}
+			if ($previousValue = $this->getPreviousValue($fieldName)) {
+				$previousData = \App\Json::decode($previousValue);
+				foreach ($previousData as $item) {
+					if (!isset($currentData[$item['key']])) {
+						\App\Fields\File::cleanTemp($item['key']);
+						\App\Fields\File::loadFromInfo(['path' => $item['path']])->delete();
+					}
+				}
+			}
 		}
 	}
 
@@ -378,7 +410,6 @@ class Users_Record_Model extends Vtiger_Record_Model
 			if (!$currentUserModel) {
 				static::$currentUserModels[$currentUser->getId()] = $currentUserModel = static::getInstanceFromUserObject($currentUser);
 			}
-
 			return $currentUserModel;
 		}
 		return new self();
@@ -642,6 +673,85 @@ class Users_Record_Model extends Vtiger_Record_Model
 		return $activityReminderInSeconds;
 	}
 
+	/** {@inheritdoc} */
+	public function getRecordListViewLinksLeftSide()
+	{
+		$links = $recordLinks = [];
+		if ($this->isViewable()) {
+			$recordLinks['LBL_SHOW_COMPLETE_DETAILS'] = [
+				'linktype' => 'LIST_VIEW_ACTIONS_RECORD_LEFT_SIDE',
+				'linklabel' => 'LBL_SHOW_COMPLETE_DETAILS',
+				'linkurl' => $this->getFullDetailViewUrl(),
+				'linkicon' => 'fas fa-th-list',
+				'linkclass' => 'btn-sm btn-default',
+				'linkhref' => true,
+			];
+		}
+		if ($this->isEditable() && $this->isActive()) {
+			$recordLinks['LBL_EDIT'] = [
+				'linktype' => 'LIST_VIEW_ACTIONS_RECORD_LEFT_SIDE',
+				'linklabel' => 'LBL_EDIT',
+				'linkurl' => $this->getEditViewUrl(),
+				'linkicon' => 'yfi yfi-full-editing-view',
+				'linkclass' => 'btn-sm btn-default',
+				'linkhref' => true,
+			];
+			if ($this->isPermitted('DuplicateRecord')) {
+				$recordLinks['LBL_DUPLICATE'] = [
+					'linktype' => 'LIST_VIEW_ACTIONS_RECORD_LEFT_SIDE',
+					'linklabel' => 'LBL_DUPLICATE',
+					'linkurl' => $this->getDuplicateRecordUrl(),
+					'linkicon' => 'fas fa-clone',
+					'linkclass' => 'btn-outline-dark btn-sm',
+					'title' => \App\Language::translate('LBL_DUPLICATE_RECORD'),
+				];
+			}
+		}
+		if ($this->privilegeToDelete()) {
+			if ($this->isActive()) {
+				$recordLinks['LBL_DELETE_RECORD_COMPLETELY'] = [
+					'linktype' => 'LIST_VIEW_ACTIONS_RECORD_LEFT_SIDE',
+					'linklabel' => 'LBL_DELETE_RECORD_COMPLETELY',
+					'linkicon' => 'fas fa-eraser',
+					'linkclass' => 'btn-sm btn-primary deleteRecordButton',
+				];
+			} else {
+				$recordLinks['LBL_DELETE_USER_PERMANENTLY'] = [
+					'linktype' => 'LIST_VIEW_ACTIONS_RECORD_LEFT_SIDE',
+					'linklabel' => 'LBL_DELETE_USER_PERMANENTLY',
+					'linkurl' => 'javascript:Settings_Users_List_Js.deleteUserPermanently(' . $this->getId() . ', event)',
+					'linkicon' => 'fas fa-eraser',
+					'linkclass' => 'btn-sm btn-dark',
+				];
+			}
+		}
+		foreach ($recordLinks as $key => $recordLink) {
+			$links[$key] = Vtiger_Link_Model::getInstanceFromValues($recordLink);
+		}
+		if (!$this->isActive()) {
+			$links['BUTTONS'][] = Vtiger_Link_Model::getInstanceFromValues([
+				'linklabel' => 'LBL_RESTORE',
+				'linkicon' => 'fas fa-sync-alt',
+				'linkclass' => 'btn btn-sm btn-light',
+				'linkurl' => 'javascript:Settings_Users_List_Js.restoreUser(' . $this->getId() . ', event)',
+			]);
+		}
+		return \App\Utils::changeSequence($links, App\Config::module($this->getModuleName(), 'recordListViewButtonSequence', []));
+	}
+
+	/** Checking if the record is active.
+	 *
+	 * @return bool
+	 */
+	public function isActive(): bool
+	{
+		$active = false;
+		if ('Active' === $this->get('status')) {
+			$active = true;
+		}
+		return $active;
+	}
+
 	/**
 	 * Function to get the users count.
 	 *
@@ -742,18 +852,19 @@ class Users_Record_Model extends Vtiger_Record_Model
 	 * assign all record which are assigned to that user
 	 * and not transfered to other user to other user.
 	 *
-	 * @param mixed $userId
-	 * @param mixed $newOwnerId
+	 * @param int $userId
+	 * @param int $newOwnerId
 	 */
 	public static function deleteUserPermanently($userId, $newOwnerId)
 	{
-		$db = App\Db::getInstance();
-		$db->createCommand()->update('vtiger_crmentity', ['smcreatorid' => $newOwnerId, 'smownerid' => $newOwnerId], ['smcreatorid' => $userId, 'setype' => 'ModComments'])->execute();
+		$dbCommand = \App\Db::getInstance()->createCommand();
+		$dbCommand->update('vtiger_crmentity', ['smcreatorid' => $newOwnerId, 'smownerid' => $newOwnerId], ['smcreatorid' => $userId, 'setype' => 'ModComments'])->execute();
 		//update history details in vtiger_modtracker_basic
-		$db->createCommand()->update('vtiger_modtracker_basic', ['whodid' => $newOwnerId], ['whodid' => $userId])->execute();
+		$dbCommand->update('vtiger_modtracker_basic', ['whodid' => $newOwnerId], ['whodid' => $userId])->execute();
 		//update comments details in vtiger_modcomments
-		$db->createCommand()->update('vtiger_modcomments', ['userid' => $newOwnerId], ['userid' => $userId])->execute();
-		$db->createCommand()->delete('vtiger_users', ['id' => $userId])->execute();
+		$dbCommand->update('vtiger_modcomments', ['userid' => $newOwnerId], ['userid' => $userId])->execute();
+		$dbCommand->delete('vtiger_users', ['id' => $userId])->execute();
+		$dbCommand->delete('vtiger_module_dashboard_widgets', ['userid' => $userId])->execute();
 		\App\PrivilegeUtil::deleteRelatedSharingRules($userId, 'Users');
 		$fileName = "user_privileges/sharing_privileges_{$userId}.php";
 		if (file_exists($fileName)) {
@@ -763,6 +874,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 		if (file_exists($fileName)) {
 			unlink($fileName);
 		}
+		self::cleanCache($userId);
 	}
 
 	/**
@@ -786,7 +898,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 			return $this->get('locks');
 		}
 		require 'user_privileges/locks.php';
-		if ($this->getId() && array_key_exists($this->getId(), $locks)) {
+		if ($this->getId() && \array_key_exists($this->getId(), $locks)) {
 			$this->set('locks', $locks[$this->getId()]);
 
 			return $locks[$this->getId()];
@@ -794,62 +906,45 @@ class Users_Record_Model extends Vtiger_Record_Model
 		return [];
 	}
 
-	public function getBodyLocks()
+	/**
+	 * Get locks content.
+	 *
+	 * @return string
+	 */
+	public function getBodyLocks(): string
+	{
+		return \App\Utils::getLocksContent($this->getLocks());
+	}
+
+	public function getHeadLocks()
 	{
 		$return = '';
 		foreach ($this->getLocks() as $lock) {
 			switch ($lock) {
 				case 'copy':
-					$return .= ' oncopy = "return false"';
+					$return = ' document.oncopy = lockFunction;';
 					break;
 				case 'cut':
-					$return .= ' oncut = "return false"';
+					$return = ' document.oncut = lockFunction;';
 					break;
 				case 'paste':
-					$return .= ' onpaste = "return false"';
+					$return = ' document.onpaste = lockFunction;';
 					break;
 				case 'contextmenu':
-					$return .= ' oncontextmenu = "return false"';
+					$return = ' document.oncontextmenu = function(event) {if(event.button==2){return false;}}; document.oncontextmenu = lockFunction;';
 					break;
 				case 'selectstart':
-					$return .= ' onselectstart = "return false" onselect = "return false"';
+					$return = ' document.onselectstart = lockFunction; document.onselect = lockFunction;';
 					break;
 				case 'drag':
-					$return .= ' ondragstart = "return false" ondrag = "return false"';
+					$return = ' document.ondragstart = lockFunction; document.ondrag = lockFunction;';
 					break;
 				default:
 					break;
 			}
 		}
-		return $return;
-	}
-
-	public function getHeadLocks()
-	{
-		$return = 'function lockFunction() {return false;}';
-		foreach ($this->getLocks() as $lock) {
-			switch ($lock) {
-				case 'copy':
-					$return .= ' document.oncopy = lockFunction;';
-					break;
-				case 'cut':
-					$return .= ' document.oncut = lockFunction;';
-					break;
-				case 'paste':
-					$return .= ' document.onpaste = lockFunction;';
-					break;
-				case 'contextmenu':
-					$return .= ' document.oncontextmenu = function(event) {if(event.button==2){return false;}}; document.oncontextmenu = lockFunction;';
-					break;
-				case 'selectstart':
-					$return .= ' document.onselectstart = lockFunction; document.onselect = lockFunction;';
-					break;
-				case 'drag':
-					$return .= ' document.ondragstart = lockFunction; document.ondrag = lockFunction;';
-					break;
-				default:
-					break;
-			}
+		if ($return) {
+			$return = 'function lockFunction() {return false;}' . $return;
 		}
 		return $return;
 	}
@@ -867,7 +962,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 	}
 
 	/**
-	 * Verify user assword.
+	 * Verify user password.
 	 *
 	 * @param string $password
 	 *
@@ -904,14 +999,12 @@ class Users_Record_Model extends Vtiger_Record_Model
 		if (!$row || 0 !== (int) $row['deleted']) {
 			$this->fakeEncryptPassword($password);
 			\App\Log::info('User not found: ' . $userName, 'UserAuthentication');
-
 			return false;
 		}
 		$this->set('id', $row['id']);
 		$userRecordModel = static::getInstanceFromFile($row['id']);
 		if ('Active' !== $userRecordModel->get('status')) {
 			\App\Log::info('Inactive user :' . $userName, 'UserAuthentication');
-
 			return false;
 		}
 		$result = $userRecordModel->doLoginByAuthMethod($password);
@@ -920,11 +1013,9 @@ class Users_Record_Model extends Vtiger_Record_Model
 		}
 		if (null === $result && $userRecordModel->verifyPassword($password)) {
 			\App\Session::set('UserAuthMethod', 'PASSWORD');
-
 			return true;
 		}
 		\App\Log::info('Invalid password. User: ' . $userName, 'UserAuthentication');
-
 		return false;
 	}
 
@@ -933,7 +1024,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 	 *
 	 * @param string $password
 	 *
-	 * @return null|bool
+	 * @return bool|null
 	 */
 	protected function doLoginByAuthMethod($password)
 	{
@@ -971,26 +1062,37 @@ class Users_Record_Model extends Vtiger_Record_Model
 	 *
 	 * @param App\User $userModel
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public function verifyPasswordChange(App\User $userModel)
+	public function verifyPasswordChange(App\User $userModel): void
 	{
 		$passConfig = \Settings_Password_Record_Model::getUserPassConfig();
 		$time = (int) $passConfig['change_time'];
 		if (1 === (int) $userModel->getDetail('force_password_change')) {
 			\App\Session::set('ShowUserPasswordChange', 2);
+			\App\Process::addEvent([
+				'name' => 'ShowUserPasswordChange',
+				'priority' => 3,
+				'type' => 'modal',
+				'url' => 'index.php?module=Users&view=PasswordModal&mode=change&record=' . $userModel->getId(),
+			]);
+			return;
 		}
-		if (0 === $time) {
-			return false;
-		}
-		if (strtotime("-$time day") > strtotime($userModel->getDetail('date_password_change'))) {
+		$lastChange = strtotime($userModel->getDetail('date_password_change'));
+		if (0 !== $time && (!$lastChange || strtotime("-$time day") > $lastChange)) {
 			$time += (int) $passConfig['lock_time'];
-			if (strtotime("-$time day") > strtotime($userModel->getDetail('date_password_change'))) {
-				return true;
+			if (!$lastChange || strtotime("-$time day") > $lastChange) {
+				\App\Session::set('ShowUserPasswordChange', 2);
+			} else {
+				\App\Session::set('ShowUserPasswordChange', 1);
 			}
-			\App\Session::set('ShowUserPasswordChange', 1);
+			\App\Process::addEvent([
+				'name' => 'ShowUserPasswordChange',
+				'priority' => 3,
+				'type' => 'modal',
+				'url' => 'index.php?module=Users&view=PasswordModal&mode=change&record=' . $userModel->getId(),
+			]);
 		}
-		return false;
 	}
 
 	/**
@@ -1012,5 +1114,29 @@ class Users_Record_Model extends Vtiger_Record_Model
 			\App\Cache::save('UsersFavourite', $this->getId(), $favouriteUsers, \App\Cache::LONG);
 		}
 		return $favouriteUsers;
+	}
+
+	/**
+	 * Update record label.
+	 *
+	 * @return void
+	 */
+	public function updateLabel(): void
+	{
+		$metaInfo = \App\Module::getEntityInfo($this->getModuleName());
+		$labelName = [];
+		foreach ($metaInfo['fieldnameArr'] as $columnName) {
+			$fieldModel = $this->getModule()->getFieldByColumn($columnName);
+			$labelName[] = $fieldModel->getDisplayValue($this->get($fieldModel->getName()), $this->getId(), $this, true);
+		}
+		$label = \App\TextParser::textTruncate(implode($metaInfo['separator'] ?? ' ', $labelName), 250, false);
+		if (!empty($label)) {
+			$db = \App\Db::getInstance();
+			if (!(new \App\Db\Query())->from('u_#__users_labels')->where(['id' => $this->getId()])->exists()) {
+				$db->createCommand()->insert('u_#__users_labels', ['id' => $this->getId(), 'label' => $label])->execute();
+			} else {
+				$db->createCommand()->update('u_#__users_labels', ['label' => $label], ['id' => $this->getId()])->execute();
+			}
+		}
 	}
 }

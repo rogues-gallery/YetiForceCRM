@@ -4,10 +4,39 @@
  * OSSPasswords record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class OSSPasswords_Record_Model extends Vtiger_Record_Model
 {
+	/** {@inheritdoc} */
+	public function getRecordRelatedListViewLinksLeftSide(Vtiger_RelationListView_Model $viewModel)
+	{
+		$links = parent::getRecordRelatedListViewLinksLeftSide($viewModel);
+		unset($links['LBL_QUICK_EDIT']);
+		if (isset($viewModel->getHeaders()['password'])) {
+			$links['BUTTONS'][] = Vtiger_Link_Model::getInstanceFromValues([
+				'linklabel' => \App\Language::translate('LBL_ShowPassword', $this->getModuleName()),
+				'linkicon' => 'adminIcon-passwords-encryption',
+				'linkclass' => 'show_pass btn btn-sm btn-light js-popover-tooltip',
+				'linkdata' => [
+					'id' => $this->getId(),
+					'title-show' => \App\Language::translate('LBL_ShowPassword', $this->getModuleName()),
+					'title-hide' => \App\Language::translate('LBL_HidePassword', $this->getModuleName()),
+					'title-copy' => \App\Language::translate('LBL_CopyToClipboardTitle', $this->getModuleName())
+				],
+			]);
+		}
+		return $links;
+	}
+
+	/** {@inheritdoc} */
+	public function getRecordListViewLinksLeftSide()
+	{
+		$links = parent::getRecordListViewLinksLeftSide();
+		unset($links['LBL_QUICK_EDIT']);
+		return $links;
+	}
+
 	/**
 	 * Function to decrypt password.
 	 *
@@ -48,10 +77,10 @@ class OSSPasswords_Record_Model extends Vtiger_Record_Model
 		$res = [];
 		$res[] = ';<?php exit;';
 		foreach ($array as $key => $val) {
-			if (is_array($val)) {
+			if (\is_array($val)) {
 				$res[] = "[$key]";
 				foreach ($val as $skey => $sval) {
-					if (is_array($sval)) {
+					if (\is_array($sval)) {
 						foreach ($sval as $i => $v) {
 							$res[] = "{$skey}[$i] = $v";
 						}
@@ -90,7 +119,7 @@ class OSSPasswords_Record_Model extends Vtiger_Record_Model
 	 */
 	public function checkPassword($password)
 	{
-		$passLength = strlen($password);
+		$passLength = \strlen($password);
 
 		if (0 == $passLength) {
 			return ['error' => true, 'message' => \App\Language::translate('LBL_NULLPASS', 'OSSPasswords')];

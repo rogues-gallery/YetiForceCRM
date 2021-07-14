@@ -5,7 +5,7 @@
  * @package Handler
  *
  * @copyright YetiForce Sp. z o.o.
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Arkadiusz Adach <a.adach@yetiforce.com>
  */
 class PaymentsIn_PaymentsInHandler_Handler
@@ -22,5 +22,6 @@ class PaymentsIn_PaymentsInHandler_Handler
 		$recordModel = $eventHandler->getRecordModel();
 		PaymentsIn_SSingleOrdersPaymentStatus_Model::updateIfPossible($recordModel);
 		PaymentsIn_FinvoicePaymentStatus_Model::updateIfPossible($recordModel);
+		PaymentsIn_FinvoiceProformaPaymentStatus_Model::updateIfPossible($recordModel);
 	}
 }

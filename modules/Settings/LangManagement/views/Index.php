@@ -4,7 +4,7 @@
  * Settings LangManagement index view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  */
 class Settings_LangManagement_Index_View extends Settings_Vtiger_Index_View
 {
@@ -13,7 +13,7 @@ class Settings_LangManagement_Index_View extends Settings_Vtiger_Index_View
 	 *
 	 * @param App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule();
 		$qualifiedModuleName = $request->getModule(false);
@@ -34,7 +34,7 @@ class Settings_LangManagement_Index_View extends Settings_Vtiger_Index_View
 	 *
 	 * @return Vtiger_JsScript_Model[]
 	 */
-	public function getFooterScripts(\App\Request $request)
+	public function getFooterScripts(App\Request $request)
 	{
 		return array_merge(parent::getFooterScripts($request), $this->checkAndConvertJsScripts([
 			'modules.Settings.' . $request->getModule() . '.resources.LangManagement',
@@ -55,7 +55,7 @@ class Settings_LangManagement_Index_View extends Settings_Vtiger_Index_View
 	 *
 	 * @return Vtiger_CssScript_Model[]
 	 */
-	public function getHeaderCss(\App\Request $request)
+	public function getHeaderCss(App\Request $request)
 	{
 		return array_merge(parent::getHeaderCss($request), $this->checkAndConvertCssStyles([
 			'~libraries/datatables.net-bs4/css/dataTables.bootstrap4.css',

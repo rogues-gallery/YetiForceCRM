@@ -3,8 +3,10 @@
 /**
  * LogIn test class.
  *
+ * @package   Tests
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 
@@ -24,7 +26,7 @@ class B_LogIn extends \Tests\Base
 			\App\Session::set('app_unique_key', \App\Config::main('application_unique_key'));
 			\App\Session::set('user_name', $userName);
 			\App\Session::set('full_user_name', \App\Fields\Owner::getUserLabel(\Tests\Base\A_User::createUsersRecord()->getId()));
-			$this->assertInternalType('int', \Tests\Base\A_User::createUsersRecord()->getId());
+			$this->assertIsInt(\Tests\Base\A_User::createUsersRecord()->getId());
 		}
 	}
 

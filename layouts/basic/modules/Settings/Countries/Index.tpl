@@ -1,13 +1,31 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
 	<div class="">
-		<div class="widget_header row">
+		<div class="o-breadcrumb widget_header row">
 			<div class="col-12">
 				{include file=\App\Layout::getTemplatePath('BreadCrumbs.tpl', $MODULE_NAME)}
 			</div>
 		</div>
 		<div class="contents mt-2">
-			{assign var=WIDTHTYPE value=$USER_MODEL->get('rowheight')}
+			<div class="mb-2">
+				<span class="mr-2">{\App\Language::translate('LBL_SET_DEFAULT_PHONE_COUNTRY', $QUALIFIED_MODULE)}</span>
+				{assign var="DEFAULT_PHONE_COUNTRY" value=\App\Config::component('Phone', 'defaultPhoneCountry')}
+				<div class="btn-group btn-group-toggle"
+					data-toggle="buttons">
+					<label class="btn btn-sm btn-outline-primary {if $DEFAULT_PHONE_COUNTRY} active{/if}">
+						<input class="js-switch js-update-get-default-phone-country" type="radio" name="defaultPhoneCountry"
+							data-js="change" id="defaultPhoneCountry1" autocomplete="off" value="1"
+							{if $DEFAULT_PHONE_COUNTRY}checked{/if}>
+							{\App\Language::translate('LBL_DEFAULT_PHONE_FROM_PANEL', $QUALIFIED_MODULE)}
+					</label>
+					<label class="btn btn-sm btn-outline-primary {if !$DEFAULT_PHONE_COUNTRY} active {/if}">
+						<input class="js-switch js-update-get-default-phone-country" type="radio" name="defaultPhoneCountry"
+							data-js="change" id="defaultPhoneCountry2" autocomplete="off" value="0"
+							{if !$DEFAULT_PHONE_COUNTRY}checked{/if} >
+							{\App\Language::translate('LBL_DEFAULT_PHONE_FROM_USER', $QUALIFIED_MODULE)}
+					</label>
+				</div>
+			</div>
 			<table class="table tableRWD table-bordered table-sm listViewEntriesTable">
 				<thead>
 					<tr class="listViewHeaders">

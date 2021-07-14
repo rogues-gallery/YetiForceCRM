@@ -4,7 +4,7 @@
  * Module Class for MappedFields Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_MappedFields_Module_Model extends Settings_Vtiger_Module_Model
@@ -239,7 +239,7 @@ class Settings_MappedFields_Module_Model extends Settings_Vtiger_Module_Model
 		$moduleModel = Vtiger_Module_Model::getInstance($this->getName());
 		$fields = [];
 		foreach ($moduleModel->getFields() as $fieldName => $fieldModel) {
-			if ($fieldModel->isActiveField() && $fieldModel->isEditable() && !\in_array($fieldModel->getUIType(), $this->getRestrictedUitypes())) {
+			if ($fieldModel->isActiveField() && !(false === $source && !($fieldModel->isEditable() && !\in_array($fieldModel->getUIType(), $this->getRestrictedUitypes())))) {
 				$blockName = $fieldModel->getBlockName();
 				if (!$blockName) {
 					$blockName = 'LBL_NOT_ASSIGNET_TO_BLOCK';

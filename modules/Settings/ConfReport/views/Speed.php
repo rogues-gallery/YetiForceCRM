@@ -4,15 +4,15 @@
  * Speed test view class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
-class Settings_ConfReport_Speed_View extends \App\Controller\Modal
+class Settings_ConfReport_Speed_View extends \App\Controller\ModalSettings
 {
 	/**
 	 * {@inheritdoc}
 	 */
-	public $successBtn = false;
+	public $showFooter = false;
 	/**
 	 * {@inheritdoc}
 	 */
@@ -21,21 +21,11 @@ class Settings_ConfReport_Speed_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function checkPermission(\App\Request $request)
-	{
-		if (!\App\User::getCurrentUserModel()->isAdmin()) {
-			throw new \App\Exceptions\NoPermittedForAdmin('LBL_PERMISSION_DENIED');
-		}
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$qualifiedModule = $request->getModule(false);
 		$viewer = $this->getViewer($request);
-		$viewer->assign('TESTS', \App\Utils\ConfReport::testSpeed());
+		$viewer->assign('BENCHMARKS', \App\Utils\Benchmarks::all());
 		$viewer->assign('QUALIFIED_MODULE', $qualifiedModule);
 		$viewer->view('Speed.tpl', $qualifiedModule);
 	}
@@ -43,7 +33,7 @@ class Settings_ConfReport_Speed_View extends \App\Controller\Modal
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getPageTitle(\App\Request $request)
+	public function getPageTitle(App\Request $request)
 	{
 		return \App\Language::translate('LBL_SERVER_SPEED_TEST', $request->getModule(false));
 	}

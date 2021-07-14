@@ -5,7 +5,7 @@
  * @package App
  *
  * @copyright YetiForce Sp. z o.o.
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Rafal Pospiech <r.pospiech@yetiforce.com>
  */
@@ -84,7 +84,7 @@ class RecordStatus
 			'response_expected' => 'FL_RESPONSE_EXPECTED',
 			'solution_expected' => 'FL_SOLUTION_EXPECTED',
 			'idle_expected' => 'FL_IDLE_DATE_EXPECTED',
-		]
+		],
 	];
 
 	/**
@@ -97,7 +97,7 @@ class RecordStatus
 		return [
 			self::RECORD_STATE_NO_CONCERN => 'LBL_RECORD_STATE_NO_CONCERN',
 			self::RECORD_STATE_OPEN => 'LBL_RECORD_STATE_OPEN',
-			self::RECORD_STATE_CLOSED => 'LBL_RECORD_STATE_CLOSED'
+			self::RECORD_STATE_CLOSED => 'LBL_RECORD_STATE_CLOSED',
 		];
 	}
 
@@ -117,7 +117,7 @@ class RecordStatus
 		foreach (Fields\Picklist::getValues($fieldName) as $value) {
 			if (isset($value['record_state']) && $state === $value['record_state']) {
 				$values[$value[$primaryKey]] = $value['picklistValue'];
-			} elseif (null === $state) {
+			} elseif (null === $state && isset($value['record_state'])) {
 				$values[$value[$primaryKey]] = $value['record_state'];
 			}
 		}
@@ -165,7 +165,7 @@ class RecordStatus
 		if (!isset($tableSchema->columns['time_counting'])) {
 			$dbCommand->addColumn($tableName, 'time_counting', $schema->createColumnSchemaBuilder(\yii\db\Schema::TYPE_TINYINT, 1)->notNull()->defaultValue(0))->execute();
 		}
-		foreach (EventHandler::getAll(false) as $handler) {
+		foreach (EventHandler::getAll() as $handler) {
 			if ('Vtiger_RecordStatusHistory_Handler' === $handler['handler_class']) {
 				$modules = $handler['include_modules'] ? \explode(',', $handler['include_modules']) : [];
 				if (!\in_array($moduleName, $modules)) {
@@ -173,7 +173,7 @@ class RecordStatus
 				}
 				EventHandler::update([
 					'is_active' => 1,
-					'include_modules' => \implode(',', $modules)
+					'include_modules' => \implode(',', $modules),
 				], $handler['eventhandler_id']);
 			}
 		}
@@ -207,7 +207,7 @@ class RecordStatus
 						'fieldTypeList' => 0,
 						'generatedtype' => 1,
 						'displayType' => 2,
-						'helpinfo' => 'Detail'
+						'helpinfo' => 'Detail',
 					]);
 				}
 			}
@@ -251,7 +251,7 @@ class RecordStatus
 				}
 				EventHandler::update([
 					'is_active' => $modules ? 1 : 0,
-					'include_modules' => \implode(',', $modules)
+					'include_modules' => \implode(',', $modules),
 				], $handler['eventhandler_id']);
 			}
 		}
@@ -276,7 +276,7 @@ class RecordStatus
 					'crmid' => $recordModel->getId(),
 					'before' => $before,
 					'after' => $after,
-					'date' => date('Y-m-d H:i:s')
+					'date' => date('Y-m-d H:i:s'),
 				])->execute();
 			Cache::save("RecordStatus::StateDates::{$recordModel->getId()}", $after, date('Y-m-d H:i:s'));
 		}
@@ -323,7 +323,7 @@ class RecordStatus
 		$date = (new Db\Query())->select(['date'])
 			->from($recordModel->getModule()->get('basetable') . '_state_history')
 			->where(['crmid' => $recordModel->getId(), 'after' => $state])->orderBy(['date' => SORT_DESC])
-			->limit(1)->scalar();
+			->scalar();
 		Cache::save($cacheName, $state, $date);
 		return $date;
 	}

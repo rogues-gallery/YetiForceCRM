@@ -2,6 +2,7 @@
   "php": {
     "Notification": "Notification",
     "SINGLE_Notification": "Notification",
+    "LBL_CHANGE_SAVE": "Every change must be saved",
     "LBL_NOTIFICATION_CONTENTS": "Notification contents",
     "FL_TITLE": "title",
     "LBL_NOTIFICATION_INFORMATION": "Basic information",
@@ -29,6 +30,7 @@
     "FL_STATUS": "Status",
     "FL_USER": "User",
     "FL_TYPE": "Type",
+    "FL_CATEGORY": "Category",
     "LBL_MARK_AS_READ": "Mark as read",
     "LBL_NO_NOTIFICATIONS": "No notifications",
     "LBL_CRON_LAUNCHING_FREQUENCY": "Cron launching frequency",

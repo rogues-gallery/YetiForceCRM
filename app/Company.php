@@ -1,14 +1,19 @@
 <?php
+/**
+ * Company basic file.
+ *
+ * @package App
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
+ */
 
 namespace App;
 
 /**
  * Company basic class.
- *
- * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
- * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
- * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Company extends Base
 {
@@ -18,10 +23,11 @@ class Company extends Base
 	 * @var int[]
 	 */
 	public static $sizes = [
-		'Micro' => 10,
+		'Micro' => 20,
 		'Small' => 50,
 		'Medium' => 250,
-		'Large' => 0,
+		'Large' => 1000,
+		'Corporation' => 0,
 	];
 
 	/**
@@ -34,7 +40,7 @@ class Company extends Base
 		if (Cache::has('CompanyGetAll', '')) {
 			return Cache::get('CompanyGetAll', '');
 		}
-		$rows = (new Db\Query())->from('s_#__companies')->all();
+		$rows = (new Db\Query())->from('s_#__companies')->all(Db::getInstance('admin'));
 		Cache::save('CompanyGetAll', '', $rows, Cache::LONG);
 		return $rows;
 	}
@@ -52,12 +58,12 @@ class Company extends Base
 		if ($name) {
 			Db::getInstance('admin')->createCommand()
 				->update('s_#__companies', [
-					'status' => $status
+					'status' => $status,
 				], ['name' => $name])->execute();
 		}
 		Db::getInstance('admin')->createCommand()
 			->update('s_#__companies', [
-				'status' => $status
+				'status' => $status,
 			])->execute();
 	}
 
@@ -76,11 +82,11 @@ class Company extends Base
 			return false;
 		}
 		$companies = \array_column(static::getAll(), 'id', 'id');
-		foreach ($companiesNew as $key => $company) {
-			if (!isset($companies[$key])) {
-				throw new Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $key);
+		foreach ($companiesNew as $company) {
+			if (!isset($companies[$company['id']])) {
+				throw new Exceptions\Security('ERR_ILLEGAL_FIELD_VALUE||' . $company['id']);
 			}
-			$recordModel = \Settings_Companies_Record_Model::getInstance((int) $key);
+			$recordModel = \Settings_Companies_Record_Model::getInstance((int) $company['id']);
 			$field = $recordModel->getModule()->getFormFields();
 			foreach (array_keys($field) as $fieldName) {
 				if (isset($company[$fieldName])) {
@@ -89,6 +95,7 @@ class Company extends Base
 					$recordModel->set($fieldName, $uiTypeModel->getDBValue($company[$fieldName]));
 				}
 			}
+			$recordModel->saveCompanyLogos();
 			$recordModel->save();
 		}
 		return (new YetiForce\Register())->register();
@@ -101,20 +108,34 @@ class Company extends Base
 	 */
 	public static function getSize(): string
 	{
-		if (Cache::has('CompanyGetSize', '')) {
-			return Cache::get('CompanyGetSize', '');
-		}
-		$count = (new Db\Query())->from('vtiger_users')->where(['status' => 'Active'])->andWhere(['<>', 'id', 1])->count();
+		$count = User::getNumberOfUsers();
 		$return = 'Micro';
+		$last = 0;
 		foreach (self::$sizes as $size => $value) {
-			if (0 !== $value && $count > $value) {
+			if (0 !== $value && $count <= $value && $count > $last) {
+				return $size;
+			}
+			if (0 === $value && $count > 1000) {
 				$return = $size;
 			}
-			if (0 === $value && $count > 250) {
-				$return = $size;
-			}
+			$last = $value;
 		}
-		Cache::save('CompanyGetSize', '', $return, Cache::LONG);
 		return $return;
+	}
+
+	/**
+	 * Compare company size.
+	 *
+	 * @param string $package
+	 *
+	 * @return bool
+	 */
+	public static function compareSize(string $package): bool
+	{
+		$size = self::$sizes[$package] ?? '';
+		if (0 === $size) {
+			return true;
+		}
+		return $size >= User::getNumberOfUsers();
 	}
 }

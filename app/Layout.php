@@ -2,9 +2,12 @@
 /**
  * Layout class.
  *
+ * @package App
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
 namespace App;
@@ -42,7 +45,6 @@ class Layout
 			if (!IS_PUBLIC_DIR) {
 				$basePath = 'public_html/' . $basePath;
 			}
-
 			return $basePath . $name;
 		}
 		$basePath = 'layouts' . '/' . \Vtiger_Viewer::getDefaultLayoutName() . '/';
@@ -50,6 +52,26 @@ class Layout
 			$basePath = 'public_html/' . $basePath;
 		}
 		return $basePath . $name;
+	}
+
+	/**
+	 * Gets layout paths.
+	 *
+	 * @return array
+	 */
+	public static function getLayoutPaths(): array
+	{
+		$basePrefix = 'layouts/' . self::getActiveLayout() . \DIRECTORY_SEPARATOR;
+		$defaultPrefix = 'layouts/' . \Vtiger_Viewer::getDefaultLayoutName() . \DIRECTORY_SEPARATOR;
+		if (\App\Config::performance('LOAD_CUSTOM_FILES')) {
+			$layoutsPath['custom/'] = 'custom/';
+			$layoutsPath["custom/{$basePrefix}"] = "custom/{$basePrefix}";
+			$layoutsPath["custom/{$defaultPrefix}"] = "custom/{$defaultPrefix}";
+		}
+		$layoutsPath[''] = '';
+		$layoutsPath[$basePrefix] = $basePrefix;
+		$layoutsPath[$defaultPrefix] = $defaultPrefix;
+		return $layoutsPath;
 	}
 
 	/**
@@ -123,6 +145,89 @@ class Layout
 	 */
 	public static function getUniqueId($name = '')
 	{
-		return $name . random_int(100, 99999);
+		return str_replace([' ', '"', "'"], '', $name) . random_int(100, 99999);
+	}
+
+	/**
+	 * Truncating plain text and adding a button showing all the text.
+	 *
+	 * @param string $text
+	 * @param int    $length
+	 * @param bool   $showIcon
+	 *
+	 * @return string
+	 */
+	public static function truncateText(string $text, int $length, bool $showIcon = false): string
+	{
+		if (\mb_strlen($text) < $length) {
+			return $text;
+		}
+		$teaser = TextParser::textTruncate($text, $length);
+		$text = nl2br($text);
+		if ($showIcon) {
+			$btn = '<span class="mdi mdi-overscan"></span>';
+		} else {
+			$btn = \App\Language::translate('LBL_MORE_BTN');
+		}
+		return "<div class=\"js-more-content\"><span class=\"teaserContent\">$teaser</span><span class=\"fullContent d-none\">$text</span><span class=\"text-right mb-1\"><button type=\"button\" class=\"btn btn-link btn-sm pt-0 js-more\">{$btn}</button></span></div>";
+	}
+
+	/**
+	 * Truncating HTML and adding a button showing all the text.
+	 *
+	 * @param string $html
+	 * @param string $size
+	 * @param int    $length
+	 *
+	 * @return string
+	 */
+	public static function truncateHtml(?string $html, ?string $size = 'medium', ?int $length = 200): string
+	{
+		if (empty($html)) {
+			return '';
+		}
+		$teaser = $css = $btn = '';
+		$btnTemplate = function (string $popoverText = '', ?string $btnClass = ''): string {
+			$popoverText = \App\Language::translate($popoverText);
+			return "<a href=\"#\" class=\"js-more noLinkBtn font-weight-lighter js-popover-tooltip {$btnClass}\" data-iframe=\"true\" data-content=\"{$popoverText}\"><span class=\"mdi mdi-overscan\"></span></a>";
+		};
+		$iframeClass = 'modal-iframe js-modal-iframe';
+		if ('full' === $size) {
+			$iframeClass = 'js-iframe-full-height';
+		} elseif ('mini' === $size) {
+			$btn = $btnTemplate('LBL_SHOW_ORIGINAL_CONTENT');
+			$css = 'display: none;';
+			$teaser = TextParser::textTruncate(trim(strip_tags($html)), $length);
+		} elseif ('medium' === $size) {
+			$btn = $btnTemplate('LBL_FULLSCREEN', 'c-btn-floating-right-bottom btn btn-primary');
+		}
+		$html = Purifier::encodeHtml($html);
+		return "<div class=\"js-iframe-content\" >$teaser <iframe sandbox=\"allow-same-origin allow-popups allow-popups-to-escape-sandbox\" class=\"w-100 {$iframeClass}\" frameborder=\"0\" style=\"{$css}\" srcdoc=\"{$html}\"></iframe>{$btn}</div>";
+	}
+
+	/**
+	 * Get record label or href.
+	 *
+	 * @param int         $record
+	 * @param string|null $moduleName
+	 *
+	 * @return string
+	 */
+	public static function getRecordLabel(int $record, ?string $moduleName = null): string
+	{
+		if (!$record) {
+			return '-';
+		}
+		if (null === $moduleName) {
+			$moduleName = Record::getType($record);
+		}
+		$label = TextParser::textTruncate(Record::getLabel($record) ?? '-', \App\Config::main('href_max_length'));
+		if (!$moduleName || !Privilege::isPermitted($moduleName, 'DetailView', $record)) {
+			return $label;
+		}
+		if ('Active' !== \App\Record::getState($record)) {
+			$label = "<s>$label</s>";
+		}
+		return "<a class=\"modCT_{$moduleName} showReferenceTooltip js-popover-tooltip--record\" href=\"index.php?module={$moduleName}&view=Detail&record={$record}\">{$label}</a>";
 	}
 }

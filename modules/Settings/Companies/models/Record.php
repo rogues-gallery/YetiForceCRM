@@ -4,7 +4,7 @@
  * Companies record model class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -125,6 +125,14 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 			$db->createCommand()->insert('s_#__companies', $params)->execute();
 			$this->set('id', $db->getLastInsertID('s_#__companies_id_seq'));
 		}
+		if ('LBL_TYPE_TARGET_USER' === self::TYPES[$params['type']] || 1 === (new \App\Db\Query())->from('s_#__companies')->count()) {
+			$configFile = new \App\ConfigFile('component', 'Branding');
+			$configFile->set('footerName', $params['name']);
+			$configFile->set('urlFacebook', $params['facebook'] ?? '');
+			$configFile->set('urlTwitter', $params['twitter'] ?? '');
+			$configFile->set('urlLinkedIn', $params['linkedin'] ?? '');
+			$configFile->create();
+		}
 		\App\Cache::clear();
 	}
 
@@ -135,7 +143,7 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 	 *
 	 * @return string
 	 */
-	public function getDisplayValue($key)
+	public function getDisplayValue(string $key)
 	{
 		$value = $this->get($key);
 		switch ($key) {
@@ -166,14 +174,18 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 
 	/**
 	 * Function to delete the current Record Model.
+	 *
+	 * @return bool
 	 */
-	public function delete()
+	public function delete(): bool
 	{
-		$db = \App\Db::getInstance('admin');
-		$db->createCommand()
+		$delete = \App\Db::getInstance('admin')->createCommand()
 			->delete('s_#__companies', ['id' => $this->getId()])
 			->execute();
-		\App\Cache::clear();
+		if ($delete) {
+			\App\Cache::clear();
+		}
+		return $delete;
 	}
 
 	/**
@@ -189,7 +201,7 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 			'linktype' => 'LISTVIEWRECORD',
 			'linklabel' => 'LBL_EDIT_RECORD',
 			'linkurl' => $this->getEditViewUrl(),
-			'linkicon' => 'fas fa-edit',
+			'linkicon' => 'yfi yfi-full-editing-view',
 			'linkclass' => 'btn btn-xs btn-info',
 		];
 		if (null === Settings_Companies_ListView_Model::$recordsCount) {
@@ -256,7 +268,7 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 	{
 		$moduleName = $this->getModule()->getName(true);
 		$labels = $this->getModule()->getFormFields();
-		$label = $label ? $label : ($labels[$name]['label'] ?? '');
+		$label = $label ?: ($labels[$name]['label'] ?? '');
 		$sourceModule = $this->get('source');
 		$companyId = $this->getId();
 		$fieldName = 'YetiForce' === $sourceModule ? "companies[$companyId][$name]" : $name;
@@ -268,6 +280,7 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 			case 'industry':
 				$params['uitype'] = 16;
 				$params['maximumlength'] = '50';
+				$params['picklistValues'] = [];
 				foreach (Settings_Companies_Module_Model::getIndustryList() as $industry) {
 					$params['picklistValues'][$industry] = \App\Language::translate($industry, $moduleName);
 				}
@@ -279,6 +292,7 @@ class Settings_Companies_Record_Model extends Settings_Vtiger_Record_Model
 			case 'country':
 				$params['uitype'] = 16;
 				$params['maximumlength'] = '100';
+				$params['picklistValues'] = [];
 				foreach (\App\Fields\Country::getAll() as $country) {
 					$params['picklistValues'][$country['name']] = \App\Language::translateSingleMod($country['name'], 'Other.Country');
 				}

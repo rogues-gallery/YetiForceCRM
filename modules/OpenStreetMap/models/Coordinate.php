@@ -4,7 +4,7 @@
  * Coordiante model.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Tomasz Kur <t.kur@yetiforce.com>
  */
 class OpenStreetMap_Coordinate_Model extends \App\Base
@@ -278,7 +278,7 @@ class OpenStreetMap_Coordinate_Model extends \App\Base
 					'lat' => $row['lat'],
 					'lon' => $row['lon'],
 					'label' => self::getLabelToPopupByArray($row, $moduleName),
-					'color' => self::getMarkerColor(empty($groupByField) ? '' : $row[$groupByField])
+					'color' => self::getMarkerColor($row[$groupByField] ?? '')
 				];
 			}
 		}
@@ -295,9 +295,10 @@ class OpenStreetMap_Coordinate_Model extends \App\Base
 	public function getCoordinatesCustomView()
 	{
 		$selectedIds = $this->get('selectedIds');
-		if ($selectedIds == 'all') {
+		if ('all' == $selectedIds) {
 			return $this->readAllCoordinatesFromCustomeView();
-		} elseif (!empty($selectedIds)) {
+		}
+		if (!empty($selectedIds)) {
 			$records = Vtiger_Mass_Action::getRecordsListFromRequest($this->get('request'));
 
 			return $this->readCoordinatesByRecords($records);
@@ -336,8 +337,8 @@ class OpenStreetMap_Coordinate_Model extends \App\Base
 		$queryGenerator->setCustomColumn('u_#__openstreetmap.lon');
 		$queryGenerator->setCustomColumn('vtiger_crmentity.crmid');
 		$queryGenerator->addJoin(['LEFT JOIN', 'u_#__openstreetmap', 'u_#__openstreetmap.crmid = vtiger_crmentity.crmid']);
-		if (!empty($searchValue)) {
-			$queryGenerator->addBaseSearchConditions($searchKey, $searchValue, $operator);
+		if (!empty($searchValue) && $operator) {
+			$queryGenerator->addCondition($searchKey, $searchValue, $operator);
 		}
 		$searchParams = $this->getArray('search_params');
 		if (empty($searchParams)) {
@@ -351,7 +352,7 @@ class OpenStreetMap_Coordinate_Model extends \App\Base
 		$transformedSearchParams = $queryGenerator->parseBaseSearchParamsToCondition($searchParams);
 		$queryGenerator->parseAdvFilter($transformedSearchParams);
 		$queryGenerator->addNativeCondition(['u_#__openstreetmap.type' => 'a']);
-		if ($excludedIds && !empty($excludedIds) && is_array($excludedIds) && count($excludedIds) > 0) {
+		if ($excludedIds && !empty($excludedIds) && \is_array($excludedIds) && \count($excludedIds) > 0) {
 			$queryGenerator->addNativeCondition(['not in', 'vtiger_crmentity.crmid', $excludedIds]);
 		}
 		if (!empty($coordinatesCenter) && !empty($radius)) {

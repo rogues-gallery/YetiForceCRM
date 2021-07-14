@@ -2,8 +2,10 @@
 /**
  * Reseting record number test class.
  *
+ * @package   Tests
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Rafal Pospiech <r.pospiech@yetiforce.com>
  */
 
@@ -77,9 +79,9 @@ class Z_ResetingRecordNumber extends \Tests\Base
 	 * @codeCoverageIgnore
 	 * Setting of tests.
 	 */
-	public static function setUpBeforeClass()
+	public static function setUpBeforeClass(): void
 	{
-		static::$transaction = \App\Db::getInstance()->beginTransaction();
+		self::$transaction = \App\Db::getInstance()->beginTransaction();
 	}
 
 	/**
@@ -206,7 +208,7 @@ class Z_ResetingRecordNumber extends \Tests\Base
 	 * Test method "IncrementNumberMonth".
 	 * Test record number resetting with new month.
 	 */
-	public function testIncrementNumberMonth()
+	public function testIncrementNumberMonth(): void
 	{
 		$actualNumber = 1;
 		$prefix = '{{YYYY}}-{{MM}}-{{DD}}/';
@@ -256,7 +258,7 @@ class Z_ResetingRecordNumber extends \Tests\Base
 	 * Test method "IncrementNumberYear".
 	 * Test record number resetting with new year.
 	 */
-	public function testIncrementNumberYear()
+	public function testIncrementNumberYear(): void
 	{
 		$actualNumber = 1;
 		$prefix = '{{YYYY}}-{{MM}}-{{DD}}/';
@@ -306,7 +308,7 @@ class Z_ResetingRecordNumber extends \Tests\Base
 	 * Test method "LeadingZeros"
 	 * Test leading zeros in numbers generation.
 	 */
-	public function testLeadingZeros()
+	public function testLeadingZeros(): void
 	{
 		for ($leadingZeros = 0; $leadingZeros < 7; ++$leadingZeros) {
 			$actualNumber = 1;
@@ -342,7 +344,7 @@ class Z_ResetingRecordNumber extends \Tests\Base
 					$currentNumber = 1;
 					$currentDate = $sequence;
 				}
-				$currentNumber = \str_pad($currentNumber, $leadingZeros, '0', \STR_PAD_LEFT);
+				$currentNumber = \str_pad($currentNumber, $leadingZeros, '0', STR_PAD_LEFT);
 				$this->assertSame("$date/$currentNumber", $instance->getIncrementNumber());
 				$number = RecordNumber::getInstance('FInvoice');
 				$this->assertSame($currentNumber + 1, $number->get('cur_id'));
@@ -356,12 +358,11 @@ class Z_ResetingRecordNumber extends \Tests\Base
 	}
 
 	/**
-	 * @codeCoverageIgnore
 	 * Cleaning after tests.
 	 */
-	public static function tearDownAfterClass()
+	public static function tearDownAfterClass(): void
 	{
-		static::$transaction->rollBack();
+		self::$transaction->rollBack();
 		\App\Cache::clear();
 	}
 }

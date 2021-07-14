@@ -3,7 +3,7 @@
  * View to show events which they are visible under the form.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Tomasz Kur <t.kur@yetiforce.com>
  */
 
@@ -17,7 +17,7 @@ class Calendar_QuickCreateEvents_View extends Vtiger_IndexAjax_View
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$dates = [];
 		$moduleName = $request->getModule();
@@ -29,16 +29,16 @@ class Calendar_QuickCreateEvents_View extends Vtiger_IndexAjax_View
 		$dateInstance = clone $currentDateInstance;
 		while ($numberDaysToDisplay) {
 			$dateInstance->sub(new DateInterval('P1D'));
-			if (!in_array($dateInstance->format('w'), $hideDays)) {
+			if (!\in_array($dateInstance->format('w'), $hideDays)) {
 				--$numberDaysToDisplay;
 				$dates[$numberDaysToDisplay] = $dateInstance->format('Y-m-d');
 			}
 		}
 		$numberDaysToDisplay = 3;
 		$dateInstance = clone $currentDateInstance;
-		while ($numberDaysToDisplay !== 6) {
+		while (6 !== $numberDaysToDisplay) {
 			$dateInstance->add(new DateInterval('P1D'));
-			if (!in_array($dateInstance->format('w'), $hideDays)) {
+			if (!\in_array($dateInstance->format('w'), $hideDays)) {
 				++$numberDaysToDisplay;
 				$dates[$numberDaysToDisplay] = $dateInstance->format('Y-m-d');
 			}

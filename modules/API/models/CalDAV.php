@@ -4,7 +4,7 @@
  * Api CalDAV Model Class.
  *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  */
 class API_CalDAV_Model
@@ -57,13 +57,6 @@ class API_CalDAV_Model
 	 * @var array
 	 */
 	public $davUsers = [];
-
-	/**
-	 * Max date.
-	 *
-	 * @var string
-	 */
-	const MAX_DATE = '2038-01-01';
 	/**
 	 * Cache.
 	 *
@@ -308,7 +301,6 @@ class API_CalDAV_Model
 		\App\Log::trace(__METHOD__ . ' | Start Cal ID:' . $cal['crmid']);
 		$calendar = \App\Integrations\Dav\Calendar::loadFromContent($cal['calendardata'], $record, $cal['uid']);
 		foreach ($calendar->getRecordInstance() as $recordModel) {
-			$recordModel->set('assigned_user_id', $this->user->get('id'));
 			$exclusion = \App\Config::component('Dav', 'CALDAV_EXCLUSION_FROM_DAV');
 			if (false !== $exclusion) {
 				foreach ($exclusion as $key => $value) {

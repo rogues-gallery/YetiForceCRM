@@ -1,10 +1,10 @@
-{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 {strip}
-	<div class="modal-content validationEngineContainer" id="EditView">
+	<div class="validationEngineContainer" id="EditView">
 		<form>
 			<div class="modal-header">
 				{if $RECORD_MODEL}
-					<h5 class="modal-title"><span class="fas fa-edit fa-sm mr-1"></span>{\App\Language::translate('LBL_TITLE_EDIT', $QUALIFIED_MODULE)}</h5>
+					<h5 class="modal-title"><span class="yfi yfi-full-editing-view fa-sm mr-1"></span>{\App\Language::translate('LBL_TITLE_EDIT', $QUALIFIED_MODULE)}</h5>
 				{else}
 					<h5 class="modal-title"><span class="fas fa-plus fa-sm mr-1"></span>{\App\Language::translate('LBL_TITLE_ADDED', $QUALIFIED_MODULE)}</h5>
 				{/if}
@@ -18,12 +18,6 @@
 					<label class="col-sm-2 col-form-label text-right u-text-small-bold"><span class="redColor">*</span>{\App\Language::translate('LBL_APP_NAME', $QUALIFIED_MODULE)}</label>
 					<div class="col-sm-10">
 						<input type="text" name="name" data-validation-engine="validate[required]" value="{if $RECORD_MODEL}{$RECORD_MODEL->getName()}{/if}" class="form-control">
-					</div>
-				</div>
-				<div class="form-group form-row col-sm-12">
-					<label class="col-sm-2 col-form-label text-right u-text-small-bold">{\App\Language::translate('LBL_ADDRESS_URL', $QUALIFIED_MODULE)}</label>
-					<div class="col-sm-10">
-						<input type="text" name="addressUrl" value="{if $RECORD_MODEL}{$RECORD_MODEL->get('acceptable_url')}{/if}" class="form-control">
 					</div>
 				</div>
 				<div class="form-group form-row col-sm-12">
@@ -51,13 +45,42 @@
 				<div class="form-group form-row col-sm-12">
 					<label class="col-sm-2 col-form-label text-right u-text-small-bold">{\App\Language::translate('LBL_TYPE_SERVER', $QUALIFIED_MODULE)}</label>
 					<div class="col-sm-10">
-						<select class="select2 typeServer" {if $RECORD_MODEL} disabled {/if}>
-							{foreach from=$TYPES_SERVERS item=TYPE}
-								<option value="{$TYPE}" {if $RECORD_MODEL && $TYPE eq  $RECORD_MODEL->get('type')}selected{/if}>
-									{$TYPE}
+						<select name="type" class="select2 typeServer" {if $RECORD_MODEL}readonly="readonly"{/if}>
+							{foreach from=\Api\Core\Containers::$list item=TYPE}
+								<option value="{$TYPE}" {if $TYPE eq $APP_TYPE}selected{/if}>
+									{\App\Language::translate($TYPE, $QUALIFIED_MODULE)}
 								</option>
 							{/foreach}
 						</select>
+					</div>
+				</div>
+				<div class="form-group form-row col-sm-12">
+					<label class="col-sm-2 col-form-label text-right u-text-small-bold">
+						{\App\Language::translate('LBL_ALLOWED_IPS', $QUALIFIED_MODULE)}
+						<a href="#" class="js-popover-tooltip ml-2" data-placement="top" data-content="{\App\Language::translate('LBL_ALLOWED_IPS_INFO', $QUALIFIED_MODULE)} x.x.x.x , y.y.y.y">
+							<i class="fas fa-info-circle"></i>
+						</a>
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="ips" value="{if $RECORD_MODEL}{$RECORD_MODEL->get('ips')}{/if}" class="form-control">
+					</div>
+				</div>
+				<div class="form-group form-row col-sm-12">
+					<label class="col-sm-2 col-form-label text-right u-text-small-bold">
+						{\App\Language::translate('LBL_PUBLIC_URL', $QUALIFIED_MODULE)}
+						<a href="#" class="js-popover-tooltip ml-2" data-placement="top" data-content="{\App\Language::translate('LBL_PUBLIC_URL_INFO', $QUALIFIED_MODULE)}">
+							<i class="fas fa-info-circle"></i>
+						</a>
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="url" value="{if $RECORD_MODEL}{$RECORD_MODEL->get('url')}{/if}" class="form-control">
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="alert alert-info mb-0" role="alert">
+						<span class="mdi mdi-information-outline u-fs-3x mr-2 float-left"></span>
+						{\App\Language::translate('LBL_MODAL_ALERT', $QUALIFIED_MODULE)}
+						<pre class="mb-0 mt-2">{\App\Purifier::encodeHtml('Authorization: Basic base64_encode($name . \':\' . $password)')}</pre>
 					</div>
 				</div>
 			</div>

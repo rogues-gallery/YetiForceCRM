@@ -15,7 +15,7 @@
 		<div id="minilistWizardContainer" class='modelContainer modal fade' tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content">
-					<div class="modal-header contentsBackground">
+					<div class="modal-header">
 						<h5 class="modal-title" id="massEditHeader">
 							<span class="fas fa-filter mr-1"></span>
 							{\App\Language::translate('LBL_MINI_LIST','Home')} {\App\Language::translate($MODULE_NAME, $MODULE_NAME)}
@@ -65,6 +65,19 @@
 									<td class="fieldValue">
 										<select class="form-control" name="fields" size="2" multiple="true"
 												data-validation-engine="validate[required]">
+											<option></option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td class="fieldLabel alignMiddle textAlignCenter" nowrap>
+										{App\Language::translate('LBL_FIELD_HREF')}&nbsp;
+										<span class="js-popover-tooltip u-cursor-pointer" data-js="popover" data-placement="top" data-content="{\App\Language::translate('LBL_FIELD_HREF_TOOLTIP')}">
+											<span class="fas fa-question-circle"></span>
+										</span>
+									</td>
+									<td class="fieldValue">
+										<select class="form-control" name="field_href" size="2">
 											<option></option>
 										</select>
 									</td>

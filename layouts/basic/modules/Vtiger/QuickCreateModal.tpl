@@ -1,5 +1,5 @@
 {strip}
-	{*<!-- {[The file is published on the basis of YetiForce Public License 3.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
+	{*<!-- {[The file is published on the basis of YetiForce Public License 4.0 that can be found in the following directory: licenses/LicenseEN.txt or yetiforce.com]} -->*}
 	<div class="tpl-Base-QuickCreateModel quickCreateModules modal" id="quickCreateModules" tabindex="-1" role="dialog"
 		 aria-labelledby="c-quick-create__title" aria-hidden="true">
 		<div class="modal-dialog c-modal-xxl" role="document">
@@ -50,7 +50,7 @@
 														href="{$MODULEMODEL->getCreateRecordUrl()}"
 													{/if}
 											>
-													<span class="modCT_{$NAME} userIcon-{$NAME} mr-1"
+													<span class="modCT_{$NAME} yfm-{$NAME} mr-1"
 														  title="{\App\Language::translate($singularLabel,$NAME)}"></span>
 												<span>{\App\Language::translate($singularLabel,$NAME)}</span>
 											</a>

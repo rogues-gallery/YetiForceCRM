@@ -4,7 +4,7 @@
  * List View Model Class for Mail Settings.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Adrian Koń <a.kon@yetiforce.com>
  */
 class Settings_Mail_ListView_Model extends Settings_Vtiger_ListView_Model
@@ -32,7 +32,7 @@ class Settings_Mail_ListView_Model extends Settings_Vtiger_ListView_Model
 		$fieldsToFilter = $module->getFilterFields();
 		if (!empty($searchParams)) {
 			foreach ($searchParams as $key => $value) {
-				if ('' !== $value['value'] && in_array($key, $fieldsToFilter)) {
+				if ('' !== $value['value'] && \in_array($key, $fieldsToFilter)) {
 					$query->andWhere([$key => $value['value']]);
 				}
 			}
@@ -40,8 +40,8 @@ class Settings_Mail_ListView_Model extends Settings_Vtiger_ListView_Model
 		$startIndex = $pagingModel->getStartIndex();
 		$pageLimit = $pagingModel->getPageLimit();
 		$orderBy = $this->getForSql('orderby');
-		if (!empty($orderBy) && in_array($orderBy, $listFields)) {
-			if ($this->getForSql('sortorder') === 'DESC') {
+		if (!empty($orderBy) && \in_array($orderBy, $listFields)) {
+			if ('DESC' === $this->getForSql('sortorder')) {
 				$query->orderBy([$orderBy => SORT_DESC]);
 			} else {
 				$query->orderBy([$orderBy => SORT_ASC]);

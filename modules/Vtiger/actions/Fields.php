@@ -3,8 +3,10 @@
 /**
  * Fields Action Class.
  *
+ * @package Action
+ *
  * @copyright YetiForce Sp. z o.o
- * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license   YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
  * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
@@ -28,14 +30,16 @@ class Vtiger_Fields_Action extends \App\Controller\Action
 	 */
 	public function checkPermission(App\Request $request)
 	{
-		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
-		if (!$currentUserPriviligesModel->hasModulePermission($request->getModule())) {
-			throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
+		if ('verifyPhoneNumber' !== $request->getMode()) {
+			$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
+			if (!$currentUserPriviligesModel->hasModulePermission($request->getModule())) {
+				throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
+			}
+			if (!\App\Privilege::isPermitted($request->getModule(), 'EditView')) {
+				throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
+			}
 		}
-		if (!\App\Privilege::isPermitted($request->getModule(), 'EditView')) {
-			throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
-		}
-		if ('findAddress' !== $request->getMode()) {
+		if ('findAddress' !== $request->getMode() && 'getReference' !== $request->getMode()) {
 			$this->fieldModel = Vtiger_Module_Model::getInstance($request->getModule())->getFieldByName($request->getByType('fieldName', 2));
 			if (!$this->fieldModel || !$this->fieldModel->isEditable()) {
 				throw new \App\Exceptions\NoPermitted('ERR_NO_PERMISSIONS_TO_FIELD', 406);
@@ -79,7 +83,7 @@ class Vtiger_Fields_Action extends \App\Controller\Action
 		}
 		$response = new Vtiger_Response();
 		if (empty($searchValue)) {
-			$response->setError('NO');
+			$response->setResult(['items' => []]);
 		} else {
 			$owner = App\Fields\Owner::getInstance($moduleName);
 			$owner->find($searchValue);
@@ -126,7 +130,7 @@ class Vtiger_Fields_Action extends \App\Controller\Action
 		$searchValue = $request->getByType('value', 'Text');
 		$response = new Vtiger_Response();
 		if (empty($searchValue)) {
-			$response->setError('NO');
+			$response->setResult(['items' => []]);
 		} else {
 			$rows = $this->fieldModel->getUITypeModel()->getSearchValues($searchValue);
 			foreach ($rows as $key => $value) {
@@ -144,24 +148,22 @@ class Vtiger_Fields_Action extends \App\Controller\Action
 	 */
 	public function getReference(App\Request $request)
 	{
-		if (!App\Config::performance('SEARCH_REFERENCE_BY_AJAX')) {
-			throw new \App\Exceptions\NoPermitted('LBL_PERMISSION_DENIED', 406);
-		}
-		if (!$this->fieldModel->isReferenceField()) {
-			throw new \App\Exceptions\NoPermitted('ERR_NO_PERMISSIONS_TO_FIELD');
+		$fieldModel = Vtiger_Module_Model::getInstance($request->getModule())->getFieldByName($request->getByType('fieldName', 2));
+		if (!$fieldModel || !$fieldModel->isActiveField() || !$fieldModel->isViewEnabled()) {
+			throw new \App\Exceptions\NoPermitted('ERR_NO_PERMISSIONS_TO_FIELD', 406);
 		}
 		$response = new Vtiger_Response();
-		$rows = (new \App\RecordSearch($request->getByType('value', 'Text'), $this->fieldModel->getReferenceList()))->search();
-		$data = $modules = $ids = [];
+		$limit = \App\Config::search('GLOBAL_SEARCH_AUTOCOMPLETE_LIMIT');
+		$searchValue = \App\RecordSearch::getSearchField()->getUITypeModel()->getDbConditionBuilderValue($request->getByType('value', \App\Purifier::TEXT), '');
+		$rows = (new \App\RecordSearch($searchValue, $fieldModel->getReferenceList(), $limit))->setMode(\App\RecordSearch::LABEL_MODE)->search();
+		$data = $modules = [];
 		foreach ($rows as $row) {
-			$ids[] = $row['crmid'];
-			$modules[$row['setype']][] = $row['crmid'];
+			$modules[$row['setype']][] = $row;
 		}
-		$labels = \App\Record::getLabel($ids);
-		foreach ($modules as $moduleName => &$rows) {
+		foreach ($modules as $moduleName => $rows) {
 			$data[] = ['name' => App\Language::translateSingleMod($moduleName, $moduleName), 'type' => 'optgroup'];
-			foreach ($rows as $id) {
-				$data[] = ['id' => $id, 'name' => $labels[$id]];
+			foreach ($rows as $row) {
+				$data[] = ['id' => $row['crmid'], 'name' => \App\Purifier::encodeHtml($row['label'])];
 			}
 		}
 		$response->setResult(['items' => $data]);

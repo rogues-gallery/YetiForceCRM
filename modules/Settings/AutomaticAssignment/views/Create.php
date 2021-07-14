@@ -4,7 +4,7 @@
  * Create View Class for Automatic assignment.
  *
  * @copyright YetiForce Sp. z o.o
- * @license YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @license YetiForce Public License 4.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 class Settings_AutomaticAssignment_Create_View extends Settings_Vtiger_BasicModal_View
@@ -16,7 +16,7 @@ class Settings_AutomaticAssignment_Create_View extends Settings_Vtiger_BasicModa
 	 *
 	 * @return string
 	 */
-	public function getSize(\App\Request $request)
+	public function getSize(App\Request $request)
 	{
 		return 'modal-sm';
 	}
@@ -26,7 +26,7 @@ class Settings_AutomaticAssignment_Create_View extends Settings_Vtiger_BasicModa
 	 *
 	 * @param \App\Request $request
 	 */
-	public function process(\App\Request $request)
+	public function process(App\Request $request)
 	{
 		$moduleName = $request->getModule(false);
 		$viewer = $this->getViewer($request);
